@@ -24,13 +24,13 @@ export async function PUT(request: Request) {
       if (newPassword.length < 6) {
         return NextResponse.json({ error: 'New password must be at least 6 characters' }, { status: 400 });
       }
-      if (existingUser.password && currentPassword) {
-        const isMatch = await bcrypt.compare(currentPassword, existingUser.password);
+      if (existingUser.passwordHash && currentPassword) {
+        const isMatch = await bcrypt.compare(currentPassword, existingUser.passwordHash);
         if (!isMatch) {
           return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
         }
       }
-      updateData.password = await bcrypt.hash(newPassword, 10);
+      updateData.passwordHash = await bcrypt.hash(newPassword, 10);
     }
 
     await prisma.user.update({
