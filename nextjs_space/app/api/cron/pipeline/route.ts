@@ -20,6 +20,7 @@ async function runPipelineCycle() {
   const startTime = Date.now();
   let trendsCreated = 0;
   let tasksCreated = 0;
+  const errors: string[] = [];
 
   // 1. Fetch fresh trends via LLM generator
   try {
@@ -35,67 +36,83 @@ async function runPipelineCycle() {
     ];
 
     const llmTrendRes = await callLLM(trendPrompt, true);
-    const parsedTrends = JSON.parse(llmTrendRes ?? '{}')?.trends || [];
+    let parsedTrends: any[] = [];
+    try {
+      const parsed = JSON.parse(llmTrendRes ?? '{}');
+      parsedTrends = parsed?.trends || (Array.isArray(parsed) ? parsed : []);
+    } catch (err: any) {
+      errors.push(`Parse trends error: ${err.message}`);
+    }
+
+    const validCategories = ['AI_TOOLS', 'LOCAL_SERVICES', 'CRYPTO_FINANCE', 'ECOMMERCE', 'AI_CONTENT', 'OTHER'];
 
     for (const t of parsedTrends) {
-      const createdTrend = await prisma.trend.create({
-        data: {
-          name: t.trend_name || 'Emerging Opportunity',
-          sourcePlatforms: t.source_platforms || ['Web', 'Social'],
-          mentionVelocity: Number(t.mention_velocity) || 8.5,
-          sentimentScore: Number(t.sentiment_score) || 0.8,
-          confidence: Number(t.initial_confidence) || 0.85,
-          category: t.category || 'AI_TOOLS',
-          status: 'ACTIVE',
-        },
-      });
-      trendsCreated++;
+      try {
+        const cat = validCategories.includes(t.category) ? t.category : 'AI_TOOLS';
+        const createdTrend = await prisma.trend.create({
+          data: {
+            name: t.trend_name || 'Emerging Opportunity',
+            sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Web', 'Social'],
+            mentionVelocity: Number(t.mention_velocity) || 12.5,
+            sentimentScore: Number(t.sentiment_score) || 0.85,
+            confidence: Number(t.initial_confidence) || 0.9,
+            category: cat as any,
+            status: 'ACTIVE',
+          },
+        });
+        trendsCreated++;
 
-      // 2. Generate a Power Move for this trend
-      const taskPrompt = [
-        {
-          role: 'system',
-          content: 'You are a task generation AI. Generate an actionable, low-cost money-making task for this trend. Return JSON format: {"title": string, "description": string, "steps": string[], "difficulty": "ZERO"|"LOW"|"MEDIUM"|"HIGH", "startup_cost": number, "time_to_first_dollar": string, "earnings_low": number, "earnings_high": number, "risk_level": "LOW"|"MEDIUM"|"HIGH", "pro_tip": string}',
-        },
-        {
-          role: 'user',
-          content: `Generate one money-making task for trend: ${createdTrend.name}. Output JSON only.`,
-        },
-      ];
+        // 2. Generate a Power Move for this trend
+        const taskPrompt = [
+          {
+            role: 'system',
+            content: 'You are a task generation AI. Generate an actionable, low-cost money-making task for this trend. Return JSON format: {"title": string, "description": string, "steps": string[], "difficulty": "ZERO"|"LOW"|"MEDIUM"|"HIGH", "startup_cost": number, "time_to_first_dollar": string, "earnings_low": number, "earnings_high": number, "risk_level": "LOW"|"MEDIUM"|"HIGH", "pro_tip": string}',
+          },
+          {
+            role: 'user',
+            content: `Generate one money-making task for trend: ${createdTrend.name}. Output JSON only.`,
+          },
+        ];
 
-      const llmTaskRes = await callLLM(taskPrompt, true);
-      const parsedTask = JSON.parse(llmTaskRes ?? '{}');
-      const now = new Date();
+        const llmTaskRes = await callLLM(taskPrompt, true);
+        let parsedTask: any = null;
+        try {
+          parsedTask = JSON.parse(llmTaskRes ?? '{}');
+        } catch (_) {}
 
-      if (parsedTask && parsedTask.title) {
+        const now = new Date();
+        const stepsArray = Array.isArray(parsedTask?.steps) ? parsedTask.steps : ['Analyze trend demand', 'Deploy automated solution', 'Acquire first paying client'];
+
         await prisma.task.create({
           data: {
             trendId: createdTrend.id,
-            title: parsedTask.title,
-            description: parsedTask.description || '',
-            steps: JSON.stringify(parsedTask.steps || ['Analyze trend market', 'Deploy baseline solution', 'Acquire first client']),
-            difficulty: parsedTask.difficulty || 'LOW',
-            startupCost: Number(parsedTask.startup_cost) || 0,
-            timeToFirstDollar: parsedTask.time_to_first_dollar || '1-7 days',
-            estimatedEarningsLow: Number(parsedTask.earnings_low) || 150,
-            estimatedEarningsHigh: Number(parsedTask.earnings_high) || 800,
-            riskLevel: parsedTask.risk_level || 'LOW',
-            proTip: parsedTask.pro_tip || 'Act within 48h while velocity is surging.',
-            category: createdTrend.category,
+            title: parsedTask?.title || `Monetize ${createdTrend.name}`,
+            description: parsedTask?.description || `Actionable execution framework for ${createdTrend.name}`,
+            steps: stepsArray,
+            difficulty: (parsedTask?.difficulty as any) || 'LOW',
+            startupCost: Number(parsedTask?.startup_cost) || 0,
+            timeToFirstDollar: parsedTask?.time_to_first_dollar || '1-3 days',
+            estimatedEarningsLow: Number(parsedTask?.earnings_low) || 200,
+            estimatedEarningsHigh: Number(parsedTask?.earnings_high) || 950,
+            riskLevel: (parsedTask?.risk_level as any) || 'LOW',
+            proTip: parsedTask?.pro_tip || 'Act within 48h while velocity is surging.',
+            category: cat as any,
             qualityScore: 0.95,
             weekOf: now,
             generatedAt: now,
             expiresAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-            trendScore: 0.9,
+            trendScore: 0.92,
             isTrending: true,
             isFeatured: true,
           },
         });
         tasksCreated++;
+      } catch (innerErr: any) {
+        errors.push(`Trend loop error: ${innerErr.message}`);
       }
     }
   } catch (e: any) {
-    console.error('Pipeline cycle error:', e.message);
+    errors.push(`Pipeline cycle error: ${e.message}`);
   }
 
   // 3. Clean up expired tasks older than 14 days
@@ -113,6 +130,7 @@ async function runPipelineCycle() {
     trendsCreated,
     tasksCreated,
     expiredPurged: deleted.count,
+    errors: errors.length > 0 ? errors : undefined,
     durationMs: Date.now() - startTime,
   };
 }
