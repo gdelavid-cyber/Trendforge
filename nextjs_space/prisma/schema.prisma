@@ -1,0 +1,346 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  FREE
+  PREMIUM
+  PRO
+  ENTERPRISE
+  ADMIN
+}
+
+enum RiskTolerance {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TrendCategory {
+  AGENT_ECONOMY
+  AI_CONTENT
+  AI_TOOLS
+  CRYPTO_FINANCE
+  LOCAL_SERVICES
+  ECOMMERCE
+  EDUCATION
+  HARDWARE
+  DATA_SCIENCE
+  OTHER
+}
+
+enum TrendStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum TaskDifficulty {
+  ZERO
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum UserTaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum FavorStatus {
+  OPEN
+  FULFILLED
+  CANCELLED
+}
+
+enum MentorshipStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum VoteType {
+  UP
+  DOWN
+}
+
+model User {
+  id                    String           @id @default(cuid())
+  email                 String           @unique
+  name                  String?
+  passwordHash          String
+  role                  UserRole         @default(FREE)
+  stripeCustomerId      String?          @unique
+  stripeSubscriptionId  String?
+  subscriptionStatus    String?
+  skills                String[]         @default([])
+  riskTolerance         RiskTolerance    @default(MEDIUM)
+  totalEarnings         Float            @default(0)
+  firstHundredAt        DateTime?
+  firstThousandAt       DateTime?
+  favorCredits          Int              @default(3)
+  isVIP                 Boolean          @default(false)
+  isMentor              Boolean          @default(false)
+  mentorId              String?
+  mentor                User?            @relation("MentorMentee", fields: [mentorId], references: [id])
+  mentees               User[]           @relation("MentorMentee")
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  userTasks             UserTask[]
+  successStories        SuccessStory[]
+  sentFavors            Favor[]          @relation("FavorFrom")
+  receivedFavors        Favor[]          @relation("FavorTo")
+  templates             Template[]
+  votes                 Vote[]
+  mentorshipsAsMentor   Mentorship[]     @relation("MentorRel")
+  mentorshipsAsMentee   Mentorship[]     @relation("MenteeRel")
+  notifications         Notification[]
+
+  @@index([role])
+  @@index([email])
+}
+
+model Trend {
+  id                  String         @id @default(cuid())
+  name                String
+  sourcePlatforms     String[]       @default([])
+  mentionVelocity     Float          @default(0)
+  sentimentScore      Float          @default(0)
+  confidence          Float          @default(0)
+  category            TrendCategory  @default(OTHER)
+  status              TrendStatus    @default(ACTIVE)
+  detectedAt          DateTime       @default(now())
+  hoursSinceDetection Float          @default(0)
+  createdAt           DateTime       @default(now())
+
+  tasks               Task[]
+
+  @@index([status])
+  @@index([detectedAt])
+  @@index([category])
+}
+
+model Task {
+  id                    String         @id @default(cuid())
+  trendId               String
+  trend                 Trend          @relation(fields: [trendId], references: [id])
+  title                 String
+  description           String
+  steps                 Json           @default("[]")
+  difficulty            TaskDifficulty @default(LOW)
+  startupCost           Float          @default(0)
+  timeToFirstDollar     String?        @default("1-3 days")
+  estimatedEarningsLow  Float          @default(0)
+  estimatedEarningsHigh Float          @default(0)
+  riskLevel             RiskLevel      @default(LOW)
+  riskExplanation       String?
+  mitigationStrategy    String?
+  toolLinks             Json           @default("[]")
+  proTip                String?
+  category              TrendCategory  @default(OTHER)
+  qualityScore          Float          @default(0)
+  isVerified            Boolean        @default(false)
+  isFeatured            Boolean        @default(false)
+  upvotes               Int            @default(0)
+  downvotes             Int            @default(0)
+  weekOf                DateTime       @default(now())
+  disclaimer            String         @default("For educational purposes only. TrendForge is not responsible for any financial losses.")
+  requiresOptIn         Boolean        @default(false)
+  createdAt             DateTime       @default(now())
+  generatedAt           DateTime       @default(now())
+  expiresAt             DateTime?
+  trendScore            Float          @default(0)
+  isTrending            Boolean        @default(false)
+
+  userTasks             UserTask[]
+  successStories        SuccessStory[]
+  votes                 Vote[]
+  favors                Favor[]
+  trendingSnapshots     TrendingSnapshot[]
+
+  @@index([trendId])
+  @@index([weekOf])
+  @@index([difficulty])
+  @@index([riskLevel])
+  @@index([category])
+  @@index([isFeatured])
+  @@index([generatedAt])
+  @@index([expiresAt])
+  @@index([trendScore])
+  @@index([isTrending])
+}
+
+model TrendingSnapshot {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  trendScore Float
+  capturedAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([capturedAt])
+}
+
+model UserTask {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  taskId          String
+  task            Task           @relation(fields: [taskId], references: [id])
+  status          UserTaskStatus @default(NOT_STARTED)
+  stepsCompleted  Int            @default(0)
+  earningsReported Float?        @default(0)
+  launchedAt      DateTime?
+  completedAt     DateTime?
+  hasOptedInRisk  Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+
+  @@unique([userId, taskId])
+  @@index([userId])
+  @@index([taskId])
+  @@index([status])
+}
+
+model SuccessStory {
+  id                     String             @id @default(cuid())
+  userId                 String
+  user                   User               @relation(fields: [userId], references: [id])
+  taskId                 String
+  task                   Task               @relation(fields: [taskId], references: [id])
+  earningsAmount         Float
+  earningsScreenshotUrl  String?
+  earningsScreenshotPath String?
+  isPublicScreenshot     Boolean            @default(true)
+  description            String
+  verificationStatus     VerificationStatus @default(PENDING)
+  verifiedAt             DateTime?
+  isPublished            Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+
+  @@index([verificationStatus])
+  @@index([userId])
+  @@index([taskId])
+}
+
+model Favor {
+  id          String      @id @default(cuid())
+  fromUserId  String
+  fromUser    User        @relation("FavorFrom", fields: [fromUserId], references: [id])
+  toUserId    String?
+  toUser      User?       @relation("FavorTo", fields: [toUserId], references: [id])
+  taskId      String?
+  task        Task?       @relation(fields: [taskId], references: [id])
+  description String
+  status      FavorStatus @default(OPEN)
+  creditValue Int         @default(1)
+  createdAt   DateTime    @default(now())
+
+  @@index([fromUserId])
+  @@index([status])
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  description String
+  fileUrl     String?
+  filePath    String?
+  isPublicFile Boolean @default(true)
+  price       Float    @default(0)
+  category    String   @default("general")
+  downloads   Int      @default(0)
+  revenue     Float    @default(0)
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isApproved])
+  @@index([category])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  voteType  VoteType
+  createdAt DateTime @default(now())
+
+  @@unique([userId, taskId])
+  @@index([taskId])
+}
+
+model Mentorship {
+  id                  String           @id @default(cuid())
+  mentorId            String
+  mentor              User             @relation("MentorRel", fields: [mentorId], references: [id])
+  menteeId            String
+  mentee              User             @relation("MenteeRel", fields: [menteeId], references: [id])
+  status              MentorshipStatus @default(ACTIVE)
+  revenueSharePercent Int              @default(10)
+  createdAt           DateTime         @default(now())
+
+  @@unique([mentorId, menteeId])
+  @@index([mentorId])
+  @@index([menteeId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model TrendIngestionLog {
+  id              String   @id @default(cuid())
+  source          String
+  status          String
+  recordsIngested Int      @default(0)
+  errorMessage    String?
+  executedAt      DateTime @default(now())
+  durationMs      Int      @default(0)
+
+  @@index([executedAt])
+}
+
+model WeeklyDigest {
+  id           String   @id @default(cuid())
+  weekOf       DateTime
+  tasks        Json     @default("[]")
+  trendSummary String?
+  sentAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([weekOf])
+}
