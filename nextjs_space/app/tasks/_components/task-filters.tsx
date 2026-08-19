@@ -173,7 +173,7 @@ export function TaskFilters({
             <option value="NEWEST" className="bg-[#0B0B12] text-white">Newest First</option>
             <option value="TRENDING" className="bg-[#0B0B12] text-white">Trending Score</option>
             <option value="POPULAR" className="bg-[#0B0B12] text-white">Most Popular</option>
-            <option value="EARNINGS_HIGH" className="bg-[#0B0B12] text-white">Highest WP Yield</option>
+            <option value="EARNINGS_HIGH" className="bg-[#0B0B12] text-white">Highest Potential Earnings</option>
             <option value="COST_LOW" className="bg-[#0B0B12] text-white">Lowest Startup Cost</option>
           </select>
         </div>

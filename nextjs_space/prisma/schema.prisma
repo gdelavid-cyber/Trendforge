@@ -162,7 +162,7 @@ model Task {
   upvotes               Int            @default(0)
   downvotes             Int            @default(0)
   weekOf                DateTime       @default(now())
-  disclaimer            String         @default("For educational purposes only. TrendForge is not responsible for any financial losses.")
+  disclaimer            String         @default("For educational purposes only. Trendly is not responsible for any financial losses.")
   requiresOptIn         Boolean        @default(false)
   createdAt             DateTime       @default(now())
   generatedAt           DateTime       @default(now())

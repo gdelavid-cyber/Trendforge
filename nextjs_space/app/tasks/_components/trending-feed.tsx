@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Clock, TrendingUp, AlertCircle, ArrowRight, Zap } from 'lucide-react';
+import { Shield, Clock, TrendingUp, AlertCircle, ArrowRight, Zap, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/constants';
 
@@ -150,8 +150,8 @@ export function TrendingFeed() {
                         <span className="text-[#FFD700] font-bold">$</span>{task.startupCost} setup
                       </div>
                       <div className="flex items-center gap-1 text-green-400 font-bold">
-                        <Zap className="w-3.5 h-3.5 fill-current text-green-400" />
-                        +{task.estimatedEarningsLow * 100}-{task.estimatedEarningsHigh * 100} WP
+                        <DollarSign className="w-3.5 h-3.5 fill-current text-green-400" />
+                        +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-blue-400" />

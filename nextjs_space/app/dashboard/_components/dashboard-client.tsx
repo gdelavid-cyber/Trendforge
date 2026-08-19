@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Flame, Star, Zap, Award, Trophy, ChevronRight, Play, Target } from 'lucide-react';
+import { Flame, Star, Zap, Award, Trophy, ChevronRight, Play, Target, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getWealthPoints, getLevelInfo, getStreak, getBadges } from '@/app/gamification';
@@ -33,8 +33,8 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
 
   const badgeConfig: { [key: string]: { name: string; desc: string; icon: any; color: string } } = {
     first_move: { name: 'Initiate', desc: 'Completed First Power Move', icon: Target, color: 'text-[#00F0FF] bg-[#00F0FF]/10 border-[#00F0FF]/20' },
-    hundred_club: { name: 'Centurion', desc: 'Crossed 10,000 WP ($100)', icon: Award, color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
-    thousand_club: { name: 'Titan', desc: 'Crossed 100,000 WP ($1,000)', icon: Trophy, color: 'text-[#FFD700] bg-[#FFD700]/10 border-[#FFD700]/20' },
+    hundred_club: { name: 'Centurion', desc: 'Crossed $100 in Earnings', icon: Award, color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+    thousand_club: { name: 'Titan', desc: 'Crossed $1,000 in Earnings', icon: Trophy, color: 'text-[#FFD700] bg-[#FFD700]/10 border-[#FFD700]/20' },
     ten_completed: { name: 'Operator', desc: 'Completed 10 Power Moves', icon: Zap, color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
     fifty_completed: { name: 'Mastermind', desc: 'Completed 50 Power Moves', icon: Star, color: 'text-[#FF6B9D] bg-[#FF6B9D]/10 border-[#FF6B9D]/20' },
   };
@@ -52,7 +52,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: Zap, label: 'Wealth Points', value: `${points.toLocaleString()} WP`, color: 'text-[#FFD700]' },
+          { icon: DollarSign, label: 'Total Earnings', value: `$${earnings.toLocaleString()}`, color: 'text-green-400' },
           { icon: Star, label: 'Level Rank', value: `Lvl ${lvlInfo.level} (${lvlInfo.name})`, color: 'text-[#00F0FF]' },
           { icon: Flame, label: 'Active Streak', value: `${streak} Days`, color: 'text-[#FFD700]' },
           { icon: Award, label: 'Completed Moves', value: `${completedCount} Done`, color: 'text-[#FF6B9D]' },
@@ -81,7 +81,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
         <div className="flex items-center justify-between mb-3 text-xs font-mono">
           <span className="text-[#00F0FF] uppercase tracking-wider font-bold">Terminal Upgrade Bandwidth</span>
           <span className="text-[#8892B0]">
-            {points} / {lvlInfo.maxPoints} WP ({Math.round(lvlInfo.progress)}%)
+            ${earnings.toLocaleString()} / ${(lvlInfo.maxPoints / 100).toLocaleString()} ({Math.round(lvlInfo.progress)}%)
           </span>
         </div>
         <div className="h-3 w-full bg-white/[0.04] rounded-full overflow-hidden border border-white/[0.08] p-0.5">
@@ -91,7 +91,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           />
         </div>
         <p className="text-[10px] text-[#8892B0] mt-2 font-mono uppercase tracking-wider">
-          Next level threshold: {lvlInfo.maxPoints} WP. Complete Power Moves to upgrade bandwidth.
+          Next level threshold: ${(lvlInfo.maxPoints / 100).toLocaleString()} in total earnings. Complete Power Moves to upgrade bandwidth.
         </p>
       </motion.div>
 
@@ -142,7 +142,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
                     <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/[0.06] pt-3 md:pt-0">
                       <div className="text-right">
                         <div className="text-sm font-bold text-green-400 font-mono">
-                          +{task.estimatedEarningsLow * 100}-{task.estimatedEarningsHigh * 100} WP
+                          +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
                         </div>
                         <div className="text-[10px] text-[#8892B0] font-mono">
                           ⏱️ {task.timeToFirstDollar ?? '1-7 days'}

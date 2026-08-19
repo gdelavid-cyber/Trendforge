@@ -89,7 +89,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
         const points = Math.floor(earningsAmount * 100);
         setClaimed(true);
         setPointsAwarded(points);
-        toast.success(`Power Move Completed! Earned +${points} Wealth Points!`);
+        toast.success(`Power Move Completed! Recorded +$${earningsAmount.toLocaleString()} in earnings!`);
         setUserTask({ ...userTask, status: 'COMPLETED', stepsCompleted: totalSteps });
       } else {
         toast.error(res.error ?? 'Failed to claim completion');
@@ -162,8 +162,8 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
             <div className="text-xl font-bold text-white">${task?.startupCost ?? 0}</div>
           </div>
           <div className="glass-card border border-white/5 rounded-xl p-4 font-mono-stats">
-            <span className="text-xs text-muted-foreground uppercase font-mono tracking-widest block mb-1">Target Yield</span>
-            <div className="text-xl font-bold text-green-400">+{task?.estimatedEarningsLow * 100}-{task?.estimatedEarningsHigh * 100} WP</div>
+            <span className="text-xs text-muted-foreground uppercase font-mono tracking-widest block mb-1">Target Earnings</span>
+            <div className="text-xl font-bold text-green-400">+${task?.estimatedEarningsLow}-${task?.estimatedEarningsHigh}</div>
           </div>
           <div className="glass-card border border-white/5 rounded-xl p-4 font-mono-stats">
             <span className="text-xs text-muted-foreground uppercase font-mono tracking-widest block mb-1">Bandwidth Duration</span>
@@ -268,9 +268,9 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-6 border-t border-white/5 pt-6 space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-gold" /> Claim Your Yield & Level Up
+                  <Trophy className="w-4 h-4 text-gold" /> Record Your Earnings & Level Up
                 </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Input completed earnings to process WP allocation.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Input completed earnings to update your profile stats.</p>
               </div>
               <div className="flex gap-2 max-w-xs">
                 <span className="bg-[#11111E] border border-white/5 px-3 py-2 text-sm rounded-l-md font-mono text-muted-foreground">$</span>
@@ -283,7 +283,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
                 />
               </div>
               <Button onClick={handleCompleteMove} disabled={claiming} className="cyan-gradient text-black font-extrabold uppercase holographic-btn w-full md:w-auto px-6 h-10 rounded">
-                {claiming ? 'Processing...' : 'Claim Power Complete / Level Up'}
+                {claiming ? 'Processing...' : 'Claim Completion & Level Up'}
               </Button>
             </motion.div>
           )}
@@ -293,8 +293,8 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
               <CheckCircle className="w-8 h-8 text-[#00F0FF] mx-auto mb-2 animate-pulse" />
               <h4 className="font-display font-black text-[#00F0FF] uppercase tracking-wider text-base">Power Move Fully Executed</h4>
               <p className="text-xs text-muted-foreground mt-1">
-                Congratulations operative. Points have been processed and credited to your terminal.
-                {pointsAwarded && <span className="text-gold font-bold ml-1">+{pointsAwarded} Wealth Points</span>}
+                Congratulations operative. Earnings have been credited to your account.
+                {pointsAwarded && <span className="text-gold font-bold ml-1">+${(pointsAwarded / 100).toLocaleString()}</span>}
               </p>
             </div>
           )}

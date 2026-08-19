@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Heart, Trophy, HandHeart, Sparkles, Flame, Zap } from 'lucide-react';
+import { Users, Heart, Trophy, HandHeart, Sparkles, Flame, Zap, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -107,7 +107,7 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
         {/* Global Leaderboard with Glass Table Header and Alternating Rows */}
         <TabsContent value="leaderboard" className="space-y-4">
           <div className="glass-card p-4 mb-4 flex items-center justify-between text-xs font-mono text-[#8892B0]">
-            <span>TOP 100 OPERATIVES SORTED BY WEALTH POINTS (WP)</span>
+            <span>TOP 100 OPERATIVES SORTED BY TOTAL EARNINGS</span>
             <span className="text-[#00F0FF]">LIVE REGISTRY TELEMETRY</span>
           </div>
 
@@ -117,7 +117,7 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
               <div className="col-span-1 text-center">Rank</div>
               <div className="col-span-5">Operative</div>
               <div className="col-span-3 text-center">Terminal Level</div>
-              <div className="col-span-3 text-right">Wealth Points</div>
+              <div className="col-span-3 text-right">Total Earnings</div>
             </div>
 
             {/* Table Rows */}
@@ -168,8 +168,8 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
 
                     {/* Wealth Points */}
                     <div className="col-span-3 text-right font-mono">
-                      <span className="font-bold text-[#FFD700] text-sm flex items-center justify-end gap-1">
-                        <Zap className="w-3.5 h-3.5 fill-[#FFD700]" /> {u.wealthPoints.toLocaleString()} WP
+                      <span className="font-bold text-green-400 text-sm flex items-center justify-end gap-1">
+                        <DollarSign className="w-3.5 h-3.5" /> ${(u.wealthPoints / 100).toLocaleString()}
                       </span>
                       <span className="text-[9px] text-[#8892B0] block mt-0.5">
                         {u.badgeCount} Badges Unlocked

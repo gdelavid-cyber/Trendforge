@@ -34,7 +34,7 @@ export async function sendNotificationEmail(params: {
         is_html: params.isHtml ?? true,
         recipient_email: params.recipientEmail,
         sender_email: `noreply@${senderHost}`,
-        sender_alias: 'TrendForge',
+        sender_alias: 'Trendly',
         ...(params.replyTo ? { reply_to: params.replyTo } : {}),
       }),
     });

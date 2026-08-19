@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Zap, Clock, Shield, Bookmark } from 'lucide-react';
+import { ArrowRight, Zap, Clock, Shield, Bookmark, DollarSign } from 'lucide-react';
 import { useState } from 'react';
 import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/constants';
 import { toast } from 'sonner';
@@ -106,8 +106,8 @@ export function TaskCard({ task }: TaskCardProps) {
               {task?.timeToFirstDollar ?? '1d'}
             </div>
             <div className="flex items-center gap-1 text-green-400 font-bold">
-              <Zap className="w-3.5 h-3.5 fill-current text-green-400" />
-              +{task?.estimatedEarningsLow * 100}-{task?.estimatedEarningsHigh * 100} WP
+              <DollarSign className="w-3.5 h-3.5 fill-current text-green-400" />
+              +${task?.estimatedEarningsLow}-${task?.estimatedEarningsHigh}
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[#FFD700] font-bold">$</span>

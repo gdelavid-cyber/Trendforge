@@ -51,7 +51,7 @@ export default async function LandingPage() {
       name: 'Pro Operator',
       price: '$19',
       description: 'Priority wealth channels with real-time neural triggers.',
-      features: ['Early access to high-velocity Moves', 'Real-time Live Pulse telemetry', 'Multiplier bonus (+20% WP)', 'Advanced pipeline sandbox'],
+      features: ['Early access to high-velocity Moves', 'Real-time Live Pulse telemetry', 'Priority task access', 'Advanced pipeline sandbox'],
       cta: 'Upgrade to Pro',
       highlight: true,
     },
@@ -185,7 +185,7 @@ export default async function LandingPage() {
                   <span className="text-[#FFD700] font-bold">$</span>{task.startupCost} Setup
                 </div>
                 <div className="text-green-400 font-bold">
-                  +{task.estimatedEarningsLow * 100}-{task.estimatedEarningsHigh * 100} WP
+                  +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
                 </div>
                 <div>
                   ⏱️ {task.timeToFirstDollar ?? '1d'}

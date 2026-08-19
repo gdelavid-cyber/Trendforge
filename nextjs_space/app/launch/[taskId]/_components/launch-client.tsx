@@ -23,9 +23,9 @@ export function LaunchClient({ task, userTask }: Props) {
   -e TASK_ID=${task?.id ?? 'unknown'} \\
   -e API_KEY=tf_******* \\
   -p 8080:8080 \\
-  trendforge/launcher:latest`;
+  trendly/launcher:latest`;
 
-  const codespacesUrl = `https://github.com/codespaces/new?machine=basicLinux32gb&repo=trendforge&ref=main`;
+  const codespacesUrl = `https://github.com/codespaces/new?machine=basicLinux32gb&repo=trendly&ref=main`;
 
   const handleLaunch = async () => {
     try {
@@ -143,7 +143,7 @@ export function LaunchClient({ task, userTask }: Props) {
                   <h3 className="font-semibold text-sm mb-2">API Key Injection</h3>
                   <p className="text-xs text-muted-foreground mb-3">Your API keys are automatically injected into the execution environment. They are masked for security.</p>
                   <div className="bg-[#0D1117] rounded p-3 font-mono text-xs">
-                    <div className="text-muted-foreground">TRENDFORGE_API_KEY=tf_****...****</div>
+                    <div className="text-muted-foreground">TRENDLY_API_KEY=tf_****...****</div>
                     <div className="text-muted-foreground">TASK_ID={task?.id ?? 'unknown'}</div>
                   </div>
                 </div>
