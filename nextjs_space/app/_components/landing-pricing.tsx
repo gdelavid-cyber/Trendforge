@@ -68,7 +68,7 @@ export function LandingPricing() {
           ))}
         </div>
         <p className="text-center text-xs text-muted-foreground mt-8">
-          For educational purposes only. TrendForge is not responsible for any financial losses.
+          For educational purposes only. Trendly is not responsible for any financial losses.
         </p>
       </div>
     </section>

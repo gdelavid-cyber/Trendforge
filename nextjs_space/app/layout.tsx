@@ -13,15 +13,15 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
-  title: 'FORGE — Infinite Wealth Stream',
-  description: 'Step into 2050. Stream real-time Power Moves, earn Wealth Points, and level up your financial terminal.',
+  title: 'Trendly — Forge Wealth from Trending Opportunities',
+  description: 'Verified money-making tasks daily. Turn emerging trends into executable wealth moves.',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: 'FORGE — Infinite Wealth Stream',
-    description: 'Money moves. Infinite. Real-time. Yours.',
+    title: 'Trendly — Forge Wealth from Trending Opportunities',
+    description: 'Turn emerging trends into executable wealth moves. Verified tasks drop daily.',
     images: ['/og-image.png'],
   },
 };

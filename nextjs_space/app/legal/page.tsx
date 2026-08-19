@@ -16,10 +16,10 @@ export default function LegalPage() {
               <AlertTriangle className="w-5 h-5 text-gold" /> Risk Disclosure
             </h2>
             <div className="text-sm text-muted-foreground space-y-3">
-              <p>TrendForge provides educational content about money-making opportunities based on trending topics. All tasks, strategies, and earning estimates are for educational purposes only.</p>
+              <p>Trendly provides educational content about money-making opportunities based on trending topics. All tasks, strategies, and earning estimates are for educational purposes only.</p>
               <p><strong className="text-foreground">No Guarantee of Earnings:</strong> Past results do not guarantee future performance. Earnings depend on individual effort, market conditions, skills, and many external factors.</p>
               <p><strong className="text-foreground">Risk Levels:</strong> Tasks are classified as Low, Medium, or High risk. High-risk tasks may involve financial loss. Always do your own research before investing money.</p>
-              <p><strong className="text-foreground">Not Financial Advice:</strong> Nothing on TrendForge constitutes financial, investment, legal, or tax advice. Consult qualified professionals before making financial decisions.</p>
+              <p><strong className="text-foreground">Not Financial Advice:</strong> Nothing on Trendly constitutes financial, investment, legal, or tax advice. Consult qualified professionals before making financial decisions.</p>
             </div>
           </section>
 
@@ -39,8 +39,8 @@ export default function LegalPage() {
               <Shield className="w-5 h-5 text-gold" /> Limitation of Liability
             </h2>
             <div className="text-sm text-muted-foreground space-y-3">
-              <p>TrendForge and its team are not liable for any direct, indirect, incidental, or consequential damages arising from the use of our platform, content, or suggested tasks.</p>
-              <p>Users assume full responsibility for actions taken based on TrendForge content. By using TrendForge, you agree to hold the platform harmless from any claims.</p>
+              <p>Trendly and its team are not liable for any direct, indirect, incidental, or consequential damages arising from the use of our platform, content, or suggested tasks.</p>
+              <p>Users assume full responsibility for actions taken based on Trendly content. By using Trendly, you agree to hold the platform harmless from any claims.</p>
             </div>
           </section>
         </div>

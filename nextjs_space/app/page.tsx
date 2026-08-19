@@ -283,7 +283,7 @@ export default async function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-white/[0.06] py-8 text-center bg-black/60 text-[#8892B0] text-[10px]">
         <div className="max-w-[1200px] mx-auto px-4 font-mono">
-          FORGE TERMINAL v2050 // ALL FUNCTIONAL CAPACITIES ONLINE // FOR RESEARCH & EDUCATIONAL SIMULATION ONLY
+          TRENDLY v2050 // ALL FUNCTIONAL CAPACITIES ONLINE // FOR RESEARCH & EDUCATIONAL SIMULATION ONLY
         </div>
       </footer>
     </div>

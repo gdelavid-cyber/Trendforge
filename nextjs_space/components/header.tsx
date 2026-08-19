@@ -28,7 +28,7 @@ export function Header(props?: any) {
       <div className="max-w-[1200px] mx-auto flex items-center justify-between px-4 h-16">
         <Link href={session?.user ? '/dashboard' : '/'} className="flex items-center gap-2">
           <Flame className="w-7 h-7 text-gold" />
-          <span className="font-display font-bold text-xl gold-text">TrendForge</span>
+          <span className="font-display font-bold text-xl gold-text">Trendly</span>
         </Link>
 
         {/* Desktop nav */}

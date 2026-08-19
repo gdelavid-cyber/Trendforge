@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <Flame className="w-8 h-8 text-gold" />
-            <span className="font-display font-bold text-2xl gold-text">TrendForge</span>
+            <span className="font-display font-bold text-2xl gold-text">Trendly</span>
           </Link>
           <h1 className="font-display font-bold text-2xl">Reset Password</h1>
           <p className="text-muted-foreground text-sm mt-1">Enter your email to receive a reset link</p>

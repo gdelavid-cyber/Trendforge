@@ -28,13 +28,13 @@ export async function POST(request: Request) {
     sendNotificationEmail({
       notificationId: process.env.NOTIF_ID_WELCOME_EMAIL ?? '',
       recipientEmail: email,
-      subject: 'Welcome to TrendForge!',
+      subject: 'Welcome to Trendly!',
       body: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0A0A0F; color: #E8E8E8; padding: 32px;">
-        <h1 style="color: #F5A623;">Welcome to TrendForge!</h1>
+        <h1 style="color: #F5A623;">Welcome to Trendly!</h1>
         <p>Hi ${name ?? 'there'},</p>
         <p>You're now part of a community turning viral trends into real income.</p>
-        <p>Every Monday, you'll receive 10 fresh money-making tasks based on the week's hottest trends.</p>
-        <p style="color: #F5A623; font-weight: bold;">Start forging your wealth today!</p>
+        <p>Explore verified money-making tasks based on the hottest trending opportunities.</p>
+        <p style="color: #F5A623; font-weight: bold;">Start building your wealth today!</p>
       </div>`,
       isHtml: true,
     }).catch(() => {});

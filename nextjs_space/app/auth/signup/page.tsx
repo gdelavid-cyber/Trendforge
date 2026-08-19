@@ -54,7 +54,7 @@ export default function SignUpPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <Flame className="w-8 h-8 text-gold" />
-            <span className="font-display font-bold text-2xl gold-text">TrendForge</span>
+            <span className="font-display font-bold text-2xl gold-text">Trendly</span>
           </Link>
           <h1 className="font-display font-bold text-2xl">Start Forging Your Wealth</h1>
           <p className="text-muted-foreground text-sm mt-1">Create a free account to access weekly tasks</p>
@@ -117,7 +117,7 @@ export default function SignUpPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            By signing up, you agree that TrendForge content is for educational purposes only.
+            By signing up, you agree that Trendly content is for educational purposes only.
           </p>
           <Button type="submit" className="w-full gold-gradient text-black font-bold" disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

@@ -31,7 +31,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         notificationId: process.env.NOTIF_ID_STORY_VERIFICATION_RESULT ?? '',
         recipientEmail: story.user.email,
         subject: `Success Story ${verificationStatus === 'VERIFIED' ? 'Verified!' : 'Update'}`,
-        body: `<div style="font-family: Arial; max-width: 600px; margin: 0 auto; background: #0A0A0F; color: #E8E8E8; padding: 32px;"><h2 style="color: #F5A623;">Story ${verificationStatus === 'VERIFIED' ? 'Verified ✅' : 'Update'}</h2><p>Hi ${story.user.name ?? 'there'},</p><p>Your success story has been ${verificationStatus?.toLowerCase()}${verificationStatus === 'VERIFIED' ? ' and is now live on TrendForge!' : '.'}.</p></div>`,
+        body: `<div style="font-family: Arial; max-width: 600px; margin: 0 auto; background: #0A0A0F; color: #E8E8E8; padding: 32px;"><h2 style="color: #F5A623;">Story ${verificationStatus === 'VERIFIED' ? 'Verified ✅' : 'Update'}</h2><p>Hi ${story.user.name ?? 'there'},</p><p>Your success story has been ${verificationStatus?.toLowerCase()}${verificationStatus === 'VERIFIED' ? ' and is now live on Trendly!' : '.'}.</p></div>`,
         isHtml: true,
       }).catch(() => {});
     }
