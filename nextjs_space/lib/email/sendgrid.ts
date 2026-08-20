@@ -76,7 +76,8 @@ export async function sendAgentBriefingEmail(
   summary: string,
   runId: string
 ) {
-  const terminalUrl = `https://trendforge-chi.vercel.app/agents/${runId}/status`;
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://trendly-platform-chi.vercel.app';
+  const terminalUrl = `${baseUrl}/agents/${runId}/status`;
 
   const html = `
     <!DOCTYPE html>
@@ -128,7 +129,8 @@ export async function sendAgentBriefingEmail(
  * Sends password reset token email
  */
 export async function sendPasswordResetEmail(toEmail: string, resetToken: string) {
-  const resetUrl = `https://trendforge-chi.vercel.app/auth/reset-password?token=${resetToken}`;
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://trendly-platform-chi.vercel.app';
+  const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>

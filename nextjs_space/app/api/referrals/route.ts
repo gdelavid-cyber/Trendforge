@@ -48,10 +48,12 @@ export async function GET() {
     const totalReferrals = user.referralsMade.length;
     const totalCommissions = user.referralsMade.reduce((acc, r) => acc + (r.commissionEarned || 0), 0);
 
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://trendly-platform-chi.vercel.app';
+
     return NextResponse.json({
       success: true,
       referralCode: user.referralCode,
-      referralUrl: `https://trendforge-chi.vercel.app/ref/${user.referralCode}`,
+      referralUrl: `${baseUrl}/ref/${user.referralCode}`,
       bonusAgentRuns: user.bonusAgentRuns,
       totalReferrals,
       totalCommissions,
