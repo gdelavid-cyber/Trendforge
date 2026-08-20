@@ -15,20 +15,46 @@ export default async function TrendsPage() {
   try {
     trends = await prisma.trend.findMany({
       orderBy: { detectedAt: 'desc' },
-      take: 50,
-      include: { _count: { select: { tasks: true } } },
+      take: 40,
+      include: {
+        tasks: {
+          select: {
+            id: true,
+            title: true,
+            startupCost: true,
+            estimatedEarningsLow: true,
+            estimatedEarningsHigh: true,
+            timeToFirstDollar: true,
+            difficulty: true,
+          },
+          take: 3,
+        },
+        _count: { select: { tasks: true } },
+      },
     });
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    console.error(e);
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#07070C] text-white">
       <Header />
-      <TrendsClient trends={trends.map((t: any) => ({
-        id: t.id, name: t.name, sourcePlatforms: t.sourcePlatforms, mentionVelocity: t.mentionVelocity,
-        sentimentScore: t.sentimentScore, confidence: t.confidence, category: t.category,
-        status: t.status, hoursSinceDetection: t.hoursSinceDetection,
-        detectedAt: t.detectedAt?.toISOString() ?? null, taskCount: t._count?.tasks ?? 0,
-      }))} />
+      <TrendsClient
+        trends={trends.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          sourcePlatforms: t.sourcePlatforms,
+          mentionVelocity: t.mentionVelocity,
+          sentimentScore: t.sentimentScore,
+          confidence: t.confidence,
+          category: t.category,
+          status: t.status,
+          hoursSinceDetection: t.hoursSinceDetection,
+          detectedAt: t.detectedAt?.toISOString() ?? null,
+          taskCount: t._count?.tasks ?? 0,
+          tasks: t.tasks || [],
+        }))}
+      />
     </div>
   );
 }
