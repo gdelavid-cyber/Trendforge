@@ -27,11 +27,11 @@ export interface RedditScraperResult {
 }
 
 export async function executeRedditScraper(
-  params: RedditScraperParams,
+  params: RedditScraperParams = {},
   log: (msg: string) => Promise<void>
 ): Promise<RedditScraperResult> {
-  const { subreddit, topic = 'general pain points', maxPosts = 25, userEmail, userName } = params;
-  const cleanSubreddit = subreddit.replace(/^r\//i, '').trim();
+  const { subreddit = 'SaaS', topic = 'general pain points', maxPosts = 25, userEmail, userName } = params || {};
+  const cleanSubreddit = (subreddit || 'SaaS').toString().replace(/^r\//i, '').trim();
 
   await log(`[REDDIT_SCRAPER] Initializing extraction for r/${cleanSubreddit} (Target topic: ${topic})...`);
 

@@ -32,10 +32,10 @@ export interface PredictionArbitrageResult {
 }
 
 export async function executePredictionArbitrage(
-  params: PredictionArbitrageParams,
+  params: PredictionArbitrageParams = {},
   log: (msg: string) => Promise<void>
 ): Promise<PredictionArbitrageResult> {
-  const { budget = 0, market = 'Polymarket' } = params;
+  const { budget = 0, market = 'Polymarket' } = params || {};
   const isSimulation = budget <= 0;
 
   await log(`[PREDICTION_ARBITRAGE] Initializing market scanner on ${market}...`);

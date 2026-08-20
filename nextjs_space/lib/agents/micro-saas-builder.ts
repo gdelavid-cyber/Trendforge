@@ -29,7 +29,7 @@ export interface MicroSaaSBuilderResult {
 }
 
 export async function executeMicroSaaSBuilder(
-  params: MicroSaaSBuilderParams,
+  params: MicroSaaSBuilderParams = {},
   log: (msg: string) => Promise<void>
 ): Promise<MicroSaaSBuilderResult> {
   const {
@@ -37,7 +37,7 @@ export async function executeMicroSaaSBuilder(
     niche = 'E-Commerce Brands',
     authType = 'NextAuth',
     pricingModel = 'MonthlySubscription',
-  } = params;
+  } = params || {};
 
   await log(`[MICRO_SAAS_BUILDER] Initializing full-stack scaffolding engine for: "${ideaPrompt}"...`);
   await log(`[MICRO_SAAS_BUILDER] Niche: ${niche} | Auth: ${authType} | Billing Architecture: ${pricingModel}`);

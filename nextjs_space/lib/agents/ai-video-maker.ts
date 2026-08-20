@@ -33,7 +33,7 @@ export interface AIVideoMakerResult {
 }
 
 export async function executeAIVideoMaker(
-  params: AIVideoMakerParams,
+  params: AIVideoMakerParams = {},
   log: (msg: string) => Promise<void>
 ): Promise<AIVideoMakerResult> {
   const {
@@ -42,7 +42,7 @@ export async function executeAIVideoMaker(
     voiceStyle = 'energetic_creator',
     aspectRatio = '9:16',
     avatarPreset = 'cyber_host',
-  } = params;
+  } = params || {};
 
   await log(`[AI_VIDEO_MAKER] Initializing viral video generation pipeline for topic: "${topic}"...`);
   await log(`[AI_VIDEO_MAKER] Aspect Ratio: ${aspectRatio} | Voice Engine: ElevenLabs Turbo (${voiceStyle}) | Avatar: ${avatarPreset}`);

@@ -27,7 +27,7 @@ export interface OpenClawDeployerResult {
 }
 
 export async function executeOpenClawDeployer(
-  params: OpenClawDeployerParams,
+  params: OpenClawDeployerParams = {},
   log: (msg: string) => Promise<void>
 ): Promise<OpenClawDeployerResult> {
   const {
@@ -36,7 +36,7 @@ export async function executeOpenClawDeployer(
     sshKey,
     targetStack = 'crawler_node',
     concurrency = 16,
-  } = params;
+  } = params || {};
 
   await log(`[OPENCLAW_DEPLOYER] Initializing deployment pipeline for '${targetStack}' on ${serverIp}...`);
 
