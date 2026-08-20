@@ -14,10 +14,13 @@ import {
   DollarSign,
   ExternalLink,
   ThumbsUp,
-  ThumbsDown,
   Star,
   Sparkles,
   XCircle,
+  Copy,
+  Check,
+  FileCode,
+  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -45,6 +48,10 @@ export function AgentStatusClient({ runId }: { runId: string }) {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  // Micro-SaaS Code Viewer state
+  const [activeCodeFileIndex, setActiveCodeFileIndex] = useState(0);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Feedback state
   const [rating, setRating] = useState<number>(5);
@@ -124,6 +131,13 @@ export function AgentStatusClient({ runId }: { runId: string }) {
     } finally {
       setSubmittingFeedback(false);
     }
+  };
+
+  const handleCopyFileCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    toast.success('Source code copied to clipboard!');
+    setTimeout(() => setCopiedCode(false), 2500);
   };
 
   const isRunning = run?.status === 'running' || run?.status === 'queued';
@@ -337,39 +351,89 @@ export function AgentStatusClient({ runId }: { runId: string }) {
             </div>
           )}
 
-          {/* Agent 5: Micro-SaaS Builder */}
+          {/* Agent 5: Micro-SaaS Builder (Interactive Source Code Explorer) */}
           {run.agentType === 'micro_saas_builder' && (
-            <div className="glass-card p-6 border border-[#00F0FF]/20">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Code className="w-5 h-5 text-[#00F0FF]" /> Micro-SaaS Scaffold Complete: {run.result.appName}
-                </h3>
-              </div>
-              <p className="text-xs text-[#8892B0] mb-4">{run.result.tagline}</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="bg-black/50 p-4 rounded-lg border border-white/5 text-xs font-mono">
-                  <span className="text-[#8892B0] block text-[10px] uppercase">Live Demo Deployment</span>
-                  <a
-                    href={run.result.liveDemoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#00F0FF] hover:underline flex items-center gap-1 mt-1 font-bold"
-                  >
-                    {run.result.liveDemoUrl} <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+            <div className="glass-card p-6 border border-[#00F0FF]/30 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Code className="w-5 h-5 text-[#00F0FF]" /> Micro-SaaS Scaffold Complete: {run.result.appName}
+                  </h3>
+                  <p className="text-xs text-[#8892B0] mt-1">{run.result.tagline}</p>
                 </div>
-                <div className="bg-black/50 p-4 rounded-lg border border-white/5 text-xs font-mono">
-                  <span className="text-[#8892B0] block text-[10px] uppercase">GitHub Code Repository</span>
+
+                <div className="flex items-center gap-3">
                   <a
-                    href={run.result.githubRepoUrl}
+                    href="https://vercel.com/new/clone?repository-url=https://github.com/gdelavid-cyber/Trendforge"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-white hover:text-[#00F0FF] flex items-center gap-1 mt-1"
+                    className="px-4 py-2 bg-[#00F0FF] text-black font-extrabold rounded-lg text-xs uppercase flex items-center gap-1.5 hover:opacity-90 transition-opacity font-mono"
                   >
-                    {run.result.githubRepoUrl} <ExternalLink className="w-3.5 h-3.5" />
+                    Deploy to Vercel <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
+
+              {/* Commercial Economics */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+                <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                  <span className="text-[#8892B0] block text-[10px] uppercase">Pricing Tier</span>
+                  <span className="text-white font-bold">{run.result.monetizationPlan?.monthlyPrice || '$29/mo'}</span>
+                </div>
+                <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                  <span className="text-[#8892B0] block text-[10px] uppercase">Annual Discount</span>
+                  <span className="text-[#FFD700] font-bold">{run.result.monetizationPlan?.annualPrice || '$290/yr'}</span>
+                </div>
+                <div className="p-3 bg-black/40 rounded-lg border border-white/5">
+                  <span className="text-[#8892B0] block text-[10px] uppercase">Target Monthly Run Rate</span>
+                  <span className="text-green-400 font-bold">{run.result.monetizationPlan?.targetMrr || '$2,900/mo'}</span>
+                </div>
+              </div>
+
+              {/* Code Files Interactive Explorer */}
+              {run.result.coreFiles && run.result.coreFiles.length > 0 && (
+                <div className="border border-white/10 rounded-xl overflow-hidden bg-[#05050A]">
+                  {/* File Tabs */}
+                  <div className="flex items-center justify-between bg-black/60 px-4 py-2 border-b border-white/10 overflow-x-auto">
+                    <div className="flex gap-1.5">
+                      {run.result.coreFiles.map((file: any, idx: number) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveCodeFileIndex(idx)}
+                          className={`px-3 py-1.5 rounded text-xs font-mono flex items-center gap-1.5 transition-all ${
+                            activeCodeFileIndex === idx
+                              ? 'bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/30 font-bold'
+                              : 'text-[#8892B0] hover:text-white'
+                          }`}
+                        >
+                          <FileCode className="w-3.5 h-3.5" />
+                          <span>{file.filePath}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCopyFileCode(run.result.coreFiles[activeCodeFileIndex]?.code || '')}
+                      className="border-white/10 text-xs font-mono text-[#8892B0] hover:text-white h-7 px-3 flex-shrink-0"
+                    >
+                      {copiedCode ? <Check className="w-3 h-3 mr-1 text-green-400" /> : <Copy className="w-3 h-3 mr-1" />}
+                      {copiedCode ? 'Copied' : 'Copy File Code'}
+                    </Button>
+                  </div>
+
+                  {/* Code File Content */}
+                  <div className="p-4 overflow-x-auto">
+                    <div className="text-[11px] text-[#8892B0] font-mono mb-2">
+                      // {run.result.coreFiles[activeCodeFileIndex]?.description}
+                    </div>
+                    <pre className="font-mono text-xs text-[#00F0FF]/90 whitespace-pre leading-relaxed">
+                      {run.result.coreFiles[activeCodeFileIndex]?.code || '// Generating code scaffold...'}
+                    </pre>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
