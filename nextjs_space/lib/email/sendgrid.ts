@@ -13,8 +13,9 @@ export interface EmailPayload {
 }
 
 export async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = payload.from || process.env.SENDGRID_FROM_EMAIL || 'support@trendly.ai';
+  const rawApiKey = process.env.SENDGRID_API_KEY || '';
+  const apiKey = rawApiKey.replace(/["'\r\n\t]/g, '').trim();
+  const fromEmail = (payload.from || process.env.SENDGRID_FROM_EMAIL || 'support@trendly.ai').replace(/["'\r\n\t]/g, '').trim();
   const fromName = payload.fromName || process.env.SENDGRID_FROM_NAME || 'Trendly Autonomous Wealth';
 
   if (!apiKey) {
@@ -22,6 +23,13 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
     return {
       success: true,
       messageId: `dev-mock-${Date.now()}`,
+    };
+  }
+
+  if (!apiKey.startsWith('SG.')) {
+    return {
+      success: false,
+      error: `Invalid API key format. SendGrid API keys must start with 'SG.'. Found key starting with '${apiKey.substring(0, 4)}...' (Length: ${apiKey.length})`,
     };
   }
 
