@@ -14,13 +14,25 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) return;
     setLoading(true);
-    // Password reset would send email when SendGrid is configured
-    setTimeout(() => {
-      setSent(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (res.ok) {
+        setSent(true);
+        toast.success('If an account exists with that email, a reset link has been dispatched via SendGrid.');
+      } else {
+        toast.error('Failed to process request');
+      }
+    } catch {
+      toast.error('Error submitting password reset');
+    } finally {
       setLoading(false);
-      toast.success('If an account exists with that email, a reset link has been sent.');
-    }, 1000);
+    }
   };
 
   return (

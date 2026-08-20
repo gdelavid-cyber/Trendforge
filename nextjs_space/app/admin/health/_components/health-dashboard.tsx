@@ -2,13 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Activity, Server, AlertTriangle, RefreshCw, CheckCircle2, Loader2, Bot } from 'lucide-react';
+import { ShieldCheck, Activity, Server, AlertTriangle, RefreshCw, CheckCircle2, Loader2, Mail, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 export function HealthDashboard({ user }: { user: any }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // SendGrid test state
+  const [testEmail, setTestEmail] = useState(user?.email || 'admin@trendly.ai');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   const fetchHealth = async () => {
     try {
@@ -27,6 +32,28 @@ export function HealthDashboard({ user }: { user: any }) {
 
   const triggerTestAlert = () => {
     toast.success('Slack & Email simulated alert dispatched to engineering channel!');
+  };
+
+  const handleSendGridTest = async () => {
+    if (!testEmail.trim()) return;
+    setSendingTestEmail(true);
+    try {
+      const res = await fetch('/api/admin/sendgrid/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testEmail: testEmail.trim() }),
+      });
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        toast.success(resData.message || 'SendGrid verification email sent successfully!');
+      } else {
+        toast.error(resData.error || 'SendGrid test failed. Check SENDGRID_API_KEY.');
+      }
+    } catch {
+      toast.error('Network error contacting SendGrid test endpoint');
+    } finally {
+      setSendingTestEmail(false);
+    }
   };
 
   return (
@@ -120,6 +147,34 @@ export function HealthDashboard({ user }: { user: any }) {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* SendGrid Integration Verification Box */}
+      <div className="glass-card p-6 border border-[#00F0FF]/20">
+        <h3 className="text-sm font-mono uppercase tracking-wider text-white mb-2 flex items-center gap-2">
+          <Mail className="w-4 h-4 text-[#00F0FF]" /> SendGrid Email Delivery Verification
+        </h3>
+        <p className="text-xs text-[#8892B0] mb-4 font-sans">
+          Test real-time transactional deliverability for password resets, agent market intelligence briefings, and weekly opportunity digests.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3 max-w-xl">
+          <Input
+            type="email"
+            placeholder="recipient@example.com"
+            value={testEmail}
+            onChange={(e) => setTestEmail(e.target.value)}
+            className="bg-black/50 border-white/10 text-white font-mono text-xs h-9"
+          />
+          <Button
+            onClick={handleSendGridTest}
+            disabled={sendingTestEmail}
+            className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-5 flex-shrink-0"
+          >
+            {sendingTestEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
+            Send Test Email
+          </Button>
         </div>
       </div>
     </div>
