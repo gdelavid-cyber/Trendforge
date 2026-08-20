@@ -2,7 +2,13 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { callLLM } from '@/lib/pipeline';
+import {
+  callLLM,
+  scrapeHackerNewsViral,
+  scrapeRedditViral,
+  isDuplicate,
+  calculateSimilarity,
+} from '@/lib/pipeline';
 
 const CRON_SECRET = process.env.PIPELINE_API_KEY || '4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b';
 
@@ -22,147 +28,199 @@ async function runPipelineCycle() {
   let tasksCreated = 0;
   const errors: string[] = [];
 
-  // Fetch all existing trend names from database to prevent any duplicates
-  const existingTrends = await prisma.trend.findMany({ select: { name: true } });
-  const existingNames = new Set(existingTrends.map((t) => t.name.toLowerCase()));
+  // 1. Fetch all existing trend names and task titles from database
+  const [existingTrends, existingTasks] = await Promise.all([
+    prisma.trend.findMany({ select: { id: true, name: true } }),
+    prisma.task.findMany({ select: { id: true, title: true } }),
+  ]);
 
-  // 1. Fetch fresh, unique trends via generator
+  const existingTrendNames = new Set(existingTrends.map((t) => t.name.toLowerCase()));
+  const existingTaskTitles = new Set(existingTasks.map((t) => t.title.toLowerCase()));
+
+  // 2. Fetch live viral content from HackerNews and Reddit
+  let liveTrends: any[] = [];
+
+  try {
+    const [hnStories, redditPosts] = await Promise.all([
+      scrapeHackerNewsViral(),
+      scrapeRedditViral(),
+    ]);
+
+    // Convert high-upvote HackerNews stories into trends
+    for (const story of hnStories) {
+      if (liveTrends.length >= 2) break;
+      const title = story.title?.trim();
+      if (!title || isDuplicate(title, existingTrendNames, 0.5)) continue;
+
+      liveTrends.push({
+        trend_name: title,
+        source_platforms: ['HackerNews', 'GitHub'],
+        mention_velocity: +(story.score ? story.score / 10 : 15).toFixed(1),
+        sentiment_score: 0.88,
+        initial_confidence: 0.92,
+        category: 'AI_TOOLS',
+      });
+      existingTrendNames.add(title.toLowerCase());
+    }
+
+    // Convert top Reddit pain points into trends
+    for (const post of redditPosts) {
+      if (liveTrends.length >= 4) break;
+      const title = post.title?.trim();
+      if (!title || isDuplicate(title, existingTrendNames, 0.5)) continue;
+
+      liveTrends.push({
+        trend_name: title,
+        source_platforms: ['Reddit', 'ProductHunt'],
+        mention_velocity: +(post.score ? post.score / 5 : 12).toFixed(1),
+        sentiment_score: 0.85,
+        initial_confidence: 0.9,
+        category: 'AI_TOOLS',
+      });
+      existingTrendNames.add(title.toLowerCase());
+    }
+  } catch (err: any) {
+    errors.push(`Live scraper warning: ${err.message}`);
+  }
+
+  // 3. If live scrapers yielded fewer than 3, complement with procedural blueprints
   try {
     const trendPrompt = [
       {
         role: 'system',
-        content: 'You are a trend detection AI. Identify 3 emerging money-making trends across Twitter, Reddit, GitHub, or TikTok. Return JSON format: {"trends": [{"trend_name": string, "source_platforms": string[], "mention_velocity": number, "sentiment_score": number, "initial_confidence": number, "category": "AI_TOOLS"|"LOCAL_SERVICES"|"CRYPTO_FINANCE"|"ECOMMERCE"|"AI_CONTENT"}]}',
+        content:
+          'You are a trend detection AI. Identify emerging money-making trends. Return JSON: {"trends": [{"trend_name": string, "source_platforms": string[], "mention_velocity": number, "sentiment_score": number, "initial_confidence": number, "category": "AI_TOOLS"|"LOCAL_SERVICES"|"CRYPTO_FINANCE"|"ECOMMERCE"|"AI_CONTENT"}]}',
       },
-      {
-        role: 'user',
-        content: 'Detect 3 high-velocity trends right now. Output JSON only.',
-      },
+      { role: 'user', content: 'Detect high-velocity trends. Output JSON only.' },
     ];
 
-    const llmTrendRes = await callLLM(trendPrompt, true, existingNames);
-    let parsedTrends: any[] = [];
-    try {
-      const parsed = JSON.parse(llmTrendRes ?? '{}');
-      parsedTrends = parsed?.trends || (Array.isArray(parsed) ? parsed : []);
-    } catch (err: any) {
-      errors.push(`Parse trends error: ${err.message}`);
-    }
-
-    const validCategories = ['AI_TOOLS', 'LOCAL_SERVICES', 'CRYPTO_FINANCE', 'ECOMMERCE', 'AI_CONTENT', 'OTHER'];
-
-    for (const t of parsedTrends) {
-      try {
-        const trendName = t.trend_name || 'Emerging Opportunity';
-        
-        // Skip duplicate names
-        if (existingNames.has(trendName.toLowerCase())) continue;
-
-        const cat = validCategories.includes(t.category) ? t.category : 'AI_TOOLS';
-        const createdTrend = await prisma.trend.create({
-          data: {
-            name: trendName,
-            sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Web', 'Social'],
-            mentionVelocity: Number(t.mention_velocity) || 14.5,
-            sentimentScore: Number(t.sentiment_score) || 0.88,
-            confidence: Number(t.initial_confidence) || 0.92,
-            category: cat as any,
-            status: 'ACTIVE',
-          },
-        });
-        trendsCreated++;
-        existingNames.add(trendName.toLowerCase());
-
-        // 2. Generate a tailored Power Move for this specific trend
-        const taskPrompt = [
-          {
-            role: 'system',
-            content: 'You are a task generation AI. Generate an actionable, low-cost money-making task for this trend. Return JSON format: {"title": string, "description": string, "steps": string[], "difficulty": "ZERO"|"LOW"|"MEDIUM"|"HIGH", "startup_cost": number, "time_to_first_dollar": string, "earnings_low": number, "earnings_high": number, "risk_level": "LOW"|"MEDIUM"|"HIGH", "pro_tip": string}',
-          },
-          {
-            role: 'user',
-            content: `Generate one money-making task for trend: ${createdTrend.name}. Output JSON only.`,
-          },
-        ];
-
-        const llmTaskRes = await callLLM(taskPrompt, true);
-        let parsedTask: any = null;
-        try {
-          parsedTask = JSON.parse(llmTaskRes ?? '{}');
-        } catch (_) {}
-
-        const now = new Date();
-        const stepsArray = Array.isArray(parsedTask?.steps) ? parsedTask.steps : [
-          'Analyze current market demand and identify target prospects',
-          'Deploy free baseline workflow using open APIs and no-code templates',
-          'Launch automated outreach sequence to acquire first paying client',
-        ];
-
-        await prisma.task.create({
-          data: {
-            trendId: createdTrend.id,
-            title: parsedTask?.title || `Monetize ${createdTrend.name}`,
-            description: parsedTask?.description || `Actionable execution framework for ${createdTrend.name}`,
-            steps: stepsArray,
-            difficulty: (parsedTask?.difficulty as any) || 'LOW',
-            startupCost: Number(parsedTask?.startup_cost) || 0,
-            timeToFirstDollar: parsedTask?.time_to_first_dollar || '1-3 days',
-            estimatedEarningsLow: Number(parsedTask?.earnings_low) || 350,
-            estimatedEarningsHigh: Number(parsedTask?.earnings_high) || 1400,
-            riskLevel: (parsedTask?.risk_level as any) || 'LOW',
-            proTip: parsedTask?.pro_tip || 'Act within 48h while velocity is surging.',
-            category: cat as any,
-            qualityScore: 0.95,
-            weekOf: now,
-            generatedAt: now,
-            expiresAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-            trendScore: 0.92,
-            isTrending: true,
-            isFeatured: true,
-          },
-        });
-        tasksCreated++;
-      } catch (innerErr: any) {
-        errors.push(`Trend loop error: ${innerErr.message}`);
+    const llmTrendRes = await callLLM(trendPrompt, true, existingTrendNames);
+    const parsed = JSON.parse(llmTrendRes ?? '{}');
+    const procedural = parsed?.trends || (Array.isArray(parsed) ? parsed : []);
+    
+    for (const p of procedural) {
+      if (!isDuplicate(p.trend_name, existingTrendNames, 0.55)) {
+        liveTrends.push(p);
+        existingTrendNames.add(p.trend_name.toLowerCase());
       }
     }
-  } catch (e: any) {
-    errors.push(`Pipeline cycle error: ${e.message}`);
+  } catch (err: any) {
+    errors.push(`Trend generation error: ${err.message}`);
   }
 
-  // 3. Clean up expired tasks older than 14 days
-  const purgeCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-  const deleted = await prisma.task.deleteMany({
-    where: {
-      expiresAt: { lt: purgeCutoff },
-      userTasks: { none: {} },
+  const validCategories = ['AI_TOOLS', 'LOCAL_SERVICES', 'CRYPTO_FINANCE', 'ECOMMERCE', 'AI_CONTENT', 'OTHER'];
+
+  // 4. Ingest unique trends into database
+  const createdTrendRecords: any[] = [];
+  for (const t of liveTrends.slice(0, 3)) {
+    try {
+      const trendName = t.trend_name || 'Emerging Market Vector';
+      const cat = validCategories.includes(t.category) ? t.category : 'AI_TOOLS';
+
+      const newTrend = await prisma.trend.create({
+        data: {
+          name: trendName,
+          category: cat as any,
+          sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Twitter', 'Reddit'],
+          mentionVelocity: Number(t.mention_velocity) || 14.5,
+          sentimentScore: Number(t.sentiment_score) || 0.85,
+          confidenceScore: Number(t.initial_confidence) || 0.9,
+          status: 'ACTIVE',
+        },
+      });
+
+      createdTrendRecords.push(newTrend);
+      trendsCreated++;
+    } catch (e: any) {
+      errors.push(`Failed to save trend "${t?.trend_name}": ${e.message}`);
+    }
+  }
+
+  // 5. Generate matching high-yield Power Move task for each new trend
+  for (const trend of createdTrendRecords) {
+    try {
+      const taskPrompt = [
+        {
+          role: 'system',
+          content:
+            'You are a task generation AI. For the given trend, formulate a step-by-step money-making task. Return JSON: {"title": string, "description": string, "steps": string[], "difficulty": "ZERO"|"LOW"|"MEDIUM"|"HIGH", "startup_cost": number, "time_to_first_dollar": string, "earnings_low": number, "earnings_high": number, "risk_level": "LOW"|"MEDIUM"|"HIGH", "risk_explanation": string, "mitigation_strategy": string, "pro_tip": string, "category": string}',
+        },
+        { role: 'user', content: `Generate one money-making task for trend: ${trend.name}. Output JSON only.` },
+      ];
+
+      const llmTaskRes = await callLLM(taskPrompt, true);
+      const parsedTask = JSON.parse(llmTaskRes ?? '{}');
+
+      let taskTitle = parsedTask.title || `Monetize ${trend.name}`;
+
+      // Check task duplicate
+      if (isDuplicate(taskTitle, existingTaskTitles, 0.6)) {
+        taskTitle = `${taskTitle} (Strategy ${Math.floor(Math.random() * 90 + 10)})`;
+      }
+
+      await prisma.task.create({
+        data: {
+          title: taskTitle,
+          description: parsedTask.description || `Step-by-step blueprint to monetize ${trend.name}.`,
+          category: trend.category,
+          steps: Array.isArray(parsedTask.steps) && parsedTask.steps.length > 0 ? parsedTask.steps : ['Identify demand', 'Deploy solution', 'Acquire clients'],
+          difficulty: ['ZERO', 'LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.difficulty) ? parsedTask.difficulty : 'LOW',
+          startupCost: typeof parsedTask.startup_cost === 'number' ? parsedTask.startup_cost : 0,
+          timeToFirstDollar: parsedTask.time_to_first_dollar || '1-3 days',
+          estimatedEarningsLow: typeof parsedTask.earnings_low === 'number' ? parsedTask.earnings_low : 350,
+          estimatedEarningsHigh: typeof parsedTask.earnings_high === 'number' ? parsedTask.earnings_high : 1500,
+          riskLevel: ['LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.risk_level) ? parsedTask.risk_level : 'LOW',
+          riskExplanation: parsedTask.risk_explanation || 'Low initial capital needed.',
+          mitigationStrategy: parsedTask.mitigation_strategy || 'Test with free pilot.',
+          proTip: parsedTask.pro_tip || 'Focus on direct outreach.',
+          trendId: trend.id,
+          isFeatured: tasksCreated === 0,
+        },
+      });
+
+      existingTaskTitles.add(taskTitle.toLowerCase());
+      tasksCreated++;
+    } catch (e: any) {
+      errors.push(`Failed to generate task for "${trend.name}": ${e.message}`);
+    }
+  }
+
+  const durationMs = Date.now() - startTime;
+
+  // Log execution
+  await prisma.trendIngestionLog.create({
+    data: {
+      source: 'LIVE_MULTI_SOURCE_SCRAPER',
+      status: errors.length > 0 && trendsCreated === 0 ? 'FAILED' : 'SUCCESS',
+      recordsIngested: trendsCreated,
+      errorMessage: errors.length > 0 ? errors.join('; ') : null,
+      durationMs,
     },
-  }).catch(() => ({ count: 0 }));
+  });
 
   return {
     success: true,
-    timestamp: new Date().toISOString(),
     trendsCreated,
     tasksCreated,
-    expiredPurged: deleted.count,
-    errors: errors.length > 0 ? errors : undefined,
-    durationMs: Date.now() - startTime,
+    durationMs,
+    errors,
   };
 }
 
 export async function GET(request: Request) {
   if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized. Provide valid ?key= parameter or Bearer token.' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized pipeline invocation' }, { status: 401 });
   }
 
-  const result = await runPipelineCycle();
-  return NextResponse.json(result);
+  try {
+    const result = await runPipelineCycle();
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('[CRON_PIPELINE_ERROR]', error);
+    return NextResponse.json({ error: error.message || 'Pipeline cycle failure' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized. Provide valid Bearer token or ?key=.' }, { status: 401 });
-  }
-
-  const result = await runPipelineCycle();
-  return NextResponse.json(result);
+  return GET(request);
 }

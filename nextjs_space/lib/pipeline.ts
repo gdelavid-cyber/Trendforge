@@ -1,4 +1,5 @@
-// Validate pipeline API key
+// Enhanced Autonomous Viral Intelligence & Multi-Source Scraper Engine
+
 export function validatePipelineKey(request: Request): boolean {
   const key = request.headers.get('x-api-key') || request.headers.get('authorization')?.replace('Bearer ', '');
   const url = new URL(request.url);
@@ -7,12 +8,12 @@ export function validatePipelineKey(request: Request): boolean {
   return key === valid || queryKey === valid;
 }
 
-// Procedural catalog of diverse, modern money-making niches and vectors
-const TREND_BLUEPRINTS = [
-  // AI TOOLS & AUTOMATION
+// Comprehensive catalog of 30+ money-making niches & viral vectors
+export const TREND_BLUEPRINTS = [
+  // 1. AI AGENTS & VOICE WORKERS
   {
     prefix: 'Deploy Autonomous AI Voice Receptionists for',
-    targets: ['Dental Clinics', 'Luxury Med Spas', 'Emergency HVAC Contractors', 'Real Estate Brokerages', 'High-End Law Firms', 'Commercial Roofing Companies'],
+    targets: ['Dental Clinics', 'Luxury Med Spas', 'Emergency HVAC Contractors', 'Real Estate Brokerages', 'High-End Law Firms', 'Commercial Roofing Companies', 'Veterinary Hospitals'],
     platforms: ['Twitter', 'LinkedIn', 'ProductHunt'],
     category: 'LOCAL_SERVICES',
     baseEarningsLow: 450,
@@ -27,9 +28,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Offer a 7-day risk-free pilot; local business owners convert immediately once they see booked appointments.',
   },
+  // 2. KNOWLEDGE BASE & EMBEDDINGS
   {
     prefix: 'Build Custom AI Knowledge Base Chatbots for',
-    targets: ['Shopify Brand Stores', 'SaaS Onboarding Teams', 'Private Equity Portfolios', 'Online Course Creators', 'Immigration Law Firms'],
+    targets: ['Shopify Brand Stores', 'SaaS Onboarding Teams', 'Private Equity Portfolios', 'Online Course Creators', 'Immigration Law Firms', 'Real Estate Wholesalers'],
     platforms: ['Twitter', 'GitHub', 'Reddit'],
     category: 'AI_TOOLS',
     baseEarningsLow: 500,
@@ -44,9 +46,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Package this with automated lead capture to collect visitor emails directly before answering questions.',
   },
+  // 3. COLD OUTREACH AGENTS
   {
     prefix: 'Launch Multi-Agent Cold Email Lead Funnels for',
-    targets: ['B2B Marketing Agencies', 'Commercial Solar Installers', 'Corporate Headhunters', 'Fintech Startups', 'Logistics Freight Brokers'],
+    targets: ['B2B Marketing Agencies', 'Commercial Solar Installers', 'Corporate Headhunters', 'Fintech Startups', 'Logistics Freight Brokers', 'Cybersecurity Consultancies'],
     platforms: ['LinkedIn', 'Twitter', 'ProductHunt'],
     category: 'AI_TOOLS',
     baseEarningsLow: 600,
@@ -61,9 +64,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Charge per booked discovery call rather than per email sent to command 4x higher pricing.',
   },
+  // 4. VIRAL UGC & SHORT FORM
   {
     prefix: 'Automated UGC Video Ads Creation for',
-    targets: ['TikTok Shop E-Commerce Brands', 'Direct-to-Consumer Fitness Gear', 'Niche Supplement Startups', 'Mobile App Publishers'],
+    targets: ['TikTok Shop E-Commerce Brands', 'Direct-to-Consumer Fitness Gear', 'Niche Supplement Startups', 'Mobile App Publishers', 'Organic Skincare Lines'],
     platforms: ['TikTok', 'Instagram', 'Twitter'],
     category: 'AI_CONTENT',
     baseEarningsLow: 350,
@@ -78,9 +82,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Study TikTok Creative Center top ads for current high-retention audio templates and pacing.',
   },
+  // 5. FACELESS AI CHANNELS
   {
-    prefix: 'Launch Faceless YouTube & TikTok Mystery Channels around',
-    targets: ['Historical Conspiracies', 'Unsolved Wealth Mysteries', 'Tech Billionaire Feuds', 'Deep Ocean Discoveries', 'Sci-Fi AI Dilemmas'],
+    prefix: 'Launch Faceless YouTube & TikTok Channels around',
+    targets: ['Historical Conspiracies', 'Unsolved Wealth Mysteries', 'Tech Billionaire Feuds', 'Deep Ocean Discoveries', 'Sci-Fi AI Dilemmas', 'Ancient Engineering Secrets'],
     platforms: ['YouTube', 'TikTok', 'Reddit'],
     category: 'AI_CONTENT',
     baseEarningsLow: 300,
@@ -88,16 +93,17 @@ const TREND_BLUEPRINTS = [
     startupCost: 0,
     time: '3-7 days',
     steps: [
-      'Generate high-tension narrative scripts via Claude/ChatGPT structured with 3-second retention hooks',
+      'Generate high-tension narrative scripts via Claude structured with 3-second retention hooks',
       'Synthesize cinematic voiceovers via ElevenLabs and match with AI image sequences from Midjourney',
-      'Assemble with CapCut or Premiere and publish 2 Shorts daily across YouTube, TikTok, and Instagram Reels',
+      'Assemble with CapCut and publish 2 Shorts daily across YouTube, TikTok, and Instagram Reels',
       'Monetize via Creator Rewards Program, affiliate digital bundles, and sponsorships',
     ],
     proTip: 'Keep script pace under 145 words per minute with visual scene cuts every 2.5 seconds.',
   },
+  // 6. NOTION OPERATING SYSTEMS
   {
     prefix: 'Curate & Sell Notion Executive Operating Systems for',
-    targets: ['Fractional CMOs', 'Solopreneur Web Developers', 'Real Estate Wholesalers', 'Gym Owners & Personal Trainers', 'Freelance Video Editors'],
+    targets: ['Fractional CMOs', 'Solopreneur Web Developers', 'Real Estate Wholesalers', 'Gym Owners & Personal Trainers', 'Freelance Video Editors', 'E-Commerce Media Buyers'],
     platforms: ['Twitter', 'ProductHunt', 'Gumroad'],
     category: 'ECOMMERCE',
     baseEarningsLow: 200,
@@ -112,9 +118,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Give away a lightweight free version to build an email list, then upsell the full operating system.',
   },
+  // 7. CRYPTO & ON-CHAIN ARBITRAGE
   {
     prefix: 'Solana DeFi Yield & MEV Arbitrage Tracking for',
-    targets: ['Raydium Liquidity Pairs', 'Orca Concentrated Pools', 'Meme Coin Launchpads', 'Jupiter DEX Routing'],
+    targets: ['Raydium Liquidity Pairs', 'Orca Concentrated Pools', 'Meme Coin Launchpads', 'Jupiter DEX Routing', 'Base Protocol Bridging'],
     platforms: ['Twitter', 'DexScreener', 'Telegram'],
     category: 'CRYPTO_FINANCE',
     baseEarningsLow: 500,
@@ -129,9 +136,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Never trade without pre-set stop losses and verify contract renunciation before entering new LP positions.',
   },
+  // 8. LOCAL SERVICE GOOGLE 3-PACK
   {
     prefix: 'Google Business Profile 3-Pack Optimization & AI Review Engine for',
-    targets: ['Local Plumbers', 'Auto Body Repair Shops', 'Cosmetic Dentists', 'Roofing Contractors', 'Local Pest Control'],
+    targets: ['Local Plumbers', 'Auto Body Repair Shops', 'Cosmetic Dentists', 'Roofing Contractors', 'Local Pest Control', 'Tree Removal Services'],
     platforms: ['Google Maps', 'LinkedIn', 'Local Directories'],
     category: 'LOCAL_SERVICES',
     baseEarningsLow: 400,
@@ -146,9 +154,10 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Local business owners value Google Maps reviews more than any other marketing channel.',
   },
+  // 9. NICHE MICRO-SAAS DIRECTORIES
   {
     prefix: 'Launch Niche Micro-SaaS Directory & Lead Job Board for',
-    targets: ['AI Prompt Engineers', 'Remote Rust Developers', 'Shopify Plus Specialists', 'Cybersecurity Analysts'],
+    targets: ['AI Prompt Engineers', 'Remote Rust Developers', 'Shopify Plus Specialists', 'Cybersecurity Analysts', 'Next.js Solopreneurs'],
     platforms: ['ProductHunt', 'Twitter', 'IndieHackers'],
     category: 'AI_TOOLS',
     baseEarningsLow: 300,
@@ -163,43 +172,137 @@ const TREND_BLUEPRINTS = [
     ],
     proTip: 'Offer the first 10 company listings for free to build initial authority and traffic proof.',
   },
+  // 10. LOCAL LLM / DEEPSEEK DEPLOYMENT
+  {
+    prefix: 'Deploy On-Premise Private DeepSeek & Ollama LLMs for',
+    targets: ['Regional Accounting Firms', 'Private Wealth Managers', 'Boutique Law Practices', 'Medical Records Teams'],
+    platforms: ['GitHub', 'LinkedIn', 'HackerNews'],
+    category: 'AI_TOOLS',
+    baseEarningsLow: 800,
+    baseEarningsHigh: 3200,
+    startupCost: 0,
+    time: '2-4 days',
+    steps: [
+      'Install Ollama with DeepSeek-R1 or Llama 3 on client local Mac Studio or private server hardware',
+      'Set up OpenWebUI dashboard ensuring zero customer data leaves their local intranet',
+      'Configure document indexing over local PDF archives and tax law databases',
+      'Charge $1,200 setup fee + $250/mo security maintenance agreement',
+    ],
+    proTip: 'Data privacy is the #1 objection for professional firms; local AI guarantees 100% HIPAA/GDPR compliance.',
+  },
 ];
 
-// Helper to generate distinct pseudo-random trends from the rich catalog
+// Fuzzy token overlap similarity checker to strictly prevent duplicate entries
+export function calculateSimilarity(str1: string, str2: string): number {
+  const words1 = new Set(str1.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean));
+  const words2 = new Set(str2.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean));
+  
+  if (words1.size === 0 || words2.size === 0) return 0;
+  
+  let intersection = 0;
+  for (const w of words1) {
+    if (words2.has(w)) intersection++;
+  }
+  
+  const union = words1.size + words2.size - intersection;
+  return union > 0 ? intersection / union : 0;
+}
+
+export function isDuplicate(text: string, existingList: Set<string> | string[], threshold = 0.55): boolean {
+  const cleanTarget = text.toLowerCase().trim();
+  const list = existingList instanceof Set ? Array.from(existingList) : existingList;
+  
+  for (const item of list) {
+    const cleanItem = item.toLowerCase().trim();
+    if (cleanItem === cleanTarget) return true;
+    if (calculateSimilarity(cleanTarget, cleanItem) >= threshold) return true;
+  }
+  return false;
+}
+
+/**
+ * Scrapes live viral stories from HackerNews Top Stories API
+ */
+export async function scrapeHackerNewsViral(): Promise<any[]> {
+  try {
+    const topRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', { next: { revalidate: 300 } });
+    if (!topRes.ok) return [];
+    const storyIds = (await topRes.json()).slice(0, 10);
+    
+    const stories = await Promise.all(
+      storyIds.map(async (id: number) => {
+        try {
+          const itemRes = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+          return itemRes.ok ? await itemRes.json() : null;
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    return stories.filter(Boolean).filter((s) => s.title && s.score > 25);
+  } catch (err) {
+    console.warn('[PIPELINE] HackerNews scrape fallback:', err);
+    return [];
+  }
+}
+
+/**
+ * Scrapes live Reddit high-velocity posts
+ */
+export async function scrapeRedditViral(): Promise<any[]> {
+  try {
+    const res = await fetch('https://www.reddit.com/r/SaaS+SideProject+Entrepreneur+artificial/hot.json?limit=15', {
+      headers: { 'User-Agent': 'Mozilla/5.0 TrendlyAI/2.0' },
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json?.data?.children?.map((c: any) => c?.data) || [];
+  } catch (err) {
+    console.warn('[PIPELINE] Reddit scrape fallback:', err);
+    return [];
+  }
+}
+
+// Procedural generator that guarantees 0 duplicates against the database
 export function generateProceduralTrends(count: number, existingNames: Set<string> = new Set()): any[] {
   const results: any[] = [];
   const shuffledBlueprints = [...TREND_BLUEPRINTS].sort(() => Math.random() - 0.5);
 
   for (const bp of shuffledBlueprints) {
     if (results.length >= count) break;
-    
-    // Pick random target from blueprint
-    const target = bp.targets[Math.floor(Math.random() * bp.targets.length)];
-    const trendName = `${bp.prefix} ${target}`;
 
-    // Skip if already in database or in current batch
-    if (existingNames.has(trendName.toLowerCase())) continue;
+    const shuffledTargets = [...bp.targets].sort(() => Math.random() - 0.5);
+    for (const target of shuffledTargets) {
+      const trendName = `${bp.prefix} ${target}`;
 
-    const velocity = +(10 + Math.random() * 9.5).toFixed(1); // 10.0 - 19.5
-    const sentiment = +(0.78 + Math.random() * 0.2).toFixed(2); // 0.78 - 0.98
-    const confidence = +(0.85 + Math.random() * 0.12).toFixed(2); // 0.85 - 0.97
+      if (isDuplicate(trendName, existingNames, 0.6)) continue;
 
-    results.push({
-      trend_name: trendName,
-      source_platforms: bp.platforms,
-      mention_velocity: velocity,
-      sentiment_score: sentiment,
-      initial_confidence: confidence,
-      category: bp.category,
-      blueprint: bp,
-      target,
-    });
+      const velocity = +(12 + Math.random() * 8.5).toFixed(1);
+      const sentiment = +(0.8 + Math.random() * 0.18).toFixed(2);
+      const confidence = +(0.88 + Math.random() * 0.1).toFixed(2);
+
+      results.push({
+        trend_name: trendName,
+        source_platforms: bp.platforms,
+        mention_velocity: velocity,
+        sentiment_score: sentiment,
+        initial_confidence: confidence,
+        category: bp.category,
+        blueprint: bp,
+        target,
+      });
+
+      existingNames.add(trendName.toLowerCase());
+      break;
+    }
   }
 
   return results;
 }
 
-// Call LLM API with intelligent autonomous fallback generator
+// Unified LLM and autonomous fallback dispatcher
 export async function callLLM(messages: { role: string; content: string }[], jsonMode = false, existingNames: Set<string> = new Set()) {
   const apiKey = process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY;
 
@@ -236,7 +339,7 @@ export async function callLLM(messages: { role: string; content: string }[], jso
     }
   }
 
-  // Autonomous trend & task procedural engine (runs dynamically with 0 repeats)
+  // Fallback generation
   const systemPrompt = messages.find((m) => m.role === 'system')?.content || '';
   const userPrompt = messages.find((m) => m.role === 'user')?.content || '';
 
@@ -246,7 +349,6 @@ export async function callLLM(messages: { role: string; content: string }[], jso
   }
 
   if (systemPrompt.includes('task generation AI')) {
-    // Check if userPrompt matches one of our blueprints
     const matchingBlueprint = TREND_BLUEPRINTS.find((bp) => userPrompt.includes(bp.prefix));
     
     if (matchingBlueprint) {
@@ -296,28 +398,4 @@ export async function callLLM(messages: { role: string; content: string }[], jso
   }
 
   return JSON.stringify({ success: true });
-}
-
-// Stream LLM response
-export async function streamLLM(messages: { role: string; content: string }[], jsonMode = false) {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY;
-  if (!apiKey) throw new Error('LLM API key not configured');
-
-  const endpoint = process.env.OPENAI_API_KEY
-    ? 'https://api.openai.com/v1/chat/completions'
-    : 'https://apps.abacus.ai/v1/chat/completions';
-
-  return fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_API_KEY ? 'gpt-4o-mini' : 'gpt-5.4-mini',
-      messages,
-      max_tokens: 4000,
-      stream: true,
-    }),
-  });
 }
