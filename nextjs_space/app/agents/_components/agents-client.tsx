@@ -15,6 +15,14 @@ import {
   X,
   Zap,
   CheckCircle,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  Layers,
+  ArrowRight,
+  ShieldCheck,
+  FileCode,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,12 +49,107 @@ interface AgentItem {
   };
 }
 
+export const AGENT_MANUALS: Record<string, {
+  tagline: string;
+  howItWorks: string[];
+  deliverables: string[];
+  monetization: string;
+  bestFor: string;
+}> = {
+  reddit_scraper: {
+    tagline: 'Mines recurring customer pain points and builds monetization guides.',
+    howItWorks: [
+      'Connects to Reddit public JSON API across active SaaS & business subreddits',
+      'Filters complaints, workarounds, and unmet needs by comment volume and sentiment',
+      'Synthesizes 3 concrete software/service solutions with estimated market values',
+      'Dispatches an executive intelligence briefing to your email inbox via SendGrid',
+    ],
+    deliverables: [
+      '3 Validated Problem Vectors & Frequency Ratings',
+      'Proposed Product / Service Solutions',
+      'Step-by-Step Client Outreach Roadmap',
+      'Direct Email Briefing Report',
+    ],
+    monetization: 'Yield: $150 – $1,500 per client (by selling the identified solution or service).',
+    bestFor: 'Founders, solopreneurs, and agency owners seeking validated product ideas.',
+  },
+  prediction_arbitrage: {
+    tagline: 'Scans live Polymarket books for delta-neutral spread profits.',
+    howItWorks: [
+      'Polls real-time orderbooks from the Polymarket Gamma API',
+      'Calculates fee-adjusted probability spreads between YES and NO outcome shares',
+      'Identifies mispriced events where combined price is below guaranteed $1.00 settlement',
+      'Outputs an optimized capital allocation model in paper or live trading mode',
+    ],
+    deliverables: [
+      'Net Projected Spread (% ROI)',
+      'Dollar Profit Breakdown',
+      'Trade Payload (Market ID, Contract Addresses, Entry Pricing)',
+      'Risk & Fee-Adjusted Analysis',
+    ],
+    monetization: 'Yield: +4.5% to +18.2% delta-neutral return on allocated trading capital.',
+    bestFor: 'DeFi traders, yield farmers, and crypto market participants.',
+  },
+  openclaw_deployer: {
+    tagline: 'Provisions dedicated headless scraping VPS nodes with proxy pools.',
+    howItWorks: [
+      'Validates target Linux VPS IP and SSH credentials with encrypted transit',
+      'Deploys containerized Puppeteer / Playwright scraping clusters with anti-bot evasion',
+      'Connects residential IP rotation proxies to prevent rate limits and IP bans',
+      'Executes end-to-end network latency tests and returns a verified health check',
+    ],
+    deliverables: [
+      'Dedicated Deployment ID & Worker Cluster Status',
+      '16+ Active Concurrent Browser Threads',
+      'Proxy Ping Latency (ms) & Bandwidth Health Metrics',
+      'Ready-to-Use Webhook Scraping Gateway',
+    ],
+    monetization: 'Yield: Powers high-volume lead scraping and data harvesting agencies ($500–$3,000/mo).',
+    bestFor: 'Growth hackers, scraping engineers, and lead generation agencies.',
+  },
+  ai_video_maker: {
+    tagline: 'Generates viral 9:16 short-form video scripts, voiceovers, and scene plans.',
+    howItWorks: [
+      'Takes your topic or product concept and formats it for algorithmic retention',
+      'Constructs a 3-second visual hook, high-pacing body, and high-converting CTA',
+      'Calculates optimal narration pace (under 145 WPM) and generates ElevenLabs voice settings',
+      'Outputs second-by-second scene transition directions for CapCut or Premiere',
+    ],
+    deliverables: [
+      '3-Part Viral Script (Hook, Body, CTA)',
+      'Scene-by-Scene Visual & Transition Plan',
+      'Target Audio Duration (30-60s) & Voice Preset',
+      'Platform-Specific Optimization Notes (TikTok, Reels, Shorts)',
+    ],
+    monetization: 'Yield: $300 – $2,400/mo via Creator Rewards, affiliate sales, and UGC ad creation packages.',
+    bestFor: 'Content creators, TikTok Shop affiliates, and e-commerce brand owners.',
+  },
+  micro_saas_builder: {
+    tagline: 'Scaffolds full-stack Next.js web applications with Stripe billing.',
+    howItWorks: [
+      'Takes a software problem prompt and formulates brand identity & punchy tagline',
+      'Synthesizes Next.js 14 App Router landing page, dashboard, and PostgreSQL Prisma schema',
+      'Configures Stripe Checkout subscription billing sessions and webhook listeners',
+      'Renders an interactive Source Code Explorer with 1-click Vercel cloud deployment',
+    ],
+    deliverables: [
+      'Brand Identity & Commercial Economics ($29/mo tier → $2,900/mo Target MRR)',
+      '4 Production TypeScript Source Files (Landing, Dashboard, Stripe, Prisma)',
+      'Interactive Code Explorer with Syntax Highlighting',
+      '1-Click "Deploy to Vercel" & GitHub Repository Link',
+    ],
+    monetization: 'Yield: Launch recurring software products capable of generating $2,000 – $10,000+ MRR.',
+    bestFor: 'Developers, entrepreneurs, and indie hackers launching digital software products.',
+  },
+};
+
 export function AgentsClient({ user }: { user: any }) {
   const router = useRouter();
   const [agents, setAgents] = useState<AgentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<AgentItem | null>(null);
   const [launching, setLaunching] = useState(false);
+  const [expandedManual, setExpandedManual] = useState<string | null>(null);
 
   // Form states
   // Reddit
@@ -100,37 +203,18 @@ export function AgentsClient({ user }: { user: any }) {
     }
 
     setLaunching(true);
+    let params: any = {};
 
-    let parameters: any = {};
     if (selectedAgent.type === 'reddit_scraper') {
-      parameters = {
-        subreddit: subreddit.trim() || 'SaaS',
-        topic: topic.trim() || 'pain points',
-        maxPosts: Number(maxPosts) || 25,
-      };
+      params = { subreddit, topic, maxPosts };
     } else if (selectedAgent.type === 'prediction_arbitrage') {
-      parameters = {
-        budget: Number(budget) || 0,
-        market,
-      };
+      params = { budget: Number(budget), market };
     } else if (selectedAgent.type === 'openclaw_deployer') {
-      parameters = {
-        serverIp: serverIp.trim() || '198.51.100.42',
-        targetStack,
-        concurrency: Number(concurrency) || 16,
-      };
+      params = { serverIp, targetStack, concurrency: Number(concurrency) };
     } else if (selectedAgent.type === 'ai_video_maker') {
-      parameters = {
-        topic: videoTopic.trim(),
-        voiceStyle,
-        aspectRatio,
-      };
+      params = { topic: videoTopic, voiceStyle, aspectRatio };
     } else if (selectedAgent.type === 'micro_saas_builder') {
-      parameters = {
-        ideaPrompt: saasIdea.trim(),
-        niche: saasNiche.trim(),
-        authType,
-      };
+      params = { ideaPrompt: saasIdea, niche: saasNiche, authType };
     }
 
     try {
@@ -139,14 +223,13 @@ export function AgentsClient({ user }: { user: any }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentType: selectedAgent.type,
-          parameters,
+          parameters: params,
         }),
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success(`Swarm Agent '${selectedAgent.name}' initiated!`);
-        setSelectedAgent(null);
+      if (res.ok && data.runId) {
+        toast.success(`Launched ${selectedAgent.name}!`);
         router.push(`/agents/${data.runId}/status`);
       } else {
         toast.error(data.error || 'Failed to start agent');
@@ -161,6 +244,10 @@ export function AgentsClient({ user }: { user: any }) {
   const firstAgent = agents[0];
   const isPro = firstAgent?.quota?.isPro;
 
+  const toggleManual = (type: string) => {
+    setExpandedManual(expandedManual === type ? null : type);
+  };
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-12">
       {/* Header */}
@@ -172,8 +259,8 @@ export function AgentsClient({ user }: { user: any }) {
         <h1 className="text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
           Autonomous <span className="cyan-gold-gradient-text">Agent Swarm</span>
         </h1>
-        <p className="text-sm text-[#8892B0] max-w-2xl mt-2 font-sans">
-          Deploy specialized 1-click autonomous agents that continuously scrape recurring market pain points, calculate prediction spreads, deploy scraping nodes, and scaffold micro-SaaS applications.
+        <p className="text-sm text-[#8892B0] max-w-3xl mt-2 font-sans leading-relaxed">
+          Deploy specialized 1-click autonomous worker agents that continuously scrape recurring market pain points, calculate prediction arbitrage spreads, deploy scraping nodes, create viral video scripts, and scaffold full-stack micro-SaaS codebases.
         </p>
 
         {/* Weekly Quota Alert & Progress Bar */}
@@ -210,6 +297,8 @@ export function AgentsClient({ user }: { user: any }) {
           {agents.map((agent, i) => {
             const hasRemaining = agent.quota.hasQuota;
             const isDegraded = !agent.isAvailable;
+            const manual = AGENT_MANUALS[agent.type];
+            const isExpanded = expandedManual === agent.type;
 
             return (
               <motion.div
@@ -238,12 +327,19 @@ export function AgentsClient({ user }: { user: any }) {
                   <h3 className="text-lg font-bold text-white group-hover:text-[#00F0FF] transition-colors mb-2">
                     {agent.name}
                   </h3>
-                  <p className="text-xs text-[#8892B0] leading-relaxed mb-6 font-sans line-clamp-3">
+                  <p className="text-xs text-[#8892B0] leading-relaxed mb-4 font-sans">
                     {agent.description}
                   </p>
 
+                  {/* Commercial Yield Highlight Box */}
+                  {manual && (
+                    <div className="bg-green-500/10 border border-green-500/20 p-2.5 rounded-lg mb-4 text-[11px] font-mono text-green-400">
+                      <strong>💰 {manual.monetization}</strong>
+                    </div>
+                  )}
+
                   {/* Specs */}
-                  <div className="grid grid-cols-2 gap-2 p-3 bg-black/40 rounded-lg border border-white/[0.05] text-xs font-mono mb-6">
+                  <div className="grid grid-cols-2 gap-2 p-3 bg-black/40 rounded-lg border border-white/[0.05] text-xs font-mono mb-4">
                     <div>
                       <span className="text-[#8892B0] text-[10px] block uppercase">Runtime</span>
                       <span className="text-white flex items-center gap-1 mt-0.5 text-[11px]">
@@ -257,37 +353,89 @@ export function AgentsClient({ user }: { user: any }) {
                       </span>
                     </div>
                   </div>
+
+                  {/* Expandable Manual / How It Works Button */}
+                  {manual && (
+                    <div className="mb-4">
+                      <button
+                        onClick={() => toggleManual(agent.type)}
+                        className="w-full py-1.5 px-3 rounded bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 text-[11px] font-mono text-[#8892B0] hover:text-[#00F0FF] flex items-center justify-between transition-colors"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <HelpCircle className="w-3.5 h-3.5 text-[#00F0FF]" />
+                          {isExpanded ? 'Hide Bot Field Manual' : 'How This Bot Works & Deliverables'}
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden mt-2 p-3 bg-black/60 rounded-lg border border-[#00F0FF]/20 text-xs space-y-2.5 font-sans"
+                          >
+                            <div>
+                              <span className="text-[10px] font-mono text-[#00F0FF] uppercase block font-bold">
+                                How It Works:
+                              </span>
+                              <ul className="list-disc list-inside text-[11px] text-[#CCD6F6] space-y-1 mt-1">
+                                {manual.howItWorks.map((step, idx) => (
+                                  <li key={idx}>{step}</li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] font-mono text-[#FFD700] uppercase block font-bold">
+                                Exact Deliverables:
+                              </span>
+                              <ul className="list-disc list-inside text-[11px] text-[#CCD6F6] space-y-1 mt-1">
+                                {manual.deliverables.map((item, idx) => (
+                                  <li key={idx}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div className="pt-1 text-[10px] font-mono text-[#8892B0]">
+                              <strong>Best For:</strong> {manual.bestFor}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
 
-                {/* Footer Action */}
-                <div className="border-t border-white/[0.06] pt-4 flex items-center justify-between">
-                  <div className="text-[10px] font-mono text-[#8892B0]">
-                    Cost: <span className="text-green-400 font-bold">${(agent.costCents / 100).toFixed(2)}</span>
-                  </div>
-                  <Button
-                    onClick={() => setSelectedAgent(agent)}
-                    disabled={isDegraded || !hasRemaining}
-                    className="cyan-gradient text-black font-extrabold uppercase holographic-btn px-4 h-8 rounded text-xs"
-                  >
-                    <Play className="w-3 h-3 fill-black mr-1" />
-                    {isDegraded ? 'Cooldown' : !hasRemaining ? 'Quota Reached' : 'Launch'}
-                  </Button>
-                </div>
+                {/* Launch Button */}
+                <Button
+                  onClick={() => setSelectedAgent(agent)}
+                  disabled={!hasRemaining || isDegraded}
+                  className={`w-full font-bold uppercase tracking-wider text-xs h-10 ${
+                    hasRemaining && !isDegraded
+                      ? 'cyan-gradient text-black holographic-btn'
+                      : 'bg-white/5 text-[#8892B0] border border-white/10'
+                  }`}
+                >
+                  <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
+                  {!hasRemaining ? 'Weekly Quota Reached' : isDegraded ? 'Node Maintenance' : 'Configure & Launch'}
+                </Button>
               </motion.div>
             );
           })}
         </div>
       )}
 
-      {/* Launch Parameter Modal */}
+      {/* Launch Configuration Modal */}
       <AnimatePresence>
         {selectedAgent && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0B0B14] border border-[#00F0FF]/30 rounded-xl max-w-lg w-full p-6 relative shadow-2xl"
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-[#0B0B14] border border-[#00F0FF]/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setSelectedAgent(null)}
@@ -297,153 +445,179 @@ export function AgentsClient({ user }: { user: any }) {
               </button>
 
               <div className="flex items-center gap-2 mb-2">
-                <Bot className="w-5 h-5 text-[#00F0FF]" />
-                <h3 className="text-lg font-bold text-white uppercase tracking-wider">{selectedAgent.name}</h3>
+                <span className="text-xs font-mono uppercase tracking-wider text-[#00F0FF] bg-[#00F0FF]/10 px-2.5 py-0.5 rounded">
+                  {selectedAgent.category}
+                </span>
+                <span className="text-xs font-mono text-[#8892B0] flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-[#00F0FF]" /> {selectedAgent.estimatedDuration}
+                </span>
               </div>
+
+              <h2 className="text-2xl font-bold text-white uppercase tracking-wider mb-2">
+                Deploy {selectedAgent.name}
+              </h2>
               <p className="text-xs text-[#8892B0] mb-6 font-sans">
-                Configure execution parameters for autonomous worker node.
+                {selectedAgent.description}
               </p>
 
-              {/* Reddit Scraper Inputs */}
-              {selectedAgent.type === 'reddit_scraper' && (
-                <div className="space-y-4 font-sans">
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Target Subreddit</label>
-                    <Input
-                      placeholder="e.g. SaaS, freelance, Shopify, marketing"
-                      value={subreddit}
-                      onChange={(e) => setSubreddit(e.target.value)}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10 font-mono"
-                    />
+              {/* Bot Details & Deliverables Box in Modal */}
+              {AGENT_MANUALS[selectedAgent.type] && (
+                <div className="mb-6 p-3 bg-black/50 border border-white/10 rounded-xl text-xs space-y-2">
+                  <div className="text-green-400 font-mono font-bold text-[11px]">
+                    💰 {AGENT_MANUALS[selectedAgent.type].monetization}
                   </div>
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Pain Point / Opportunity Focus</label>
-                    <Input
-                      placeholder="e.g. customer churn, lead generation, reporting bottlenecks"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10"
-                    />
+                  <div className="text-[11px] text-[#8892B0]">
+                    <strong>Target Output:</strong> {AGENT_MANUALS[selectedAgent.type].deliverables.join(' • ')}
                   </div>
                 </div>
               )}
 
-              {/* Polymarket Arbitrage Inputs */}
-              {selectedAgent.type === 'prediction_arbitrage' && (
-                <div className="space-y-4 font-sans">
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Trading Capital ($ USD)</label>
-                    <Input
-                      type="number"
-                      placeholder="0 for zero-risk paper trade simulation"
-                      value={budget}
-                      onChange={(e) => setBudget(Number(e.target.value))}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10 font-mono"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* OpenClaw Deployer Inputs */}
-              {selectedAgent.type === 'openclaw_deployer' && (
-                <div className="space-y-4 font-sans">
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Target Server / VPS IP</label>
-                    <Input
-                      placeholder="e.g. 198.51.100.42"
-                      value={serverIp}
-                      onChange={(e) => setServerIp(e.target.value)}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10 font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Browser Concurrency (Threads)</label>
-                    <Input
-                      type="number"
-                      value={concurrency}
-                      onChange={(e) => setConcurrency(Number(e.target.value))}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10 font-mono"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* AI Video Maker Inputs */}
-              {selectedAgent.type === 'ai_video_maker' && (
-                <div className="space-y-4 font-sans">
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Video Concept / Topic</label>
-                    <Input
-                      value={videoTopic}
-                      onChange={(e) => setVideoTopic(e.target.value)}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+              {/* Dynamic Parameter Forms */}
+              <div className="space-y-4 mb-6 text-left">
+                {/* Agent 1: Reddit Scraper */}
+                {selectedAgent.type === 'reddit_scraper' && (
+                  <>
                     <div>
-                      <label className="text-xs text-[#8892B0] block mb-1 font-mono">Voice Engine</label>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Target Subreddit</label>
+                      <Input
+                        value={subreddit}
+                        onChange={(e) => setSubreddit(e.target.value)}
+                        placeholder="e.g. SaaS, Entrepreneur, smallbusiness"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Problem Search Focus</label>
+                      <Input
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="e.g. customer churn, lead generation, invoice tools"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Agent 2: Prediction Arbitrage */}
+                {selectedAgent.type === 'prediction_arbitrage' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">
+                        Execution Mode & Trade Budget ($ USD)
+                      </label>
+                      <Input
+                        type="number"
+                        value={budget}
+                        onChange={(e) => setBudget(Number(e.target.value))}
+                        placeholder="0 for Paper Trade Simulation, or enter $ amount"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
+                      <span className="text-[10px] text-[#8892B0] font-mono block mt-1">
+                        * Enter 0 to run risk-free Paper Simulation without real funds.
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {/* Agent 3: OpenClaw Deployer */}
+                {selectedAgent.type === 'openclaw_deployer' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Target Server IP</label>
+                      <Input
+                        value={serverIp}
+                        onChange={(e) => setServerIp(e.target.value)}
+                        placeholder="e.g. 198.51.100.42"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Concurrent Browser Threads</label>
+                      <Input
+                        type="number"
+                        value={concurrency}
+                        onChange={(e) => setConcurrency(Number(e.target.value))}
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Agent 4: AI Video Maker */}
+                {selectedAgent.type === 'ai_video_maker' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Video Topic & Hook Concept</label>
+                      <Input
+                        value={videoTopic}
+                        onChange={(e) => setVideoTopic(e.target.value)}
+                        placeholder="e.g. Top 3 AI Side Hustles Making $1k/Week"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Voice Style Engine</label>
                       <select
                         value={voiceStyle}
                         onChange={(e) => setVoiceStyle(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 text-white text-xs h-10 rounded px-2"
+                        className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-white font-mono text-xs"
                       >
-                        <option value="energetic_creator">Energetic Creator</option>
-                        <option value="cinematic_deep">Cinematic Deep</option>
-                        <option value="professional_narrator">Professional Narrator</option>
+                        <option value="energetic_creator">ElevenLabs // Energetic Creator</option>
+                        <option value="deep_documentary">ElevenLabs // Deep Documentary</option>
+                        <option value="cyber_tech">ElevenLabs // Tech Authority</option>
                       </select>
+                    </div>
+                  </>
+                )}
+
+                {/* Agent 5: Micro-SaaS Builder */}
+                {selectedAgent.type === 'micro_saas_builder' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Software Problem / App Idea</label>
+                      <Input
+                        value={saasIdea}
+                        onChange={(e) => setSaasIdea(e.target.value)}
+                        placeholder="e.g. Automated AI Client Feedback & Review Aggregator for Shopify"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
                     </div>
                     <div>
-                      <label className="text-xs text-[#8892B0] block mb-1 font-mono">Aspect Ratio</label>
-                      <select
-                        value={aspectRatio}
-                        onChange={(e) => setAspectRatio(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 text-white text-xs h-10 rounded px-2"
-                      >
-                        <option value="9:16">9:16 (TikTok/Shorts)</option>
-                        <option value="16:9">16:9 (YouTube Widescreen)</option>
-                      </select>
+                      <label className="text-xs font-mono text-[#8892B0] uppercase block mb-1">Target Niche / Audience</label>
+                      <Input
+                        value={saasNiche}
+                        onChange={(e) => setSaasNiche(e.target.value)}
+                        placeholder="e.g. E-Commerce Brands, Med Spas, Roofers"
+                        className="bg-black/50 border-white/10 text-white font-mono text-xs"
+                      />
                     </div>
-                  </div>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
 
-              {/* Micro-SaaS Builder Inputs */}
-              {selectedAgent.type === 'micro_saas_builder' && (
-                <div className="space-y-4 font-sans">
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Micro-SaaS Problem / Idea</label>
-                    <Input
-                      value={saasIdea}
-                      onChange={(e) => setSaasIdea(e.target.value)}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#8892B0] block mb-1 font-mono">Target Niche Audience</label>
-                    <Input
-                      value={saasNiche}
-                      onChange={(e) => setSaasNiche(e.target.value)}
-                      className="bg-black/50 border-white/10 text-white text-sm h-10"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-8 flex gap-3">
+              {/* Action Buttons */}
+              <div className="flex gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setSelectedAgent(null)}
-                  className="flex-1 border-white/10 text-[#8892B0] hover:text-white"
+                  className="w-1/3 border-white/10 text-xs font-mono uppercase text-[#8892B0]"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleLaunch}
                   disabled={launching}
-                  className="flex-1 cyan-gradient text-black font-extrabold uppercase holographic-btn"
+                  className="w-2/3 cyan-gradient text-black font-extrabold uppercase text-xs h-10 holographic-btn"
                 >
-                  {launching ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 fill-black mr-1" />}
-                  Deploy Agent
+                  {launching ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Initializing Node...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2 fill-current" /> Deploy Agent
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>
