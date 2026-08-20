@@ -22,7 +22,11 @@ async function runPipelineCycle() {
   let tasksCreated = 0;
   const errors: string[] = [];
 
-  // 1. Fetch fresh trends via LLM generator
+  // Fetch all existing trend names from database to prevent any duplicates
+  const existingTrends = await prisma.trend.findMany({ select: { name: true } });
+  const existingNames = new Set(existingTrends.map((t) => t.name.toLowerCase()));
+
+  // 1. Fetch fresh, unique trends via generator
   try {
     const trendPrompt = [
       {
@@ -35,7 +39,7 @@ async function runPipelineCycle() {
       },
     ];
 
-    const llmTrendRes = await callLLM(trendPrompt, true);
+    const llmTrendRes = await callLLM(trendPrompt, true, existingNames);
     let parsedTrends: any[] = [];
     try {
       const parsed = JSON.parse(llmTrendRes ?? '{}');
@@ -48,21 +52,27 @@ async function runPipelineCycle() {
 
     for (const t of parsedTrends) {
       try {
+        const trendName = t.trend_name || 'Emerging Opportunity';
+        
+        // Skip duplicate names
+        if (existingNames.has(trendName.toLowerCase())) continue;
+
         const cat = validCategories.includes(t.category) ? t.category : 'AI_TOOLS';
         const createdTrend = await prisma.trend.create({
           data: {
-            name: t.trend_name || 'Emerging Opportunity',
+            name: trendName,
             sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Web', 'Social'],
-            mentionVelocity: Number(t.mention_velocity) || 12.5,
-            sentimentScore: Number(t.sentiment_score) || 0.85,
-            confidence: Number(t.initial_confidence) || 0.9,
+            mentionVelocity: Number(t.mention_velocity) || 14.5,
+            sentimentScore: Number(t.sentiment_score) || 0.88,
+            confidence: Number(t.initial_confidence) || 0.92,
             category: cat as any,
             status: 'ACTIVE',
           },
         });
         trendsCreated++;
+        existingNames.add(trendName.toLowerCase());
 
-        // 2. Generate a Power Move for this trend
+        // 2. Generate a tailored Power Move for this specific trend
         const taskPrompt = [
           {
             role: 'system',
@@ -81,7 +91,11 @@ async function runPipelineCycle() {
         } catch (_) {}
 
         const now = new Date();
-        const stepsArray = Array.isArray(parsedTask?.steps) ? parsedTask.steps : ['Analyze trend demand', 'Deploy automated solution', 'Acquire first paying client'];
+        const stepsArray = Array.isArray(parsedTask?.steps) ? parsedTask.steps : [
+          'Analyze current market demand and identify target prospects',
+          'Deploy free baseline workflow using open APIs and no-code templates',
+          'Launch automated outreach sequence to acquire first paying client',
+        ];
 
         await prisma.task.create({
           data: {
@@ -92,8 +106,8 @@ async function runPipelineCycle() {
             difficulty: (parsedTask?.difficulty as any) || 'LOW',
             startupCost: Number(parsedTask?.startup_cost) || 0,
             timeToFirstDollar: parsedTask?.time_to_first_dollar || '1-3 days',
-            estimatedEarningsLow: Number(parsedTask?.earnings_low) || 200,
-            estimatedEarningsHigh: Number(parsedTask?.earnings_high) || 950,
+            estimatedEarningsLow: Number(parsedTask?.earnings_low) || 350,
+            estimatedEarningsHigh: Number(parsedTask?.earnings_high) || 1400,
             riskLevel: (parsedTask?.risk_level as any) || 'LOW',
             proTip: parsedTask?.pro_tip || 'Act within 48h while velocity is surging.',
             category: cat as any,
