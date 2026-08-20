@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
 import { DashboardClient } from './_components/dashboard-client';
+import { OnboardingTour } from '@/components/onboarding-tour';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -28,14 +29,13 @@ export default async function DashboardPage() {
     const now = new Date();
     trendingMoves = await prisma.task.findMany({
       where: {
-        isTrending: true,
         OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: now } },
+          { isFeatured: true },
+          { qualityScore: { gte: 80 } },
         ],
       },
       orderBy: { trendScore: 'desc' },
-      take: 5,
+      take: 6,
     });
 
     userTasks = await prisma.userTask.findMany({
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
     console.error('Dashboard data query failed:', e);
   }
 
-  const completedCount = userTasks.filter(ut => ut.status === 'COMPLETED').length;
+  const completedCount = userTasks.filter((ut) => ut.status === 'COMPLETED').length;
 
   const headerStats = user
     ? {
@@ -61,6 +61,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
       <Header userStats={headerStats} />
+      <OnboardingTour isNewUser={completedCount === 0} />
       <DashboardClient
         user={
           user

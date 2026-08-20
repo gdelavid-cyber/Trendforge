@@ -1,17 +1,18 @@
-generator client {
-    provider = "prisma-client-js"
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-datasource db {
-    provider  = "postgresql"
-    url       = env("DATABASE_URL")
-    directUrl = env("DIRECT_URL")
+generator client {
+  provider = "prisma-client-js"
 }
 
 enum UserRole {
   FREE
   PREMIUM
   PRO
+  ELITE
   ENTERPRISE
   ADMIN
 }
@@ -23,12 +24,12 @@ enum RiskTolerance {
 }
 
 enum TrendCategory {
-  AGENT_ECONOMY
-  AI_CONTENT
   AI_TOOLS
-  CRYPTO_FINANCE
   LOCAL_SERVICES
+  CRYPTO_FINANCE
   ECOMMERCE
+  AI_CONTENT
+  AGENT_ECONOMY
   EDUCATION
   HARDWARE
   DATA_SCIENCE
@@ -37,7 +38,8 @@ enum TrendCategory {
 
 enum TrendStatus {
   ACTIVE
-  ARCHIVED
+  COOLING
+  EXPIRED
 }
 
 enum TaskDifficulty {
@@ -101,6 +103,10 @@ model User {
   mentorId              String?
   mentor                User?            @relation("MentorMentee", fields: [mentorId], references: [id])
   mentees               User[]           @relation("MentorMentee")
+  referralCode          String?          @unique
+  successFeeOptIn       Boolean          @default(false)
+  bonusAgentRuns        Int              @default(0)
+  communityPoints       Int              @default(0)
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
@@ -113,6 +119,12 @@ model User {
   mentorshipsAsMentor   Mentorship[]     @relation("MentorRel")
   mentorshipsAsMentee   Mentorship[]     @relation("MenteeRel")
   notifications         Notification[]
+  badges                UserBadge[]
+  posts                 CommunityPost[]
+  comments              CommunityComment[]
+  referralsMade         Referral[]       @relation("ReferralsMade")
+  referredBy            Referral?        @relation("ReferredUser")
+  workflows             AgentWorkflow[]
 
   @@index([role])
   @@index([email])
@@ -168,50 +180,34 @@ model Task {
   generatedAt           DateTime       @default(now())
   expiresAt             DateTime?
   trendScore            Float          @default(0)
-  isTrending            Boolean        @default(false)
 
   userTasks             UserTask[]
   successStories        SuccessStory[]
-  votes                 Vote[]
   favors                Favor[]
-  trendingSnapshots     TrendingSnapshot[]
+  templates             Template[]
+  votes                 Vote[]
 
   @@index([trendId])
-  @@index([weekOf])
   @@index([difficulty])
-  @@index([riskLevel])
   @@index([category])
+  @@index([weekOf])
   @@index([isFeatured])
-  @@index([generatedAt])
-  @@index([expiresAt])
-  @@index([trendScore])
-  @@index([isTrending])
-}
-
-model TrendingSnapshot {
-  id         String   @id @default(cuid())
-  taskId     String
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  trendScore Float
-  capturedAt DateTime @default(now())
-
-  @@index([taskId])
-  @@index([capturedAt])
+  @@index([isVerified])
 }
 
 model UserTask {
-  id              String         @id @default(cuid())
-  userId          String
-  user            User           @relation(fields: [userId], references: [id])
-  taskId          String
-  task            Task           @relation(fields: [taskId], references: [id])
-  status          UserTaskStatus @default(NOT_STARTED)
-  stepsCompleted  Int            @default(0)
-  earningsReported Float?        @default(0)
-  launchedAt      DateTime?
-  completedAt     DateTime?
-  hasOptedInRisk  Boolean        @default(false)
-  createdAt       DateTime       @default(now())
+  id               String         @id @default(cuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id])
+  taskId           String
+  task             Task           @relation(fields: [taskId], references: [id])
+  status           UserTaskStatus @default(NOT_STARTED)
+  stepsCompleted   Int            @default(0)
+  earningsReported Float?         @default(0)
+  launchedAt       DateTime?
+  completedAt      DateTime?
+  hasOptedInRisk   Boolean        @default(false)
+  createdAt        DateTime       @default(now())
 
   @@unique([userId, taskId])
   @@index([userId])
@@ -258,20 +254,22 @@ model Favor {
 }
 
 model Template {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  title       String
-  description String
-  fileUrl     String?
-  filePath    String?
-  isPublicFile Boolean @default(true)
-  price       Float    @default(0)
-  category    String   @default("general")
-  downloads   Int      @default(0)
-  revenue     Float    @default(0)
-  isApproved  Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  taskId       String?
+  task         Task?    @relation(fields: [taskId], references: [id])
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  title        String
+  description  String
+  fileUrl      String?
+  filePath     String?
+  isPublicFile Boolean  @default(true)
+  price        Float    @default(0)
+  category     String   @default("general")
+  downloads    Int      @default(0)
+  revenue      Float    @default(0)
+  isApproved   Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   @@index([userId])
   @@index([isApproved])
@@ -376,18 +374,20 @@ model BrainMetric {
 }
 
 model AgentRun {
-  id           String    @id @default(cuid())
-  userId       String
-  agentType    String    // 'reddit_scraper', 'prediction_arbitrage'
-  status       String    @default("queued") // 'queued', 'running', 'completed', 'failed', 'cancelled'
-  parameters   Json      @default("{}")
-  result       Json?
-  logs         String    @default("") // concatenated log messages
-  createdAt    DateTime  @default(now())
-  completedAt  DateTime?
-  errorMessage String?
-  costCents    Int       @default(0)
-  durationMs   Int?      // execution time in milliseconds
+  id            String    @id @default(cuid())
+  userId        String
+  agentType     String    // 'reddit_scraper', 'prediction_arbitrage', 'openclaw_deployer', 'ai_video_maker', 'micro_saas_builder'
+  status        String    @default("queued") // 'queued', 'running', 'completed', 'failed', 'cancelled'
+  parameters    Json      @default("{}")
+  result        Json?
+  logs          String    @default("") // concatenated log messages
+  userFeedback  String?
+  userRating    Int?      // 1-5
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  errorMessage  String?
+  costCents     Int       @default(0)
+  durationMs    Int?      // execution time in milliseconds
   correlationId String?
 
   @@index([userId])
@@ -400,10 +400,83 @@ model AgentQuota {
   userId     String
   agentType  String
   runsUsed   Int      @default(0)
-  runsLimit  Int      @default(1)
+  runsLimit  Int      @default(3) // 3 runs/week for free tier
   weekStart  DateTime @default(now())
 
   @@id([userId, agentType])
   @@index([userId])
 }
 
+model AgentWorkflow {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  definition  Json     // Array of agent steps with input mappings
+  status      String   @default("draft") // 'draft', 'active', 'completed', 'failed'
+  lastRunAt   DateTime?
+  result      Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String   // 'first_move', 'first_agent_run', 'hundred_club', 'thousand_club', 'top_earner', 'referral_champion'
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model CommunityPost {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  title     String
+  content   String
+  category  String             @default("GENERAL") // 'GENERAL', 'HELP', 'SUCCESS_STORIES', 'AGENT_IDEAS'
+  upvotes   Int                @default(0)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  comments  CommunityComment[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model CommunityComment {
+  id        String        @id @default(cuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime      @default(now())
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Referral {
+  id               String    @id @default(cuid())
+  referrerId       String
+  referrer         User      @relation("ReferralsMade", fields: [referrerId], references: [id])
+  referredEmail    String?
+  referredUserId   String?   @unique
+  referredUser     User?     @relation("ReferredUser", fields: [referredUserId], references: [id])
+  code             String
+  signedUpAt       DateTime  @default(now())
+  upgradedAt       DateTime?
+  commissionEarned Float     @default(0)
+  status           String    @default("registered") // 'registered', 'active', 'upgraded'
+
+  @@index([referrerId])
+  @@index([code])
+}

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
-import { Flame, Menu, X, User, LogOut, LayoutDashboard, Zap, Bot, Cpu } from 'lucide-react';
+import { Flame, Menu, X, User, LogOut, LayoutDashboard, Zap, Bot, Cpu, Layers, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Header(props?: any) {
@@ -15,12 +15,14 @@ export function Header(props?: any) {
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/tasks', label: 'Tasks', icon: Zap },
         { href: '/agents', label: 'Agents', icon: Bot },
+        { href: '/workflows', label: 'Workflows', icon: Layers },
         { href: '/trends', label: 'Trends', icon: Flame },
         { href: '/community', label: 'Community', icon: User },
         { href: '/marketplace', label: 'Marketplace', icon: Flame },
       ]
     : [
         { href: '/agents', label: 'Agents', icon: Bot },
+        { href: '/enterprise', label: 'Enterprise', icon: Cpu },
         { href: '/pricing', label: 'Pricing', icon: Zap },
         { href: '/stories', label: 'Success Stories', icon: Flame },
       ];
@@ -55,6 +57,9 @@ export function Header(props?: any) {
                 <>
                   <Link href="/admin/brain">
                     <Button variant="ghost" size="sm" className="text-purple-400"><Cpu className="w-4 h-4 mr-1" /> Brain</Button>
+                  </Link>
+                  <Link href="/admin/health">
+                    <Button variant="ghost" size="sm" className="text-green-400"><Activity className="w-4 h-4 mr-1" /> Health</Button>
                   </Link>
                   <Link href="/admin">
                     <Button variant="ghost" size="sm" className="text-red-400">Admin</Button>

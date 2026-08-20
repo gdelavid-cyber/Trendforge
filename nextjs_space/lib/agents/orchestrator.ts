@@ -1,8 +1,12 @@
 import { prisma } from '@/lib/db';
 import { canExecute, recordSuccess, recordFailure } from '@/lib/agents/circuit-breaker';
 import { getUserQuota, consumeQuota, AGENT_CONFIGS } from '@/lib/agents/quota';
+import { getCachedAgentResult, setCachedAgentResult } from '@/lib/agents/cache';
 import { executeRedditScraper } from '@/lib/agents/reddit-scraper';
 import { executePredictionArbitrage } from '@/lib/agents/prediction-arbitrage';
+import { executeOpenClawDeployer } from '@/lib/agents/openclaw-deployer';
+import { executeAIVideoMaker } from '@/lib/agents/ai-video-maker';
+import { executeMicroSaaSBuilder } from '@/lib/agents/micro-saas-builder';
 
 export interface StartAgentOptions {
   userId: string;
@@ -52,10 +56,24 @@ export async function launchAgentRun(options: StartAgentOptions): Promise<{ runI
     },
   });
 
-  // 5. Consume 1 quota count
+  // 5. Consume quota
   await consumeQuota(userId, agentType);
 
-  // 6. Execute asynchronously in background
+  // 6. Award "first_agent_run" badge if not already earned
+  try {
+    await prisma.userBadge.upsert({
+      where: {
+        userId_badgeId: { userId, badgeId: 'first_agent_run' },
+      },
+      update: {},
+      create: {
+        userId,
+        badgeId: 'first_agent_run',
+      },
+    });
+  } catch (_) {}
+
+  // 7. Execute asynchronously in background
   executeAgentAsync(run.id, agentType, { ...parameters, userEmail, userName }, correlationId, config.timeoutMs).catch(
     (err) => {
       console.error(`[ORCHESTRATOR] Unhandled error running agent ${run.id}:`, err);
@@ -98,21 +116,48 @@ async function executeAgentAsync(
   try {
     await appendLog(`[ORCHESTRATOR] Starting worker execution (Correlation ID: ${correlationId})...`);
 
-    // Race agent execution with timeout promise
-    const executionPromise = (async () => {
-      if (agentType === 'reddit_scraper') {
-        return await executeRedditScraper(parameters, appendLog);
-      } else if (agentType === 'prediction_arbitrage') {
-        return await executePredictionArbitrage(parameters, appendLog);
+    // Check cache for identical requests
+    const cacheKey = `${agentType}_${JSON.stringify(parameters)}`;
+    const cached = getCachedAgentResult(cacheKey);
+
+    let result: any = null;
+
+    if (cached && process.env.AGENT_FALLBACK_ENABLED !== 'false') {
+      await appendLog(`[ORCHESTRATOR] Cache hit! Loaded verified execution snapshot.`);
+      result = cached;
+    } else {
+      // Race agent execution with timeout promise
+      const executionPromise = (async () => {
+        switch (agentType) {
+          case 'reddit_scraper':
+            return await executeRedditScraper(parameters, appendLog);
+          case 'prediction_arbitrage':
+            return await executePredictionArbitrage(parameters, appendLog);
+          case 'openclaw_deployer':
+            return await executeOpenClawDeployer(parameters, appendLog);
+          case 'ai_video_maker':
+            return await executeAIVideoMaker(parameters, appendLog);
+          case 'micro_saas_builder':
+            return await executeMicroSaaSBuilder(parameters, appendLog);
+          default:
+            throw new Error(`No execution handler for agent type '${agentType}'`);
+        }
+      })();
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Agent execution exceeded maximum timeout of ${timeoutMs / 1000}s`)),
+          timeoutMs
+        )
+      );
+
+      result = (await Promise.race([executionPromise, timeoutPromise])) as any;
+
+      // Cache successful result
+      if (result && result.success) {
+        setCachedAgentResult(cacheKey, result);
       }
-      throw new Error(`No execution handler for agent type '${agentType}'`);
-    })();
-
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`Agent execution exceeded maximum timeout of ${timeoutMs / 1000}s`)), timeoutMs)
-    );
-
-    const result = (await Promise.race([executionPromise, timeoutPromise])) as any;
+    }
 
     const durationMs = Date.now() - startTime;
     await appendLog(`[ORCHESTRATOR] Agent run completed in ${durationMs}ms with status: SUCCESS.`);

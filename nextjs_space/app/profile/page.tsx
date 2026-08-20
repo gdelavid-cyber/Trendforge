@@ -14,22 +14,54 @@ export default async function ProfilePage() {
 
   let user: any = null;
   let completedTasks = 0;
+  let badges: any[] = [];
+  let agentRunsCount = 0;
+
   try {
-    user = await prisma.user.findUnique({ where: { id: userId } });
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        badges: true,
+      },
+    });
     completedTasks = await prisma.userTask.count({ where: { userId, status: 'COMPLETED' } });
-  } catch (e) { console.error(e); }
+    agentRunsCount = await prisma.agentRun.count({ where: { userId, status: 'completed' } });
+    badges = user?.badges || [];
+  } catch (e) {
+    console.error(e);
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#07070C] text-white">
       <Header />
       <ProfileClient
-        user={user ? {
-          name: user.name, email: user.email, role: user.role, skills: user.skills,
-          riskTolerance: user.riskTolerance, totalEarnings: user.totalEarnings,
-          favorCredits: user.favorCredits, isVIP: user.isVIP, isMentor: user.isMentor,
-          createdAt: user.createdAt?.toISOString() ?? null,
-        } : null}
+        user={
+          user
+            ? {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                skills: user.skills,
+                riskTolerance: user.riskTolerance,
+                totalEarnings: user.totalEarnings,
+                favorCredits: user.favorCredits,
+                isVIP: user.isVIP,
+                isMentor: user.isMentor,
+                referralCode: user.referralCode,
+                successFeeOptIn: user.successFeeOptIn,
+                communityPoints: user.communityPoints,
+                bonusAgentRuns: user.bonusAgentRuns,
+                createdAt: user.createdAt?.toISOString() ?? null,
+              }
+            : null
+        }
         completedTasks={completedTasks}
+        agentRunsCount={agentRunsCount}
+        badges={badges.map((b: any) => ({
+          badgeId: b.badgeId,
+          earnedAt: b.earnedAt?.toISOString() ?? null,
+        }))}
       />
     </div>
   );

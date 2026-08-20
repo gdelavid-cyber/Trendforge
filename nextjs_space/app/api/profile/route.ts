@@ -11,14 +11,27 @@ export async function PUT(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const userId = (session.user as any)?.id;
-    const { skills, riskTolerance, currentPassword, newPassword } = await request.json();
+    const { skills, riskTolerance, successFeeOptIn, currentPassword, newPassword } = await request.json();
 
     const existingUser = await prisma.user.findUnique({ where: { id: userId } });
     if (!existingUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const updateData: any = {};
-    if (skills) updateData.skills = skills;
-    if (riskTolerance) updateData.riskTolerance = riskTolerance;
+    if (skills !== undefined) updateData.skills = skills;
+    if (riskTolerance !== undefined) updateData.riskTolerance = riskTolerance;
+    if (typeof successFeeOptIn === 'boolean') {
+      updateData.successFeeOptIn = successFeeOptIn;
+      if (successFeeOptIn) {
+        // Award Top Earner / Success-Fee Badge
+        try {
+          await prisma.userBadge.upsert({
+            where: { userId_badgeId: { userId, badgeId: 'top_earner' } },
+            update: {},
+            create: { userId, badgeId: 'top_earner' },
+          });
+        } catch (_) {}
+      }
+    }
 
     if (newPassword) {
       if (newPassword.length < 6) {
@@ -33,12 +46,16 @@ export async function PUT(request: Request) {
       updateData.passwordHash = await bcrypt.hash(newPassword, 10);
     }
 
-    await prisma.user.update({
+    const updated = await prisma.user.update({
       where: { id: userId },
       data: updateData,
     });
 
-    return NextResponse.json({ success: true, passwordUpdated: !!newPassword });
+    return NextResponse.json({
+      success: true,
+      passwordUpdated: !!newPassword,
+      successFeeOptIn: updated.successFeeOptIn,
+    });
   } catch (error: any) {
     console.error('Profile update error:', error);
     return NextResponse.json({ error: error?.message ?? 'Failed to update profile' }, { status: 500 });
