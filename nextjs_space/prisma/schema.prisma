@@ -342,3 +342,68 @@ model WeeklyDigest {
 
   @@index([weekOf])
 }
+
+model BrainDecision {
+  id            String   @id @default(cuid())
+  timestamp     DateTime @default(now())
+  type          String   // 'insight', 'action', 'anomaly'
+  parameters    Json     // structured parameters
+  outcome       String?  @default("pending") // 'pending', 'approved', 'rejected', 'executed'
+  feedbackScore Float?   // 0-1, measured after execution
+  executedBy    String?  // 'admin' or 'system'
+  title         String?  @default("Optimization Decision")
+  description   String?
+  riskLevel     String?  @default("MEDIUM") // 'LOW', 'MEDIUM', 'HIGH'
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([outcome])
+  @@index([type])
+  @@index([timestamp])
+}
+
+model BrainMetric {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  metricName  String
+  value       Float
+  source      String   // 'database', 'stripe', 'vercel', 'sendgrid'
+  tags        Json     @default("{}") // { environment: 'prod', region: 'us-east' }
+
+  @@index([metricName])
+  @@index([timestamp])
+  @@index([source])
+}
+
+model AgentRun {
+  id           String    @id @default(cuid())
+  userId       String
+  agentType    String    // 'reddit_scraper', 'prediction_arbitrage'
+  status       String    @default("queued") // 'queued', 'running', 'completed', 'failed', 'cancelled'
+  parameters   Json      @default("{}")
+  result       Json?
+  logs         String    @default("") // concatenated log messages
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+  costCents    Int       @default(0)
+  durationMs   Int?      // execution time in milliseconds
+  correlationId String?
+
+  @@index([userId])
+  @@index([agentType])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AgentQuota {
+  userId     String
+  agentType  String
+  runsUsed   Int      @default(0)
+  runsLimit  Int      @default(1)
+  weekStart  DateTime @default(now())
+
+  @@id([userId, agentType])
+  @@index([userId])
+}
+
