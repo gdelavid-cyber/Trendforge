@@ -16,6 +16,13 @@ import {
   Clock,
   Play,
   Cpu,
+  Swords,
+  ShoppingBag,
+  Gift,
+  Palette,
+  Coins,
+  ShieldAlert,
+  Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/db';
@@ -60,6 +67,69 @@ export default async function LandingPage() {
     { name: 'Micro-SaaS Scaffolder', type: 'micro_saas_builder', yieldText: '$2k - $10k+ MRR', desc: 'Builds full-stack Next.js web applications with Stripe billing in 20s.', avatar: '/avatars/wall_street_titan_animated.webp' },
   ];
 
+  const web4Pillars = [
+    {
+      title: 'No-Code Agent Studio',
+      href: '/builder',
+      icon: Layers,
+      badge: '50+ Modular Skills',
+      color: 'from-[#00F0FF]/20 to-blue-500/10 border-[#00F0FF]/40',
+      textColor: 'text-[#00F0FF]',
+      desc: 'Drag-and-drop DAG workflow canvas with real-time sandbox execution, compute cost tracking, and 1-click on-chain minting.',
+      cta: 'Launch Builder Canvas',
+    },
+    {
+      title: 'GTA Visual Avatar Studio',
+      href: '/avatar-studio',
+      icon: Palette,
+      badge: '3D WebGL + Lip-Sync',
+      color: 'from-[#FFD700]/20 to-amber-500/10 border-[#FFD700]/40',
+      textColor: 'text-[#FFD700]',
+      desc: '3D avatar customizer with 4 base archetypes, holographic visors, photon wings, plasma auras, and real-time audio viseme sync.',
+      cta: 'Customize 3D Avatar',
+    },
+    {
+      title: 'Sovereign Web4 Agents',
+      href: '/agents',
+      icon: Bot,
+      badge: 'Conway Crypto Wallets',
+      color: 'from-green-500/20 to-emerald-500/10 border-green-500/40',
+      textColor: 'text-green-400',
+      desc: 'Autonomous economic citizens with EIP-8004 identity hashes, Conway USDC wallets, and Economic Darwinism ("Make money or die").',
+      cta: 'Command Center',
+    },
+    {
+      title: 'Agent Battle Arena',
+      href: '/battles',
+      icon: Swords,
+      badge: 'Tiered USDC Bounties',
+      color: 'from-[#FF007A]/20 to-rose-500/10 border-[#FF007A]/40',
+      textColor: 'text-[#FF007A]',
+      desc: '3-round PVP speedruns across Bronze ($10), Silver ($50), Gold ($250), and Platinum ($1,000) USDC bounty prize pools.',
+      cta: 'Enter Battle Arena',
+    },
+    {
+      title: 'Agent & Cosmetics Market',
+      href: '/marketplace',
+      icon: ShoppingBag,
+      badge: 'P2P Exchange',
+      color: 'from-purple-500/20 to-indigo-500/10 border-purple-500/40',
+      textColor: 'text-purple-400',
+      desc: 'Buy, sell, and hire top performing agents ranked by verified P&L and survival scores, plus 50+ wearable GTA NFT cosmetics.',
+      cta: 'Explore Marketplace',
+    },
+    {
+      title: 'Bootstrap Micro-Grants',
+      href: '/dashboard/grants',
+      icon: Gift,
+      badge: '$25 USDC Treasury Seed',
+      color: 'from-amber-400/20 to-yellow-500/10 border-amber-400/40',
+      textColor: 'text-amber-300',
+      desc: 'Non-dilutive $25.00 USDC seed liquidity allocated from protocol commissions to fund your first autonomous agent deployments.',
+      cta: 'Claim $25 Seed Grant',
+    },
+  ];
+
   const plans = [
     {
       name: 'Starter Terminal',
@@ -92,9 +162,9 @@ export default async function LandingPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative max-w-[1240px] mx-auto px-4 pt-20 pb-20 text-center">
+      <section className="relative max-w-[1280px] mx-auto px-4 pt-16 pb-16 text-center">
         {/* Release live indicator badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-8">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-6">
           <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
           <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
             NEW MONEY-MAKING TASK DROPS DAILY
@@ -102,31 +172,49 @@ export default async function LandingPage() {
         </div>
 
         <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto uppercase">
-          <span className="cyan-gold-gradient-text">Forge Wealth</span> from the<br />
-          Week&apos;s Hottest Trends
+          <span className="cyan-gold-gradient-text">Trendly Web4</span><br />
+          The Wealth Operating System
         </h1>
 
-        <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-10 font-sans leading-relaxed">
-          Verified money-making tasks. From zero-cost side hustles to high-reward ventures — all backed by real success stories.
+        <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-8 font-sans leading-relaxed">
+          Create, customize, and deploy autonomous AI agents that operate as sovereign economic citizens — with crypto wallets, 3D visual avatars, and Darwinian survival instincts.
         </p>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-          <Link href="/auth/signup">
+        {/* Primary Action Buttons */}
+        <div className="flex flex-wrap gap-3 justify-center items-center mb-14">
+          <Link href="/builder">
             <Button
               size="lg"
-              className="h-13 px-8 text-sm font-extrabold uppercase font-mono tracking-wider cyan-gradient text-black holographic-btn shadow-[0_0_30px_rgba(0,240,255,0.4)]"
+              className="h-12 px-6 text-xs sm:text-sm font-extrabold uppercase font-mono tracking-wider cyan-gradient text-black holographic-btn shadow-[0_0_30px_rgba(0,240,255,0.4)]"
             >
-              Deploy Free Agent <ChevronRight className="w-4 h-4 ml-1.5" />
+              <Layers className="w-4 h-4 mr-2 stroke-[3]" /> No-Code Agent Studio
             </Button>
           </Link>
-          <Link href="/workflows">
+          <Link href="/avatar-studio">
             <Button
               variant="outline"
               size="lg"
-              className="h-13 px-8 text-sm font-mono uppercase tracking-wider border-white/10 hover:border-[#00F0FF]/40 text-white bg-white/[0.03] backdrop-blur-md"
+              className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-[#FFD700]/50 text-white bg-white/[0.03] backdrop-blur-md"
             >
-              <Layers className="w-4 h-4 mr-2 text-[#00F0FF]" /> Explore Workflows
+              <Palette className="w-4 h-4 mr-2 text-[#FFD700]" /> 3D Avatar Studio
+            </Button>
+          </Link>
+          <Link href="/agents">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-green-400/50 text-white bg-white/[0.03] backdrop-blur-md"
+            >
+              <Bot className="w-4 h-4 mr-2 text-green-400" /> Web4 Agents
+            </Button>
+          </Link>
+          <Link href="/battles">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-[#FF007A]/50 text-white bg-white/[0.03] backdrop-blur-md"
+            >
+              <Swords className="w-4 h-4 mr-2 text-[#FF007A]" /> Battle Arena
             </Button>
           </Link>
         </div>
@@ -166,6 +254,60 @@ export default async function LandingPage() {
           <div className="glass-card p-6 text-center border-t-2 border-t-green-400/50">
             <div className="stat-number text-3xl font-black text-green-400 mb-1 font-mono">94.8%</div>
             <div className="text-xs text-[#8E9BB4] uppercase font-mono tracking-wider">Verified Success Ratio</div>
+          </div>
+        </div>
+      </section>
+
+      {/* WEB4 OPERATING SYSTEM LIVE ARCHITECTURE SHOWCASE */}
+      <section className="py-20 border-t border-white/[0.08] bg-black/60 backdrop-blur-2xl">
+        <div className="max-w-[1280px] mx-auto px-4">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>THE COMPLETE WEB4 WEALTH OPERATING SYSTEM</span>
+            </div>
+            <h2 className="font-orbitron text-3xl md:text-5xl font-black uppercase text-white tracking-wider">
+              Explore the <span className="cyan-gold-gradient-text">Web4 Ecosystem</span>
+            </h2>
+            <p className="text-sm text-[#8E9BB4] font-sans max-w-xl mx-auto mt-2">
+              Every tool and protocol is live in production. Click any module to launch directly into the application.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {web4Pillars.map((p, idx) => {
+              const Icon = p.icon;
+              return (
+                <div
+                  key={idx}
+                  className={`glass-card p-6 rounded-2xl bg-gradient-to-br ${p.color} border flex flex-col justify-between hover:scale-[1.02] transition-all`}
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center">
+                        <Icon className={`w-6 h-6 ${p.textColor}`} />
+                      </div>
+                      <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-black/40 border border-white/10 text-white">
+                        {p.badge}
+                      </span>
+                    </div>
+
+                    <h3 className="font-orbitron text-lg font-bold text-white uppercase mb-2">
+                      {p.title}
+                    </h3>
+                    <p className="text-xs text-[#8E9BB4] font-sans leading-relaxed mb-6">
+                      {p.desc}
+                    </p>
+                  </div>
+
+                  <Link href={p.href}>
+                    <Button className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono">
+                      {p.cta} <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -261,52 +403,48 @@ export default async function LandingPage() {
         <div className="max-w-[1240px] mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="font-orbitron text-3xl md:text-5xl text-white uppercase tracking-wider mb-3">
-              Access <span className="cyan-gold-gradient-text">Terminals</span>
+              Monetization <span className="cyan-gold-gradient-text">Bandwidth</span>
             </h2>
             <p className="text-[#8E9BB4] max-w-md mx-auto text-sm font-sans">
-              Choose your bandwidth and deployment tier.
+              Choose your autonomous extraction speed. Cancel or upgrade anytime.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {plans.map((plan, idx) => (
+            {plans.map((p) => (
               <div
-                key={idx}
+                key={p.name}
                 className={`glass-card p-8 flex flex-col justify-between relative ${
-                  plan.highlight ? 'border-[#00F0FF]/40 shadow-[0_0_40px_rgba(0,240,255,0.15)]' : ''
+                  p.highlight ? 'border-[#00F0FF]/50 shadow-[0_0_30px_rgba(0,240,255,0.2)]' : ''
                 }`}
               >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#00F0FF] text-black font-mono font-black text-[10px] uppercase tracking-wider">
+                {p.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00F0FF] text-black text-[10px] font-mono font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                     Most Popular
                   </div>
                 )}
                 <div>
-                  <h4 className="text-lg font-bold text-white uppercase tracking-wider font-orbitron mb-1">{plan.name}</h4>
-                  <p className="text-xs text-[#8E9BB4] mb-6 font-sans">{plan.description}</p>
-                  <div className="text-4xl font-black text-white font-mono mb-6 flex items-baseline gap-1">
-                    {plan.price}
-                    <span className="text-xs text-[#8E9BB4] font-normal">/month</span>
+                  <h3 className="font-orbitron text-xl font-bold text-white mb-2">{p.name}</h3>
+                  <div className="text-3xl font-black font-mono text-white mb-4">
+                    {p.price}<span className="text-xs text-[#8E9BB4]">/mo</span>
                   </div>
-                  <div className="space-y-3 mb-8">
-                    {plan.features.map((feat, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs font-sans text-[#CCD6F6]">
-                        <Check className="w-4 h-4 text-[#00F0FF] flex-shrink-0" />
-                        <span>{feat}</span>
+                  <p className="text-xs text-[#8E9BB4] mb-6">{p.description}</p>
+                  <div className="space-y-2 mb-8">
+                    {p.features.map((feat) => (
+                      <div key={feat} className="flex items-center text-xs text-[#CCD6F6]">
+                        <Check className="w-3.5 h-3.5 text-green-400 mr-2 flex-shrink-0" />
+                        {feat}
                       </div>
                     ))}
                   </div>
                 </div>
-
                 <Link href="/auth/signup">
                   <Button
-                    className={`w-full font-bold uppercase text-xs h-10 font-mono tracking-wider ${
-                      plan.highlight
-                        ? 'cyan-gradient text-black holographic-btn'
-                        : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
+                    className={`w-full text-xs font-mono uppercase font-bold h-10 ${
+                      p.highlight ? 'cyan-gradient text-black' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
                     }`}
                   >
-                    {plan.cta}
+                    {p.cta}
                   </Button>
                 </Link>
               </div>
