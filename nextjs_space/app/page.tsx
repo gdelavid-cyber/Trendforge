@@ -94,20 +94,20 @@ export default async function LandingPage() {
       {/* Hero Section */}
       <section className="relative max-w-[1240px] mx-auto px-4 pt-20 pb-20 text-center">
         {/* Release live indicator badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#00F0FF]/15 via-white/[0.04] to-[#FFD700]/15 border border-[#00F0FF]/30 shadow-[0_0_20px_rgba(0,240,255,0.15)] mb-8">
-          <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-ping" />
-          <span className="text-xs font-mono font-bold tracking-wider text-white">
-            AUTONOMOUS SWARM 2.4 // 5 PRODUCTION WORKERS LIVE
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-8">
+          <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
+          <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
+            NEW MONEY-MAKING TASKS DROP DAILY
           </span>
         </div>
 
         <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto uppercase">
-          <span className="cyan-gold-gradient-text">Forge Wealth</span> With <br />
-          Autonomous <span className="text-white">Agent Swarms</span>
+          <span className="cyan-gold-gradient-text">Forge Wealth</span> from the<br />
+          Week&apos;s Hottest Trends
         </h1>
 
         <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-10 font-sans leading-relaxed">
-          The autonomous intelligence operating system that ingests live market pain points, calculates prediction arbitrage, and executes money-making moves in seconds.
+          Verified money-making tasks. From zero-cost side hustles to high-reward ventures — all backed by real success stories.
         </p>
 
         {/* Action Buttons */}
