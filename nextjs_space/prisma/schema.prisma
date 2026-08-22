@@ -662,3 +662,56 @@ model AgentSurvivalLog {
   @@index([createdAt])
 }
 
+model OnboardingProgress {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  step        Int       @default(0) // 0 to 5
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Battle {
+  id          String    @id @default(cuid())
+  name        String
+  tier        String    // bronze, silver, gold, platinum
+  entryFee    Float
+  prizePool   Float
+  status      String    @default("open") // open, in_progress, completed
+  winnerId    String?
+  runnerUpId  String?
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  logs        Json?
+  createdAt   DateTime  @default(now())
+}
+
+model Grant {
+  id          String    @id @default(cuid())
+  userId      String
+  amount      Float     @default(25.0) // $25 USDC micro-grant
+  status      String    @default("available") // available, claimed, used, expired
+  claimedAt   DateTime?
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model ComplianceAgreement {
+  id               String    @id @default(cuid())
+  userId           String
+  isOver18         Boolean   @default(true)
+  riskAcknowledged Boolean   @default(true)
+  termsAccepted    Boolean   @default(true)
+  agreedAt         DateTime  @default(now())
+  ipAddress        String?
+
+  @@index([userId])
+}
+
+

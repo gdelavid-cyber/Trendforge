@@ -19,6 +19,8 @@ import {
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getWealthPoints, getLevelInfo, getStreak, getBadges } from '@/app/gamification';
+import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
+import { Gift } from 'lucide-react';
 
 interface DashboardClientProps {
   user: {
@@ -74,6 +76,11 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
         </div>
 
         <div className="flex gap-2">
+          <Link href="/dashboard/grants">
+            <Button size="sm" variant="outline" className="border-[#FFD700]/30 text-xs font-mono uppercase h-9 px-4 text-[#FFD700] bg-[#FFD700]/10 hover:bg-[#FFD700]/20">
+              <Gift className="w-3.5 h-3.5 mr-1.5" /> $25 Grant
+            </Button>
+          </Link>
           <Link href="/agents">
             <Button size="sm" className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono">
               <Bot className="w-3.5 h-3.5 mr-1.5 fill-current" /> Deploy Swarm Agent
@@ -86,6 +93,9 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           </Link>
         </div>
       </motion.div>
+
+      {/* 5-Step Interactive Onboarding Modal */}
+      <OnboardingTour user={user} />
 
       {/* Quick Launch Swarm Dock */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

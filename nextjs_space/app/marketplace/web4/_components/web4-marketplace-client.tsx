@@ -15,9 +15,15 @@ import {
   TrendingUp,
   Tag,
   Flame,
+  Search,
+  Trophy,
+  Award,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface MarketplaceItem {
   id: string;
@@ -33,26 +39,37 @@ interface MarketplaceItem {
 
 export function Web4MarketplaceClient({ user }: { user: any }) {
   const [listings, setListings] = useState<MarketplaceItem[]>([]);
+  const [featured, setFeatured] = useState<MarketplaceItem[]>([]);
+  const [topPerformers, setTopPerformers] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'AGENT' | 'COSMETIC'>('ALL');
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
-  const fetchListings = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await fetch('/api/web4/marketplace');
-      const data = await res.json();
-      if (data.success && data.listings) {
-        setListings(data.listings);
-      }
+      const [listingsRes, featuredRes, topRes] = await Promise.all([
+        fetch('/api/web4/marketplace'),
+        fetch('/api/marketplace/featured'),
+        fetch('/api/marketplace/top-performers'),
+      ]);
+
+      const lData = await listingsRes.json();
+      const fData = await featuredRes.json();
+      const tData = await topRes.json();
+
+      if (lData.success && lData.listings) setListings(lData.listings);
+      if (fData.success && fData.featured) setFeatured(fData.featured);
+      if (tData.success && tData.topPerformers) setTopPerformers(tData.topPerformers);
     } catch {
-      toast.error('Failed to load marketplace');
+      toast.error('Failed to load marketplace data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchListings();
+    fetchInitialData();
   }, []);
 
   const handleBuy = async (listingId: string) => {
@@ -67,7 +84,7 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success(`${data.message} (10% platform commission deducted: $${data.commissionPaid})`);
-        fetchListings();
+        fetchInitialData();
       } else {
         toast.error(data.error || 'Transaction failed');
       }
@@ -78,18 +95,21 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
     }
   };
 
-  const filteredListings = filterType === 'ALL'
-    ? listings
-    : listings.filter((l) => l.itemType === filterType);
+  const filteredListings = listings.filter((item) => {
+    const matchesType = filterType === 'ALL' || item.itemType === filterType;
+    const name = item.agent?.name || item.cosmetic?.name || '';
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
+  });
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 py-8">
+    <div className="max-w-[1360px] mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-2">
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>P2P ECONOMIC CITIZEN EXCHANGE // 10% PLATFORM PROTOCOL COMMISSION</span>
+            <span>P2P ECONOMIC CITIZEN EXCHANGE // 10% PROTOCOL COMMISSION</span>
           </div>
           <h1 className="font-orbitron text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
             Agent & Cosmetic <span className="cyan-gold-gradient-text">Marketplace</span>
@@ -99,8 +119,62 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
           </p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex gap-2 p-1 bg-black/40 rounded-xl border border-white/10">
+        <div className="flex items-center gap-3">
+          <Link href="/cosmetics">
+            <Button variant="outline" className="border-white/10 text-xs font-mono uppercase text-white bg-white/[0.03]">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#FFD700]" /> 50+ Item Cosmetics Shop
+            </Button>
+          </Link>
+          <Link href="/builder">
+            <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono">
+              <Bot className="w-3.5 h-3.5 mr-1 fill-current" /> Mint Agent to Sell
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Top Performers Ranking Banner */}
+      {topPerformers.length > 0 && (
+        <div className="mb-10 p-6 rounded-2xl bg-gradient-to-r from-[#00F0FF]/10 via-black/60 to-[#FFD700]/10 border border-white/10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 font-mono text-sm font-bold text-white uppercase">
+              <Trophy className="w-4 h-4 text-[#FFD700]" />
+              <span>Verified Top Performers // Verified On-Chain P&L Leaderboard</span>
+            </div>
+            <span className="text-[10px] font-mono text-green-400">Algorithmic Darwinism Rank</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {topPerformers.slice(0, 4).map((agent, idx) => (
+              <div key={agent.id} className="p-3.5 rounded-xl bg-black/60 border border-white/5 space-y-1.5 font-mono">
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="text-[#00F0FF] font-bold">#{idx + 1} {agent.rankInfo.tierBadge.replace(/_/g, ' ')}</span>
+                  <span className="text-green-400 font-bold">+${agent.profit.toFixed(1)} USDC</span>
+                </div>
+                <div className="text-xs font-bold text-white truncate">{agent.name}</div>
+                <div className="flex justify-between text-[10px] text-[#8E9BB4]">
+                  <span>Survival: {agent.survivalScore}/100</span>
+                  <span>★ {agent.rankInfo.trustRating.toFixed(1)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center mb-8">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-[#8E9BB4] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search agents or cosmetics..."
+            className="pl-9 bg-black/50 border-white/10 text-white font-mono text-xs h-9 rounded-xl"
+          />
+        </div>
+
+        <div className="flex gap-2 p-1 bg-black/40 rounded-xl border border-white/10 w-full sm:w-auto">
           {['ALL', 'AGENT', 'COSMETIC'].map((type) => (
             <button
               key={type}
@@ -126,9 +200,9 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
       ) : filteredListings.length === 0 ? (
         <div className="glass-card p-12 text-center max-w-xl mx-auto space-y-4">
           <Tag className="w-12 h-12 text-[#FFD700] mx-auto animate-pulse" />
-          <h3 className="text-lg font-bold text-white font-orbitron uppercase">No Active Listings Found</h3>
+          <h3 className="text-lg font-bold text-white font-orbitron uppercase">No Listings Found</h3>
           <p className="text-xs text-[#8E9BB4] font-sans">
-            Be the first operative to list an autonomous agent or rare cosmetic in the Web4 exchange.
+            Try adjusting your search query or filter.
           </p>
         </div>
       ) : (
