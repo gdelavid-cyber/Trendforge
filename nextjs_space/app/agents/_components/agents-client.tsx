@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 interface AgentItem {
   type: string;
@@ -57,6 +58,17 @@ export const getAgentAvatar = (type: string) => {
     case 'openclaw_deployer': return '/avatars/cyber_humanoid_animated.webp';
     case 'reddit_scraper':
     default: return '/avatars/cyber_humanoid_animated.webp';
+  }
+};
+
+const getAgentArchetype = (type: string) => {
+  switch (type) {
+    case 'prediction_arbitrage': return 'QUANTUM_ANDROID';
+    case 'ai_video_maker': return 'COSMIC_ENTITY';
+    case 'micro_saas_builder': return 'WALL_STREET_TITAN';
+    case 'openclaw_deployer': return 'CYBER_HUMANOID';
+    case 'reddit_scraper':
+    default: return 'CYBER_HUMANOID';
   }
 };
 
@@ -186,6 +198,7 @@ export function AgentsClient({ user }: { user: any }) {
   const [saasIdea, setSaasIdea] = useState('Automated AI Client Feedback & Review Aggregator for Shopify');
   const [saasNiche, setSaasNiche] = useState('E-Commerce Brands');
   const [authType, setAuthType] = useState('NextAuth');
+  const [talkAgent, setTalkAgent] = useState<any | null>(null);
 
   const fetchAgents = async () => {
     try {
@@ -429,19 +442,35 @@ export function AgentsClient({ user }: { user: any }) {
                   )}
                 </div>
 
-                {/* Launch Button */}
-                <Button
-                  onClick={() => setSelectedAgent(agent)}
-                  disabled={!hasRemaining || isDegraded}
-                  className={`w-full font-bold uppercase tracking-wider text-xs h-10 ${
-                    hasRemaining && !isDegraded
-                      ? 'cyan-gradient text-black holographic-btn'
-                      : 'bg-white/5 text-[#8892B0] border border-white/10'
-                  }`}
-                >
-                  <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
-                  {!hasRemaining ? 'Weekly Quota Reached' : isDegraded ? 'Node Maintenance' : 'Configure & Launch'}
-                </Button>
+                {/* Action Buttons */}
+                <div className="grid grid-cols-5 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setTalkAgent({
+                        name: agent.name,
+                        archetype: getAgentArchetype(agent.type),
+                        walletBalance: 100,
+                        survivalScore: 88,
+                      })
+                    }
+                    className="col-span-2 border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] hover:bg-[#00F0FF]/10 bg-black/40 h-10 px-2"
+                  >
+                    <Bot className="w-3.5 h-3.5 mr-1 text-[#00F0FF]" /> Talk & Voice
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedAgent(agent)}
+                    disabled={!hasRemaining || isDegraded}
+                    className={`col-span-3 font-bold uppercase tracking-wider text-xs h-10 ${
+                      hasRemaining && !isDegraded
+                        ? 'cyan-gradient text-black holographic-btn'
+                        : 'bg-white/5 text-[#8892B0] border border-white/10'
+                    }`}
+                  >
+                    <Play className="w-3.5 h-3.5 mr-1 fill-current" />
+                    {!hasRemaining ? 'No Quota' : isDegraded ? 'Maint' : 'Configure'}
+                  </Button>
+                </div>
               </motion.div>
             );
           })}
@@ -646,6 +675,14 @@ export function AgentsClient({ user }: { user: any }) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Global AI Companion Consultation Modal */}
+      <AgentCompanionModal
+        isOpen={!!talkAgent}
+        onClose={() => setTalkAgent(null)}
+        agent={talkAgent}
+        user={user}
+      />
     </div>
   );
 }

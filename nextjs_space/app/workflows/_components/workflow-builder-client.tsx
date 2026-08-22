@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 const getStepAvatar = (agentType: string) => {
   switch (agentType) {
@@ -16,6 +17,17 @@ const getStepAvatar = (agentType: string) => {
     case 'openclaw_deployer': return '/avatars/cyber_humanoid_animated.webp';
     case 'reddit_scraper':
     default: return '/avatars/cyber_humanoid_animated.webp';
+  }
+};
+
+const getStepArchetype = (agentType: string) => {
+  switch (agentType) {
+    case 'prediction_arbitrage': return 'QUANTUM_ANDROID';
+    case 'ai_video_maker': return 'COSMIC_ENTITY';
+    case 'micro_saas_builder': return 'WALL_STREET_TITAN';
+    case 'openclaw_deployer': return 'CYBER_HUMANOID';
+    case 'reddit_scraper':
+    default: return 'CYBER_HUMANOID';
   }
 };
 
@@ -29,6 +41,7 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
     { agentType: 'ai_video_maker', name: '3. Generate Marketing Video' },
   ]);
   const [executing, setExecuting] = useState(false);
+  const [consultAgent, setConsultAgent] = useState<any | null>(null);
 
   const fetchWorkflows = async () => {
     try {
@@ -114,7 +127,18 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
             {steps.map((step, idx) => (
               <div key={idx} className="flex items-center gap-3">
                 <div className="p-3.5 bg-black/60 border border-white/10 hover:border-[#00F0FF]/40 rounded-xl relative group min-w-[220px] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-black/80 shadow-[0_0_10px_rgba(0,240,255,0.15)]">
+                  <div
+                    onClick={() =>
+                      setConsultAgent({
+                        name: step.name,
+                        archetype: getStepArchetype(step.agentType),
+                        walletBalance: 100,
+                        survivalScore: 90,
+                      })
+                    }
+                    className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-black/80 shadow-[0_0_10px_rgba(0,240,255,0.15)] cursor-pointer hover:border-[#00F0FF] hover:scale-105 transition-all"
+                    title="Click to Talk / Consult Worker"
+                  >
                     <img src={getStepAvatar(step.agentType)} alt={step.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
@@ -177,6 +201,14 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
           </Button>
         </div>
       </div>
+
+      {/* Global AI Companion Modal */}
+      <AgentCompanionModal
+        isOpen={!!consultAgent}
+        onClose={() => setConsultAgent(null)}
+        agent={consultAgent}
+        user={user}
+      />
     </div>
   );
 }
