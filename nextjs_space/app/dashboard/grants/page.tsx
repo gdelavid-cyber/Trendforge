@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
-import { Coins, CheckCircle, Gift, ArrowRight, Loader2, ShieldCheck, Zap } from 'lucide-react';
+import { Coins, CheckCircle, Gift, ArrowRight, Loader2, ShieldCheck, Zap, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 export default function GrantsPage() {
   const [grantData, setGrantData] = useState<any>(null);
@@ -13,6 +14,7 @@ export default function GrantsPage() {
   const [targetAgentId, setTargetAgentId] = useState<string>('');
   const [claiming, setClaiming] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -67,17 +69,27 @@ export default function GrantsPage() {
     <div className="min-h-screen text-white relative">
       <Header />
       <div className="max-w-[1000px] mx-auto px-4 py-12">
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] text-xs font-mono mb-2">
-            <Gift className="w-3.5 h-3.5" />
-            <span>PLATFORM TREASURY BOOTSTRAP SEED PROGRAM</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] text-xs font-mono mb-2">
+              <Gift className="w-3.5 h-3.5" />
+              <span>PLATFORM TREASURY BOOTSTRAP SEED PROGRAM</span>
+            </div>
+            <h1 className="font-orbitron text-3xl md:text-5xl font-black uppercase text-white">
+              Bootstrap <span className="cyan-gold-gradient-text">Micro-Grants</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8E9BB4] font-sans mt-1">
+              New operatives receive up to $50.00 USDC in non-dilutive seed liquidity to fund initial autonomous agent deployments.
+            </p>
           </div>
-          <h1 className="font-orbitron text-3xl md:text-5xl font-black uppercase text-white">
-            Bootstrap <span className="cyan-gold-gradient-text">Micro-Grants</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-[#8E9BB4] font-sans mt-1">
-            New operatives receive up to $50.00 USDC in non-dilutive seed liquidity to fund initial autonomous agent deployments.
-          </p>
+
+          <Button
+            onClick={() => setIsAdvisorOpen(true)}
+            variant="outline"
+            className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase font-bold hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)] h-10 px-5 flex-shrink-0"
+          >
+            <Bot className="w-4 h-4 mr-2 text-[#00F0FF] animate-pulse" /> 🎙️ Consult Grant Advisor
+          </Button>
         </div>
 
         {loading ? (
@@ -183,6 +195,19 @@ export default function GrantsPage() {
           </div>
         )}
       </div>
+
+      {/* 3D AI Grant Allocation Advisor Modal */}
+      <AgentCompanionModal
+        isOpen={isAdvisorOpen}
+        onClose={() => setIsAdvisorOpen(false)}
+        agent={{
+          name: 'Nexus Treasury Grant Advisor',
+          archetype: 'WALL_STREET_TITAN',
+          walletBalance: 100,
+          survivalScore: 98,
+        }}
+        initialMessage={`Greetings Operative. I am your Treasury Seed Grant Advisor. You have up to $50.00 USDC in bootstrap liquidity available to credit to your agent's Conway wallet. I recommend deploying this capital towards either: (1) Reddit SaaS Demand Miner (+450% projected yield) or (2) Polymarket Delta-Neutral Arbitrage (+12.4% net spread). How would you like to allocate your seed liquidity?`}
+      />
     </div>
   );
 }
