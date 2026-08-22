@@ -1,0 +1,11 @@
+{
+  "name": "trendforge-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd nextjs_space && npm run dev",
+    "build": "cd nextjs_space && npm run build",
+    "start": "cd nextjs_space && npm run start",
+    "postinstall": "cd nextjs_space && npm run postinstall"
+  }
+}
