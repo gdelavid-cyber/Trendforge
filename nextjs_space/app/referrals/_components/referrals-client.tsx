@@ -6,11 +6,13 @@ import { Share2, Users, DollarSign, Copy, Check, Sparkles, Bot, ArrowRight, Load
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 export function ReferralsClient() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [isGrowthCompanionOpen, setIsGrowthCompanionOpen] = useState(false);
 
   const fetchReferralStats = async () => {
     try {
@@ -59,7 +61,7 @@ export function ReferralsClient() {
           Your Unique Operative Invite Link
         </h3>
 
-        <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+        <div className="flex flex-col sm:flex-row gap-3 max-w-3xl">
           <Input
             readOnly
             value={data?.referralUrl ?? 'Loading invite link...'}
@@ -71,6 +73,13 @@ export function ReferralsClient() {
           >
             {copied ? <Check className="w-4 h-4 mr-1.5" /> : <Copy className="w-4 h-4 mr-1.5" />}
             {copied ? 'Copied' : 'Copy Link'}
+          </Button>
+          <Button
+            onClick={() => setIsGrowthCompanionOpen(true)}
+            variant="outline"
+            className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase font-bold hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)] h-11 px-5 flex-shrink-0"
+          >
+            <Bot className="w-4 h-4 mr-1.5 text-[#00F0FF] animate-pulse" /> 🎙️ Draft Viral Pitch
           </Button>
         </div>
       </div>
@@ -135,6 +144,19 @@ export function ReferralsClient() {
           </div>
         )}
       </div>
+
+      {/* 3D AI Growth Partner Modal */}
+      <AgentCompanionModal
+        isOpen={isGrowthCompanionOpen}
+        onClose={() => setIsGrowthCompanionOpen(false)}
+        agent={{
+          name: 'Nexus Viral Growth Lead',
+          archetype: 'COSMIC_ENTITY',
+          walletBalance: 100,
+          survivalScore: 96,
+        }}
+        initialMessage={`Greetings Operative. I am your 3D Viral Growth Partner. I am holding your unique invite link: ${data?.referralUrl || 'https://trendly.io/ref/...'}. Every invite earns you +1 stackable Swarm Agent run and 10% lifetime recurring Stripe commission. Would you like me to generate a viral X (Twitter) thread or a LinkedIn growth case study now?`}
+      />
     </div>
   );
 }
