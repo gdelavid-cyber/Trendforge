@@ -1,32 +1,22 @@
 export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
-import { MarketplaceClient } from './_components/marketplace-client';
+import { Web4MarketplaceClient } from './web4/_components/web4-marketplace-client';
+
+export const metadata = {
+  title: 'Agent & Cosmetic Marketplace // Trendly Web4',
+  description: 'Buy, sell, and hire verified high-yield autonomous Web4 agents and rare GTA cosmetic accessories.',
+};
 
 export default async function MarketplacePage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect('/auth/signin');
-
-  let templates: any[] = [];
-  try {
-    templates = await prisma.template.findMany({
-      where: { isApproved: true },
-      include: { user: { select: { name: true } } },
-      orderBy: { downloads: 'desc' },
-    });
-  } catch (e) { console.error(e); }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-white relative">
       <Header />
-      <MarketplaceClient templates={templates.map((t: any) => ({
-        id: t.id, title: t.title, description: t.description, price: t.price,
-        category: t.category, downloads: t.downloads, userName: t.user?.name ?? 'Anonymous',
-      }))} />
+      <Web4MarketplaceClient user={session?.user || null} />
     </div>
   );
 }
