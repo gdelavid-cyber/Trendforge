@@ -50,7 +50,8 @@ export function Header(props?: any) {
       ];
 
   return (
-    <div className="sticky top-3 z-50 w-full px-3 md:px-6 pointer-events-none">
+    <>
+      <div className="sticky top-3 z-50 w-full px-3 md:px-6 pointer-events-none">
       <header className="max-w-[1260px] mx-auto rounded-2xl backdrop-blur-2xl bg-[#06060E]/80 border border-white/[0.1] shadow-[0_10px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] transition-all pointer-events-auto">
         <div className="flex items-center justify-between px-4 md:px-6 h-16">
           {/* Logo & Status Beacon */}
@@ -239,13 +240,14 @@ export function Header(props?: any) {
           )}
         </AnimatePresence>
       </header>
-
-      {/* Global AI Companion Header Modal */}
-      <AgentCompanionModal
-        isOpen={isCompanionOpen}
-        onClose={() => setIsCompanionOpen(false)}
-        user={session?.user}
-      />
     </div>
+
+    {/* Global AI Companion Header Modal */}
+    <AgentCompanionModal
+      isOpen={isCompanionOpen}
+      onClose={() => setIsCompanionOpen(false)}
+      user={session?.user}
+    />
+  </>
   );
 }
