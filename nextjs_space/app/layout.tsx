@@ -5,7 +5,7 @@ import { Inter, Orbitron, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
-import { Starfield } from '@/components/starfield';
+import { CyberBackground } from '@/components/cyber-background';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron' });
@@ -13,15 +13,15 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
-  title: 'Trendly — Forge Wealth from Trending Opportunities',
-  description: 'Verified money-making tasks daily. Turn emerging trends into executable wealth moves.',
+  title: 'Trendly — Autonomous Wealth Operating System & AI Swarm',
+  description: 'Deploy specialized 1-click autonomous agents and execute verified wealth moves from real-time market trends.',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: 'Trendly — Forge Wealth from Trending Opportunities',
-    description: 'Turn emerging trends into executable wealth moves. Verified tasks drop daily.',
+    title: 'Trendly — Autonomous Wealth Operating System & AI Swarm',
+    description: 'Deploy specialized 1-click autonomous agents and execute verified wealth moves from real-time market trends.',
     images: ['/og-image.png'],
   },
 };
@@ -32,9 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script src="https://apps.abacus.ai/chatllm/appllm-lib.js" />
       </head>
-      <body className={`${inter.variable} ${orbitron.variable} ${spaceGrotesk.variable} font-sans min-h-screen relative`}>
+      <body className={`${inter.variable} ${orbitron.variable} ${spaceGrotesk.variable} font-sans min-h-screen relative bg-[#040408]`}>
         <Providers>
-          <Starfield />
+          <CyberBackground />
           <div className="relative z-10">
             {children}
           </div>
