@@ -22,6 +22,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { AvatarRenderer } from '@/components/avatar/AvatarRenderer';
+import { AvatarControls } from '@/components/avatar/AvatarControls';
+import { EmotionController } from '@/components/avatar/EmotionController';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { AvatarEmotion, AvatarPose } from '@/hooks/useAvatar';
 
 interface CosmeticItem {
   id: string;
@@ -37,7 +42,14 @@ export function AvatarStudioClient({ user }: { user: any }) {
   const [cosmetics, setCosmetics] = useState<CosmeticItem[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'BASE' | 'SKIN' | 'ACCESSORY' | 'AURA' | 'ANIMATION'>('BASE');
+  const [activeTab, setActiveTab] = useState<'BASE' | 'SKIN' | 'ACCESSORY' | 'AURA' | 'ANIMATION' | 'VOICE'>('BASE');
+  const [renderMode, setRenderMode] = useState<'3D_INTERACTIVE' | '2D_ANIMATED'>('3D_INTERACTIVE');
+  const [wireframe, setWireframe] = useState<boolean>(false);
+  const [emotion, setEmotion] = useState<AvatarEmotion>('confident');
+  const [pose, setPose] = useState<AvatarPose>('idle');
+  const [isCompanionModalOpen, setIsCompanionModalOpen] = useState<boolean>(false);
+  const [personalityText, setPersonalityText] = useState<string>('');
+  const [voiceId, setVoiceId] = useState<string>('21m00Tcm4TlvDq8ikWAM');
 
   // Customization state
   const [baseModel, setBaseModel] = useState<'CYBER_HUMANOID' | 'QUANTUM_ANDROID' | 'WALL_STREET_TITAN' | 'COSMIC_ENTITY'>('CYBER_HUMANOID');
@@ -170,6 +182,14 @@ export function AvatarStudioClient({ user }: { user: any }) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setIsCompanionModalOpen(true)}
+            size="sm"
+            variant="outline"
+            className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase font-bold hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+          >
+            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF] animate-pulse" /> Talk to Agent (3D Voice)
+          </Button>
           <Link href="/marketplace/web4">
             <Button variant="outline" size="sm" className="border-white/10 text-xs font-mono uppercase text-white bg-white/[0.03]">
               <ShoppingBag className="w-3.5 h-3.5 mr-1.5 text-[#FFD700]" /> Cosmetics Shop
@@ -186,67 +206,134 @@ export function AvatarStudioClient({ user }: { user: any }) {
         </div>
       </div>
 
+      {/* Render Mode Switcher Banner */}
+      <div className="flex items-center justify-between p-3 bg-black/40 border border-white/10 rounded-xl mb-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-[#8E9BB4] uppercase">Viewport Engine:</span>
+          <div className="inline-flex rounded-lg p-0.5 bg-black/60 border border-white/10">
+            <button
+              onClick={() => setRenderMode('3D_INTERACTIVE')}
+              className={`px-3 py-1 text-xs font-mono font-bold rounded-md transition-all ${
+                renderMode === '3D_INTERACTIVE' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/40' : 'text-[#8E9BB4] hover:text-white'
+              }`}
+            >
+              🎮 3D WebGL (Three.js)
+            </button>
+            <button
+              onClick={() => setRenderMode('2D_ANIMATED')}
+              className={`px-3 py-1 text-xs font-mono font-bold rounded-md transition-all ${
+                renderMode === '2D_ANIMATED' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/40' : 'text-[#8E9BB4] hover:text-white'
+              }`}
+            >
+              ✨ 2D Holo Loop
+            </button>
+          </div>
+        </div>
+
+        <div className="text-[11px] font-mono text-[#8E9BB4] hidden sm:block">
+          Active: <span className="text-white font-bold">{baseModel}</span> ({selectedSkin})
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Col: Real-Time 3D Holographic Avatar Stage */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="glass-card p-8 flex flex-col items-center justify-center relative min-h-[460px] overflow-hidden border border-white/10">
-            {/* Holographic Stage Backdrop Grid */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,240,255,0.08)_0%,transparent_70%)] pointer-events-none" />
+          <div className="glass-card p-6 flex flex-col items-center justify-center relative min-h-[480px] overflow-hidden border border-white/10">
+            {renderMode === '3D_INTERACTIVE' ? (
+              <div className="w-full h-[360px] relative">
+                <AvatarRenderer
+                  config={{
+                    baseModel,
+                    skin: selectedSkin,
+                    accessory: selectedAccessory,
+                    aura: selectedAura,
+                    animation: selectedAnimation,
+                    voiceId,
+                    personality: personalityText,
+                  }}
+                  emotion={emotion}
+                  pose={pose}
+                  wireframe={wireframe}
+                  interactive={true}
+                  cameraDistance={3.2}
+                />
+              </div>
+            ) : (
+              <>
+                {/* Holographic Stage Backdrop Grid */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,240,255,0.08)_0%,transparent_70%)] pointer-events-none" />
 
-            {/* Rotating 3D Platform Ring */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
-              className="absolute bottom-12 w-64 h-24 rounded-full border border-[#00F0FF]/30 border-dashed pointer-events-none"
-              style={{ transform: 'perspective(400px) rotateX(65deg)' }}
-            />
+                {/* Rotating 3D Platform Ring */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
+                  className="absolute bottom-12 w-64 h-24 rounded-full border border-[#00F0FF]/30 border-dashed pointer-events-none"
+                  style={{ transform: 'perspective(400px) rotateX(65deg)' }}
+                />
 
-            {/* Main Visual Character Canvas */}
-            <motion.div
-              animate={{
-                y: selectedAnimation.includes('Hover') ? [-8, 8, -8] : [0, 0, 0],
-                rotate: rotationAngle,
-              }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className={`relative z-10 w-52 h-52 rounded-3xl border-2 flex items-center justify-center overflow-hidden transition-all duration-500 backdrop-blur-xl ${getAuraColor()}`}
-            >
-              {/* Base Model Animated Character */}
-              <img
-                src={getAvatarImageSrc(baseModel)}
-                alt={baseModel}
-                className="w-full h-full object-cover rounded-3xl pointer-events-none select-none"
-              />
+                {/* Main Visual Character Canvas */}
+                <motion.div
+                  animate={{
+                    y: selectedAnimation.includes('Hover') ? [-8, 8, -8] : [0, 0, 0],
+                    rotate: rotationAngle,
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  className={`relative z-10 w-52 h-52 rounded-3xl border-2 flex items-center justify-center overflow-hidden transition-all duration-500 backdrop-blur-xl ${getAuraColor()}`}
+                >
+                  {/* Base Model Animated Character */}
+                  <img
+                    src={getAvatarImageSrc(baseModel)}
+                    alt={baseModel}
+                    className="w-full h-full object-cover rounded-3xl pointer-events-none select-none"
+                  />
 
-              {/* Accessory Overlay */}
-              {getAccessoryGraphic() && (
-                <span className="absolute -top-1 -right-1 text-2xl animate-bounce bg-black/70 border border-white/20 p-2 rounded-2xl shadow-lg z-20">
-                  {getAccessoryGraphic()}
-                </span>
-              )}
-            </motion.div>
+                  {/* Accessory Overlay */}
+                  {getAccessoryGraphic() && (
+                    <span className="absolute -top-1 -right-1 text-2xl animate-bounce bg-black/70 border border-white/20 p-2 rounded-2xl shadow-lg z-20">
+                      {getAccessoryGraphic()}
+                    </span>
+                  )}
+                </motion.div>
 
-            {/* Stage Rotation & Zoom Controls */}
-            <div className="mt-8 z-10 flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setRotationAngle((prev) => prev - 45)}
-                className="border-white/10 text-xs font-mono text-[#8E9BB4] hover:text-white bg-black/40"
-              >
-                <RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate -45°
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setRotationAngle((prev) => prev + 45)}
-                className="border-white/10 text-xs font-mono text-[#8E9BB4] hover:text-white bg-black/40"
-              >
-                <RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate +45°
-              </Button>
-            </div>
+                {/* Stage Rotation & Zoom Controls */}
+                <div className="mt-8 z-10 flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRotationAngle((prev) => prev - 45)}
+                    className="border-white/10 text-xs font-mono text-[#8E9BB4] hover:text-white bg-black/40"
+                  >
+                    <RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate -45°
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRotationAngle((prev) => prev + 45)}
+                    className="border-white/10 text-xs font-mono text-[#8E9BB4] hover:text-white bg-black/40"
+                  >
+                    <RotateCw className="w-3.5 h-3.5 mr-1" /> Rotate +45°
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Controls Bar */}
+            {renderMode === '3D_INTERACTIVE' && (
+              <div className="w-full mt-3 z-10 space-y-2">
+                <EmotionController emotion={emotion} />
+                <AvatarControls
+                  emotion={emotion}
+                  setEmotion={setEmotion}
+                  pose={pose}
+                  setPose={setPose}
+                  wireframe={wireframe}
+                  setWireframe={setWireframe}
+                />
+              </div>
+            )}
 
             {/* Equipped Spec Badges */}
-            <div className="mt-6 z-10 flex flex-wrap justify-center gap-2 text-[10px] font-mono">
+            <div className="mt-4 z-10 flex flex-wrap justify-center gap-2 text-[10px] font-mono">
               <span className="px-2.5 py-0.5 rounded bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/20">
                 Skin: {selectedSkin}
               </span>
@@ -297,6 +384,7 @@ export function AvatarStudioClient({ user }: { user: any }) {
               { key: 'ACCESSORY', label: 'Accessories', icon: Crown },
               { key: 'AURA', label: 'Particle Auras', icon: Flame },
               { key: 'ANIMATION', label: 'Animations', icon: Zap },
+              { key: 'VOICE', label: 'Voice & Brain', icon: Bot },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -441,9 +529,77 @@ export function AvatarStudioClient({ user }: { user: any }) {
                 </div>
               ))}
             </div>
+          {/* Tab 6: Voice & Brain Personality */}
+          {activeTab === 'VOICE' && (
+            <div className="space-y-4">
+              <div className="glass-card p-5 space-y-4">
+                <h4 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-[#00F0FF]" /> Neural Voice Models (TTS & Lip-Sync)
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel / Stealth Cyber', tone: 'Tactical, crisp, calm cyberpunk', archetype: 'CYBER_HUMANOID' },
+                    { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi / Quantum Quant', tone: 'Synthetic, calculated, high-speed DeFi', archetype: 'QUANTUM_ANDROID' },
+                    { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni / Sovereign Titan', tone: 'Executive, authoritative, Silicon Valley CEO', archetype: 'WALL_STREET_TITAN' },
+                    { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella / Cosmic Nebula', tone: 'Ethereal, magnetic, viral storytelling', archetype: 'COSMIC_ENTITY' },
+                  ].map((v) => (
+                    <div
+                      key={v.id}
+                      onClick={() => setVoiceId(v.id)}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                        voiceId === v.id ? 'border-[#00F0FF] bg-[#00F0FF]/10 shadow-[0_0_15px_rgba(0,240,255,0.2)]' : 'border-white/10 bg-black/40 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold text-white font-mono">{v.name}</span>
+                        {voiceId === v.id && <span className="text-[10px] text-[#00F0FF] font-mono font-bold">EQUIPPED</span>}
+                      </div>
+                      <p className="text-[11px] text-[#8E9BB4] font-sans">{v.tone}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-card p-5 space-y-3">
+                <label className="text-xs font-mono text-[#8E9BB4] uppercase block font-bold">
+                  Companion Custom Directives & Prompt:
+                </label>
+                <textarea
+                  value={personalityText}
+                  onChange={(e) => setPersonalityText(e.target.value)}
+                  placeholder="Define custom personality guidelines, catchphrases, or trading focus for this 3D agent..."
+                  className="w-full h-24 bg-black/60 border border-white/10 rounded-xl p-3 text-xs font-mono text-white focus:border-[#00F0FF] outline-none"
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Global AI Companion 3D Chat Modal */}
+      <AgentCompanionModal
+        isOpen={isCompanionModalOpen}
+        onClose={() => setIsCompanionModalOpen(false)}
+        agent={{
+          id: selectedAgentId,
+          name: agents.find((a) => a.id === selectedAgentId)?.name || 'Nexus Cyber Operative',
+          archetype: baseModel,
+          walletBalance: agents.find((a) => a.id === selectedAgentId)?.walletBalance ?? 100,
+          survivalScore: agents.find((a) => a.id === selectedAgentId)?.survivalScore ?? 88,
+          avatarConfig: {
+            baseModel,
+            skin: selectedSkin,
+            accessory: selectedAccessory,
+            aura: selectedAura,
+            animation: selectedAnimation,
+            voiceId,
+            personality: personalityText,
+          },
+          personality: personalityText,
+          voiceId,
+        }}
+        user={user}
+      />
     </div>
   );
 }

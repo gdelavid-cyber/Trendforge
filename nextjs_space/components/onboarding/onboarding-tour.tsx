@@ -38,8 +38,28 @@ export function OnboardingTour({ user }: { user: any }) {
       .catch(() => {});
   }, []);
 
+  const speakStepGuide = (stepIdx: number) => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const guides: Record<number, string> = {
+        1: 'Welcome Operative. You are entering the autonomous agentic economy with sovereign crypto wallets and Darwinian survival.',
+        2: 'Step two: Select your worker monetization template to initialize your autonomous agent.',
+        3: 'Step three: Customize your visual three D avatar and parameters in the studio.',
+        4: 'Step four: Test your worker in the sandbox simulation before live liquidity deployment.',
+        5: 'Step five: Claim your twenty-five dollar micro-grant and deploy into the live Web4 agent layer!',
+      };
+      const text = guides[stepIdx];
+      if (text) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.05;
+        window.speechSynthesis.speak(u);
+      }
+    }
+  };
+
   const handleNextStep = async (nextStepIndex: number) => {
     setStep(nextStepIndex);
+    speakStepGuide(nextStepIndex);
     await fetch('/api/onboarding/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

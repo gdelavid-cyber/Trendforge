@@ -28,15 +28,25 @@ Live Production URL: **[https://trendforge-chi.vercel.app](https://trendforge-ch
 * Daily Operative Quests with Community Points rewards.
 * Verified Earner Leaderboard and peer favors exchange.
 
-### 5. AI Brain Telemetry & HITL Governance (`/admin/brain` & `/admin/health`)
-* Autonomous platform monitoring, $200.00 monthly LLM budget cap alarms, and 1-click Human-In-The-Loop (HITL) approval workflows.
-* Real-time gateway latency tracking and circuit breaker state machines.
+### 6. Visual AI Companion Layer (Three.js 3D Avatars & Real-Time Voice)
+* **Interactive 3D Avatar Engine** (`/avatar-studio`): Real-time Three.js WebGL renderer supporting 4 base archetypes (Cyber Humanoid, Quantum Android, Wall Street Titan, Cosmic Entity), dynamic particle auras, wireframe inspection, and custom cosmetics.
+* **Synchronized 60FPS Lip-Sync**: Viseme analysis mapped from real-time Web Audio API frequency spectrums and phoneme sequences (>95% synchronization).
+* **Dual Voice System (STT + TTS)**: Speech-to-Text via Web Speech API and Text-to-Speech via ElevenLabs / Google Cloud TTS / browser synthesis fallback.
+* **Conversational Agent Brain (`/api/agent/chat`)**: Multi-turn conversational reasoning with Gemini 2.0 / ADK, personality prompts, emotional facial morph targets (`happy`, `surprised`, `thinking`, `confident`, `battle`), and autonomous tool execution (Reddit scraping, DeFi arbitrage, SaaS scaffolding).
+* **Cross-Platform Integration**: Spoken companion triggers on Dashboard, Avatar Studio, Web4 Agents, Marketplace live demos, and Battle Arena trash-talk.
 
 ---
 
 ## ⚙️ Environment Variables
 
 ```env
+# AI Companion & Brain Configuration
+GEMINI_API_KEY="your-gemini-api-key"
+TTS_API_KEY="your-elevenlabs-api-key"
+TTS_API_URL="https://api.elevenlabs.io/v1/text-to-speech"
+STT_API_KEY="your-stt-api-key"
+NEXT_PUBLIC_TTS_ENABLED=true
+NEXT_PUBLIC_STT_ENABLED=true
 # Database
 DATABASE_URL="postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-2.pooler.supabase.com:5432/postgres"

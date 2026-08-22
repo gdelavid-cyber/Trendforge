@@ -539,6 +539,11 @@ model Web4Agent {
   memory            Json?           // Experience reflection logs
   constitution      Json?           // Operational guardrails
   avatarConfig      Json?           // GTA skin, accessories, animations, particle auras
+  personality       String?         // Core prompt / conversational personality instructions
+  voiceId           String?         // TTS voice ID (ElevenLabs / Google voice)
+  emotionsEnabled   Boolean         @default(true)
+  ttsEnabled        Boolean         @default(true)
+  sttEnabled        Boolean         @default(true)
   eip8004Hash       String?         // Verifiable on-chain identity hash
   mcpEndpoints      Json?           // Registered MCP tool servers
   generation        Int             @default(1)

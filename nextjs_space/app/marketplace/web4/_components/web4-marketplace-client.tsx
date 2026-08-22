@@ -38,13 +38,15 @@ interface MarketplaceItem {
 }
 
 export function Web4MarketplaceClient({ user }: { user: any }) {
-  const [listings, setListings] = useState<MarketplaceItem[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<'ALL' | 'AGENT' | 'COSMETIC'>('ALL');
+  const [search, setSearch] = useState('');
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [demoAgent, setDemoAgent] = useState<any | null>(null);
   const [featured, setFeatured] = useState<MarketplaceItem[]>([]);
   const [topPerformers, setTopPerformers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'ALL' | 'AGENT' | 'COSMETIC'>('ALL');
-  const [loading, setLoading] = useState(true);
-  const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
   const fetchInitialData = async () => {
     try {
@@ -266,26 +268,46 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
                   )}
                 </div>
 
-                <Button
-                  onClick={() => handleBuy(item.id)}
-                  disabled={isBuying}
-                  className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
-                >
-                  {isBuying ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Settling on Conway...
-                    </>
-                  ) : (
-                    <>
-                      <Coins className="w-3.5 h-3.5 mr-1.5 fill-current" /> Buy Now (${item.price} USDC)
-                    </>
+                <div className="space-y-2">
+                  {isAgent && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setDemoAgent(item.agent)}
+                      className="w-full border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] hover:bg-[#00F0FF]/10 bg-black/40 h-8"
+                    >
+                      <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF]" /> 🎙️ Demo & Talk (Voice)
+                    </Button>
                   )}
-                </Button>
+
+                  <Button
+                    onClick={() => handleBuy(item.id)}
+                    disabled={isBuying}
+                    className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
+                  >
+                    {isBuying ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Settling on Conway...
+                      </>
+                    ) : (
+                      <>
+                        <Coins className="w-3.5 h-3.5 mr-1.5 fill-current" /> Buy Now (${item.price} USDC)
+                      </>
+                    )}
+                  </Button>
+                </div>
               </motion.div>
             );
           })}
         </div>
       )}
+
+      {/* Global AI Companion Demo Modal */}
+      <AgentCompanionModal
+        isOpen={!!demoAgent}
+        onClose={() => setDemoAgent(null)}
+        agent={demoAgent}
+        user={user}
+      />
     </div>
   );
 }

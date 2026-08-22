@@ -26,12 +26,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 export function Web4AgentsClient({ user }: { user: any }) {
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [executingAgentId, setExecutingAgentId] = useState<string | null>(null);
   const [refuelingAgentId, setRefuelingAgentId] = useState<string | null>(null);
+  const [talkAgent, setTalkAgent] = useState<any | null>(null);
 
   const fetchAgents = async () => {
     try {
@@ -326,18 +328,17 @@ export function Web4AgentsClient({ user }: { user: any }) {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => handleRefuel(agent.id)}
-                      disabled={isRefueling}
-                      className="border-white/10 text-xs font-mono uppercase text-[#8E9BB4] hover:text-white bg-black/30 h-8"
+                      onClick={() => setTalkAgent(agent)}
+                      className="border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] hover:bg-[#00F0FF]/10 bg-black/40 h-8"
                     >
-                      <Coins className="w-3 h-3 mr-1 text-[#FFD700]" /> Refuel $50
+                      <Bot className="w-3 h-3 mr-1 text-[#00F0FF]" /> Talk & Voice
                     </Button>
                     <Link href="/avatar-studio">
                       <Button
                         variant="outline"
                         className="w-full border-white/10 text-xs font-mono uppercase text-[#8E9BB4] hover:text-white bg-black/30 h-8"
                       >
-                        <Palette className="w-3 h-3 mr-1 text-[#00F0FF]" /> Avatar
+                        <Palette className="w-3 h-3 mr-1 text-[#00F0FF]" /> 3D Studio
                       </Button>
                     </Link>
                   </div>
@@ -347,6 +348,14 @@ export function Web4AgentsClient({ user }: { user: any }) {
           })}
         </div>
       )}
+
+      {/* Global AI Companion Modal */}
+      <AgentCompanionModal
+        isOpen={!!talkAgent}
+        onClose={() => setTalkAgent(null)}
+        agent={talkAgent}
+        user={user}
+      />
     </div>
   );
 }

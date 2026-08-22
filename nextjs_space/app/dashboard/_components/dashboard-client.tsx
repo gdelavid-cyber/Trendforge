@@ -21,6 +21,8 @@ import { Button } from '@/components/ui/button';
 import { getWealthPoints, getLevelInfo, getStreak, getBadges } from '@/app/gamification';
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
 import { Gift } from 'lucide-react';
+import { useState } from 'react';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 interface DashboardClientProps {
   user: {
@@ -37,6 +39,7 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary }: DashboardClientProps) {
+  const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const earnings = user?.totalEarnings ?? 0;
   const completedCount = user?.completedCount ?? 0;
   const userTasksList = user?.userTasks ?? [];
@@ -75,7 +78,14 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           </h1>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            onClick={() => setIsCompanionOpen(true)}
+            className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase h-9 px-4 hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)] font-bold"
+          >
+            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF] animate-pulse" /> 🎙️ Talk to Agent
+          </Button>
           <Link href="/dashboard/grants">
             <Button size="sm" variant="outline" className="border-[#FFD700]/30 text-xs font-mono uppercase h-9 px-4 text-[#FFD700] bg-[#FFD700]/10 hover:bg-[#FFD700]/20">
               <Gift className="w-3.5 h-3.5 mr-1.5" /> $25 Grant
@@ -83,7 +93,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           </Link>
           <Link href="/agents">
             <Button size="sm" className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono">
-              <Bot className="w-3.5 h-3.5 mr-1.5 fill-current" /> Deploy Swarm Agent
+              <Bot className="w-3.5 h-3.5 mr-1.5 fill-current" /> Deploy Swarm
             </Button>
           </Link>
           <Link href="/workflows">
@@ -262,6 +272,13 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           </div>
         </div>
       </div>
+
+      {/* Global AI Companion Modal */}
+      <AgentCompanionModal
+        isOpen={isCompanionOpen}
+        onClose={() => setIsCompanionOpen(false)}
+        user={user}
+      />
     </div>
   );
 }

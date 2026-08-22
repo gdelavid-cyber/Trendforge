@@ -79,6 +79,17 @@ export function BattlesClient({ user }: { user: any }) {
 
     setFighting(true);
     setLastBattleResult(null);
+
+    // Spoken Trash-talk at match start
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const challenger = agents.find((a) => a.id === challengerId);
+      const trashTalk = `${challenger?.name || 'Challenger'}: Initiating combat sequence! Prepare for total liquidity extraction.`;
+      const u = new SpeechSynthesisUtterance(trashTalk);
+      u.rate = 1.1;
+      window.speechSynthesis.speak(u);
+    }
+
     try {
       const res = await fetch('/api/battles/enter', {
         method: 'POST',
@@ -90,6 +101,15 @@ export function BattlesClient({ user }: { user: any }) {
       if (res.ok && data.success) {
         setLastBattleResult(data);
         toast.success(`Match Concluded! Winner: ${data.winner.name} (+$${data.winner.payout} USDC Bounty)`);
+        
+        // Spoken Winner Celebration
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          const victorySpeech = `Victory confirmed! ${data.winner.name} takes the bounty pool of ${data.winner.payout} dollars!`;
+          const uVictory = new SpeechSynthesisUtterance(victorySpeech);
+          uVictory.rate = 1.05;
+          setTimeout(() => window.speechSynthesis.speak(uVictory), 600);
+        }
+
         fetchInitialData();
       } else {
         toast.error(data.error || 'Battle match failed');
