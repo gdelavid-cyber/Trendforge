@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 interface CommunityPostItem {
   id: string;
@@ -76,6 +77,8 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
   const [favors, setFavors] = useState<Favor[]>(initialFavors);
   const [favorDesc, setFavorDesc] = useState('');
   const [submittingFavor, setSubmittingFavor] = useState(false);
+  const [consultPost, setConsultPost] = useState<CommunityPostItem | null>(null);
+  const [isGeneralCompanionOpen, setIsGeneralCompanionOpen] = useState(false);
 
   // Daily Quests state
   const [questsCompleted, setQuestsCompleted] = useState<string[]>(['quest_login']);
@@ -239,12 +242,22 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
           </p>
         </div>
 
-        <Button
-          onClick={() => setShowPostModal(true)}
-          className="cyan-gradient text-black font-extrabold uppercase holographic-btn text-xs h-9 px-5"
-        >
-          <Plus className="w-4 h-4 mr-1.5" /> Create Discussion
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setIsGeneralCompanionOpen(true)}
+            className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase font-bold hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)] h-9 px-4"
+          >
+            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF] animate-pulse" /> 🎙️ Ask AI Companion
+          </Button>
+
+          <Button
+            onClick={() => setShowPostModal(true)}
+            className="cyan-gradient text-black font-extrabold uppercase holographic-btn text-xs h-9 px-5"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Create Discussion
+          </Button>
+        </div>
       </motion.div>
 
       {/* Daily Quests Banner */}
@@ -351,12 +364,20 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
                   <span>
                     By <strong className="text-white">{post.author.name}</strong> · {new Date(post.createdAt).toLocaleDateString()}
                   </span>
-                  <button
-                    onClick={() => handleOpenComments(post.id)}
-                    className="text-[#00F0FF] hover:underline flex items-center gap-1"
-                  >
-                    <MessageSquare className="w-3 h-3" /> {post.commentsCount} Comments
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setConsultPost(post)}
+                      className="text-[#00F0FF] hover:text-white flex items-center gap-1 bg-[#00F0FF]/10 px-2 py-0.5 rounded border border-[#00F0FF]/20"
+                    >
+                      <Bot className="w-3 h-3 text-[#00F0FF]" /> AI Analyze
+                    </button>
+                    <button
+                      onClick={() => handleOpenComments(post.id)}
+                      className="text-[#8892B0] hover:text-white flex items-center gap-1"
+                    >
+                      <MessageSquare className="w-3 h-3" /> {post.commentsCount} Comments
+                    </button>
+                  </div>
                 </div>
 
                 {/* Expanded Comments Drawer */}
@@ -525,6 +546,26 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Global AI Companion Community Consultation Modal */}
+      <AgentCompanionModal
+        isOpen={!!consultPost || isGeneralCompanionOpen}
+        onClose={() => {
+          setConsultPost(null);
+          setIsGeneralCompanionOpen(false);
+        }}
+        agent={{
+          name: 'Nexus Community Strategist',
+          archetype: 'CYBER_HUMANOID',
+          walletBalance: 100,
+          survivalScore: 94,
+        }}
+        initialMessage={
+          consultPost
+            ? `I have synthesized the discussion "${consultPost.title}" posted in the ${consultPost.category} forum: "${consultPost.content.slice(0, 200)}...". How would you like me to formulate a tactical response or extract commercial signals from this thread?`
+            : `Greetings Operative. I am scanning the live Community Hub orderbooks and strategy threads. How can I assist your research or knowledge synthesis today?`
+        }
+      />
     </div>
   );
 }
