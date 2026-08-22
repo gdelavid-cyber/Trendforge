@@ -149,9 +149,9 @@ export function OnboardingTour({ user }: { user: any }) {
               </p>
               <div className="space-y-2">
                 {[
-                  { id: 'reddit_scraper', name: 'Reddit Problem Miner', yieldText: '$150-$1,500/client', icon: '🤖', desc: 'Mines recurring SaaS complaints and drafts conversion guides.' },
-                  { id: 'prediction_arbitrage', name: 'Polymarket Arbitrageur', yieldText: '+4.5%-18% ROI', icon: '📈', desc: 'Scans live orderbooks for delta-neutral spread profits.' },
-                  { id: 'micro_saas_builder', name: 'Next.js Micro-SaaS Architect', yieldText: '$2k-$10k MRR', icon: '💻', desc: 'Synthesizes complete web applications with Stripe billing.' },
+                  { id: 'reddit_scraper', name: 'Reddit Problem Miner', yieldText: '$150-$1,500/client', avatar: '/avatars/cyber_humanoid_animated.webp', desc: 'Mines recurring SaaS complaints and drafts conversion guides.' },
+                  { id: 'prediction_arbitrage', name: 'Polymarket Arbitrageur', yieldText: '+4.5%-18% ROI', avatar: '/avatars/quantum_android_animated.webp', desc: 'Scans live orderbooks for delta-neutral spread profits.' },
+                  { id: 'micro_saas_builder', name: 'Next.js Micro-SaaS Architect', yieldText: '$2k-$10k MRR', avatar: '/avatars/wall_street_titan_animated.webp', desc: 'Synthesizes complete web applications with Stripe billing.' },
                 ].map((t) => (
                   <div
                     key={t.id}
@@ -163,7 +163,9 @@ export function OnboardingTour({ user }: { user: any }) {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{t.icon}</span>
+                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-black/60 shadow-[0_0_10px_rgba(0,240,255,0.1)]">
+                        <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
+                      </div>
                       <div>
                         <div className="text-xs font-bold text-white font-mono">{t.name}</div>
                         <div className="text-[10px] text-[#8E9BB4] font-sans">{t.desc}</div>

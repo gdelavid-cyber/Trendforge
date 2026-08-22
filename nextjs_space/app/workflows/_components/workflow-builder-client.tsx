@@ -8,6 +8,17 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
+const getStepAvatar = (agentType: string) => {
+  switch (agentType) {
+    case 'prediction_arbitrage': return '/avatars/quantum_android_animated.webp';
+    case 'ai_video_maker': return '/avatars/cosmic_entity_animated.webp';
+    case 'micro_saas_builder': return '/avatars/wall_street_titan_animated.webp';
+    case 'openclaw_deployer': return '/avatars/cyber_humanoid_animated.webp';
+    case 'reddit_scraper':
+    default: return '/avatars/cyber_humanoid_animated.webp';
+  }
+};
+
 export function WorkflowBuilderClient({ user }: { user: any }) {
   const router = useRouter();
   const [workflows, setWorkflows] = useState<any[]>([]);
@@ -102,9 +113,14 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             {steps.map((step, idx) => (
               <div key={idx} className="flex items-center gap-3">
-                <div className="p-4 bg-black/60 border border-white/10 hover:border-[#00F0FF]/40 rounded-xl relative group min-w-[200px]">
-                  <span className="text-[10px] font-mono text-[#00F0FF] uppercase block">Step #{idx + 1}</span>
-                  <span className="text-xs font-bold text-white mt-1 block">{step.name}</span>
+                <div className="p-3.5 bg-black/60 border border-white/10 hover:border-[#00F0FF]/40 rounded-xl relative group min-w-[220px] flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-black/80 shadow-[0_0_10px_rgba(0,240,255,0.15)]">
+                    <img src={getStepAvatar(step.agentType)} alt={step.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-[#00F0FF] uppercase block">Step #{idx + 1}</span>
+                    <span className="text-xs font-bold text-white block truncate max-w-[130px]">{step.name}</span>
+                  </div>
                   <button
                     onClick={() => handleRemoveStep(idx)}
                     className="absolute top-2 right-2 text-[#8892B0] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"

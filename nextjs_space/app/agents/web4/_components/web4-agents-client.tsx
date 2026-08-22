@@ -21,6 +21,7 @@ import {
   DollarSign,
   Palette,
   ExternalLink,
+  Coins,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -135,6 +136,17 @@ export function Web4AgentsClient({ user }: { user: any }) {
     }
   };
 
+  const getAvatarImageSrc = (cfg: any) => {
+    if (!cfg || !cfg.baseModel) return '/avatars/cyber_humanoid_animated.webp';
+    switch (cfg.baseModel) {
+      case 'QUANTUM_ANDROID': return '/avatars/quantum_android_animated.webp';
+      case 'WALL_STREET_TITAN': return '/avatars/wall_street_titan_animated.webp';
+      case 'COSMIC_ENTITY': return '/avatars/cosmic_entity_animated.webp';
+      case 'CYBER_HUMANOID':
+      default: return '/avatars/cyber_humanoid_animated.webp';
+    }
+  };
+
   const getAvatarEmoji = (cfg: any) => {
     if (!cfg) return '🥷';
     switch (cfg.baseModel) {
@@ -226,8 +238,12 @@ export function Web4AgentsClient({ user }: { user: any }) {
 
                   {/* Visual Avatar & Name Header */}
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(0,240,255,0.15)]">
-                      {getAvatarEmoji(agent.avatarConfig)}
+                    <div className="w-14 h-14 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-center overflow-hidden shadow-[0_0_20px_rgba(0,240,255,0.15)] flex-shrink-0">
+                      <img
+                        src={getAvatarImageSrc(agent.avatarConfig)}
+                        alt={agent.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white font-mono flex items-center gap-1.5">

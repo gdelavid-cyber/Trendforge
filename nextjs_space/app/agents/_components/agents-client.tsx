@@ -49,6 +49,17 @@ interface AgentItem {
   };
 }
 
+export const getAgentAvatar = (type: string) => {
+  switch (type) {
+    case 'prediction_arbitrage': return '/avatars/quantum_android_animated.webp';
+    case 'ai_video_maker': return '/avatars/cosmic_entity_animated.webp';
+    case 'micro_saas_builder': return '/avatars/wall_street_titan_animated.webp';
+    case 'openclaw_deployer': return '/avatars/cyber_humanoid_animated.webp';
+    case 'reddit_scraper':
+    default: return '/avatars/cyber_humanoid_animated.webp';
+  }
+};
+
 export const AGENT_MANUALS: Record<string, {
   tagline: string;
   howItWorks: string[];
@@ -323,11 +334,21 @@ export function AgentsClient({ user }: { user: any }) {
                     )}
                   </div>
 
-                  {/* Name & Desc */}
-                  <h3 className="text-lg font-bold text-white group-hover:text-[#00F0FF] transition-colors mb-2">
-                    {agent.name}
-                  </h3>
-                  <p className="text-xs text-[#8892B0] leading-relaxed mb-4 font-sans">
+                  {/* Name & Desc with Animated Avatar */}
+                  <div className="flex items-center gap-3.5 mb-3">
+                    <div className="w-13 h-13 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(0,240,255,0.15)] flex-shrink-0 bg-black/60 p-0.5">
+                      <img src={getAgentAvatar(agent.type)} alt={agent.name} className="w-full h-full object-cover rounded-xl" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-white group-hover:text-[#00F0FF] transition-colors leading-snug">
+                        {agent.name}
+                      </h3>
+                      <span className="text-[10px] font-mono text-[#8892B0] block">
+                        {agent.type}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#8892B0] leading-relaxed mb-4 font-sans line-clamp-2">
                     {agent.description}
                   </p>
 
@@ -444,18 +465,19 @@ export function AgentsClient({ user }: { user: any }) {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-[#00F0FF] bg-[#00F0FF]/10 px-2.5 py-0.5 rounded">
-                  {selectedAgent.category}
-                </span>
-                <span className="text-xs font-mono text-[#8892B0] flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-[#00F0FF]" /> {selectedAgent.estimatedDuration}
-                </span>
+              <div className="flex items-center gap-3.5 mb-3">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(0,240,255,0.2)] flex-shrink-0 bg-black/60 p-0.5">
+                  <img src={getAgentAvatar(selectedAgent.type)} alt={selectedAgent.name} className="w-full h-full object-cover rounded-xl" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+                    Deploy {selectedAgent.name}
+                  </h2>
+                  <span className="text-[10px] font-mono text-[#00F0FF]">
+                    {selectedAgent.category} • Runtime: {selectedAgent.estimatedDuration}
+                  </span>
+                </div>
               </div>
-
-              <h2 className="text-2xl font-bold text-white uppercase tracking-wider mb-2">
-                Deploy {selectedAgent.name}
-              </h2>
               <p className="text-xs text-[#8892B0] mb-6 font-sans">
                 {selectedAgent.description}
               </p>

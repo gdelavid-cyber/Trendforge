@@ -117,6 +117,16 @@ export function AvatarStudioClient({ user }: { user: any }) {
     }
   };
 
+  const getAvatarImageSrc = (model: string) => {
+    switch (model) {
+      case 'QUANTUM_ANDROID': return '/avatars/quantum_android_animated.webp';
+      case 'WALL_STREET_TITAN': return '/avatars/wall_street_titan_animated.webp';
+      case 'COSMIC_ENTITY': return '/avatars/cosmic_entity_animated.webp';
+      case 'CYBER_HUMANOID':
+      default: return '/avatars/cyber_humanoid_animated.webp';
+    }
+  };
+
   const getBaseAvatarGraphic = () => {
     switch (baseModel) {
       case 'CYBER_HUMANOID': return '🥷';
@@ -198,14 +208,18 @@ export function AvatarStudioClient({ user }: { user: any }) {
                 rotate: rotationAngle,
               }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className={`relative z-10 w-48 h-48 rounded-3xl border-2 flex items-center justify-center text-7xl transition-all duration-500 backdrop-blur-xl ${getAuraColor()}`}
+              className={`relative z-10 w-52 h-52 rounded-3xl border-2 flex items-center justify-center overflow-hidden transition-all duration-500 backdrop-blur-xl ${getAuraColor()}`}
             >
-              {/* Base Model Character */}
-              <span>{getBaseAvatarGraphic()}</span>
+              {/* Base Model Animated Character */}
+              <img
+                src={getAvatarImageSrc(baseModel)}
+                alt={baseModel}
+                className="w-full h-full object-cover rounded-3xl pointer-events-none select-none"
+              />
 
               {/* Accessory Overlay */}
               {getAccessoryGraphic() && (
-                <span className="absolute -top-3 -right-3 text-3xl animate-bounce">
+                <span className="absolute -top-1 -right-1 text-2xl animate-bounce bg-black/70 border border-white/20 p-2 rounded-2xl shadow-lg z-20">
                   {getAccessoryGraphic()}
                 </span>
               )}
@@ -303,21 +317,23 @@ export function AvatarStudioClient({ user }: { user: any }) {
           {activeTab === 'BASE' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { id: 'CYBER_HUMANOID', name: 'Cyber Humanoid Operative', icon: '🥷', desc: 'Tactical stealth operative optimized for high-speed web scraping and social intelligence.' },
-                { id: 'QUANTUM_ANDROID', name: 'Quantum Void Android', icon: '🤖', desc: 'High-compute silicon unit built for algorithmic DeFi arbitrage and orderbook analysis.' },
-                { id: 'WALL_STREET_TITAN', name: 'Wall Street Sovereign Titan', icon: '👑', desc: 'Golden executive suited for SaaS scaffolding and enterprise client conversion.' },
-                { id: 'COSMIC_ENTITY', name: 'Cosmic Nebula Entity', icon: '🌌', desc: 'Multidimensional entity possessing viral video scripting and media automation.' },
+                { id: 'CYBER_HUMANOID', name: 'Cyber Humanoid Operative', img: '/avatars/cyber_humanoid_animated.webp', desc: 'Tactical stealth operative optimized for high-speed web scraping and social intelligence.' },
+                { id: 'QUANTUM_ANDROID', name: 'Quantum Void Android', img: '/avatars/quantum_android_animated.webp', desc: 'High-compute silicon unit built for algorithmic DeFi arbitrage and orderbook analysis.' },
+                { id: 'WALL_STREET_TITAN', name: 'Wall Street Sovereign Titan', img: '/avatars/wall_street_titan_animated.webp', desc: 'Golden executive suited for SaaS scaffolding and enterprise client conversion.' },
+                { id: 'COSMIC_ENTITY', name: 'Cosmic Nebula Entity', img: '/avatars/cosmic_entity_animated.webp', desc: 'Multidimensional entity possessing viral video scripting and media automation.' },
               ].map((model) => (
                 <div
                   key={model.id}
                   onClick={() => setBaseModel(model.id as any)}
-                  className={`glass-card p-5 cursor-pointer transition-all ${
+                  className={`glass-card p-4 cursor-pointer transition-all flex items-center gap-4 ${
                     baseModel === model.id ? 'border-[#00F0FF] bg-[#00F0FF]/10 shadow-[0_0_20px_rgba(0,240,255,0.2)]' : 'hover:border-white/20'
                   }`}
                 >
-                  <div className="text-3xl mb-2">{model.icon}</div>
-                  <h4 className="text-sm font-bold text-white font-mono">{model.name}</h4>
-                  <p className="text-xs text-[#8E9BB4] font-sans mt-1">{model.desc}</p>
+                  <img src={model.img} alt={model.name} className="w-16 h-16 rounded-2xl object-cover border border-white/20 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-bold text-white font-mono">{model.name}</h4>
+                    <p className="text-xs text-[#8E9BB4] font-sans mt-1 line-clamp-2">{model.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
