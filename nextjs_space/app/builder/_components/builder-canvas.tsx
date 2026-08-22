@@ -27,6 +27,18 @@ import { toast } from 'sonner';
 import { SKILLS_LIBRARY, SkillDefinition } from '@/lib/web4/skills-library';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+
+const getArchetypeModel = (archetype: string) => {
+  switch (archetype) {
+    case 'DEFI_ARBITRAGEUR': return 'QUANTUM_ANDROID';
+    case 'VIRAL_CREATOR': return 'COSMIC_ENTITY';
+    case 'SAAS_ARCHITECT': return 'WALL_STREET_TITAN';
+    case 'DATA_MINER':
+    case 'LEAD_HUNTER':
+    default: return 'CYBER_HUMANOID';
+  }
+};
 
 interface WorkflowNode {
   id: string;
@@ -57,6 +69,7 @@ export function BuilderCanvas({ user }: { user: any }) {
   const [agentArchetype, setAgentArchetype] = useState('DATA_MINER');
   const [testing, setTesting] = useState(false);
   const [minting, setMinting] = useState(false);
+  const [isVoiceTesting, setIsVoiceTesting] = useState(false);
   const [sandboxLogs, setSandboxLogs] = useState<any[] | null>(null);
 
   const filteredSkills = selectedCategory === 'ALL'
@@ -81,7 +94,7 @@ export function BuilderCanvas({ user }: { user: any }) {
     setNodes((prev) => prev.filter((n) => n.id !== id));
   };
 
-  const updateNodeParam = (nodeId: string, paramName: string, value: any) => {
+  const handleParamChange = (nodeId: string, paramName: string, value: any) => {
     setNodes((prev) =>
       prev.map((n) => (n.id === nodeId ? { ...n, params: { ...n.params, [paramName]: value } } : n))
     );
@@ -89,42 +102,40 @@ export function BuilderCanvas({ user }: { user: any }) {
 
   const handleTestSandbox = async () => {
     if (nodes.length === 0) {
-      toast.error('Add at least one skill block to the workflow canvas.');
+      toast.error('Add at least 1 skill node to test.');
       return;
     }
 
     setTesting(true);
     setSandboxLogs(null);
     try {
-      const res = await fetch('/api/web4/builder/execute', {
+      const res = await fetch('/api/web4/sandbox', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes }),
+        body: JSON.stringify({
+          agentName,
+          archetype: agentArchetype,
+          nodes: nodes.map((n) => ({ skillId: n.skillId, params: n.params })),
+        }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
         setSandboxLogs(data.logs);
-        toast.success(`Sandbox verified! Projected profit: $${data.netProjectedProfit} USDC`);
+        toast.success(`Sandbox execution passed! Estimated P&L: +$${data.estimatedProfitUsdc} USDC`);
       } else {
-        toast.error(data.error || 'Test run failed');
+        toast.error(data.error || 'Sandbox simulation failed.');
       }
     } catch {
-      toast.error('Network error executing sandbox');
+      toast.error('Network error during sandbox test.');
     } finally {
       setTesting(false);
     }
   };
 
   const handleMintAgent = async () => {
-    if (!user) {
-      toast.error('Please sign in to deploy sovereign Web4 agents.');
-      router.push('/auth/signin');
-      return;
-    }
-
     if (nodes.length === 0) {
-      toast.error('Workflow canvas is empty.');
+      toast.error('Add at least 1 skill node to mint agent.');
       return;
     }
 
@@ -136,7 +147,7 @@ export function BuilderCanvas({ user }: { user: any }) {
         body: JSON.stringify({
           name: agentName,
           archetype: agentArchetype,
-          skills: nodes.map((n) => ({ skillId: n.skillId, params: n.params })),
+          nodes: nodes.map((n) => ({ skillId: n.skillId, params: n.params })),
         }),
       });
 
@@ -173,7 +184,16 @@ export function BuilderCanvas({ user }: { user: any }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setIsVoiceTesting(true)}
+            size="sm"
+            className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase font-bold hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+          >
+            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF] animate-pulse" /> 🎙️ Test Agent Voice
+          </Button>
+
           <Button
             variant="outline"
             onClick={handleTestSandbox}
@@ -402,6 +422,20 @@ export function BuilderCanvas({ user }: { user: any }) {
           )}
         </div>
       </div>
+
+      {/* 3D AI Companion Voice Tester Modal */}
+      <AgentCompanionModal
+        isOpen={isVoiceTesting}
+        onClose={() => setIsVoiceTesting(false)}
+        agent={{
+          name: agentName,
+          archetype: getArchetypeModel(agentArchetype),
+          walletBalance: 100,
+          survivalScore: 92,
+        }}
+        user={user}
+        initialMessage={`Greetings, Creator. I am configured as ${agentName} (${agentArchetype}). My autonomous skill pipeline contains ${nodes.length} chained execution stages with an estimated compute burn of $${totalComputeCost.toFixed(4)} USDC. How shall we calibrate my intelligence?`}
+      />
     </div>
   );
 }
