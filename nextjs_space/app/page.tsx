@@ -97,7 +97,7 @@ export default async function LandingPage() {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-8">
           <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
           <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
-            NEW MONEY-MAKING TASKS DROP DAILY
+            NEW MONEY-MAKING TASK DROPS DAILY
           </span>
         </div>
 
