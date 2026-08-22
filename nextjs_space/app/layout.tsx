@@ -6,6 +6,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { CyberBackground } from '@/components/cyber-background';
+import { FloatingCompanionWidget } from '@/components/chat/FloatingCompanionWidget';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron' });
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="relative z-10">
             {children}
           </div>
+          <FloatingCompanionWidget />
           <Toaster position="top-right" theme="dark" richColors />
         </Providers>
       </body>

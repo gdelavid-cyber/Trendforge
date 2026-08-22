@@ -53,6 +53,8 @@ export function AvatarRenderer({
   const visorMeshRef = useRef<THREE.Mesh | null>(null);
   const crownGroupRef = useRef<THREE.Group | null>(null);
   const orbitalRingsRef = useRef<THREE.Group | null>(null);
+  const leftWingRef = useRef<THREE.Mesh | null>(null);
+  const rightWingRef = useRef<THREE.Mesh | null>(null);
   const particleSystemRef = useRef<THREE.Points | null>(null);
   const haloLightRef = useRef<THREE.PointLight | null>(null);
 
@@ -241,6 +243,19 @@ export function AvatarRenderer({
         crownGroupRef.current.rotation.y = elapsedTime * 0.5;
       }
 
+      // Cyber Wings Dynamic Flapping Animation
+      if (leftWingRef.current && rightWingRef.current) {
+        const flapAngle = Math.sin(elapsedTime * (isSpeaking ? 5.0 : 2.0)) * 0.25;
+        leftWingRef.current.rotation.y = -0.3 + flapAngle;
+        rightWingRef.current.rotation.y = 0.3 - flapAngle;
+      }
+
+      // Audio-Reactive Halo Point Light
+      if (haloLightRef.current) {
+        const speechBoost = (currentViseme?.amplitude || 0) * 3.0;
+        haloLightRef.current.intensity = 1.8 + speechBoost;
+      }
+
       // Particle Aura Swirl
       if (particleSystemRef.current) {
         particleSystemRef.current.rotation.y = -elapsedTime * 0.3;
@@ -426,7 +441,39 @@ export function AvatarRenderer({
       orbitalRingsRef.current = ringsGroup;
     }
 
-    // 7. Particle Aura Emitter System
+    // 7. Holographic Cyber Wings
+    const wingShape = new THREE.Shape();
+    wingShape.moveTo(0, 0);
+    wingShape.lineTo(0.5, 0.4);
+    wingShape.lineTo(0.7, 0.2);
+    wingShape.lineTo(0.4, -0.1);
+    wingShape.lineTo(0, 0);
+
+    const wingGeo = new THREE.ShapeGeometry(wingShape);
+    const wingMat = new THREE.MeshPhysicalMaterial({
+      color: primary,
+      emissive: primary,
+      emissiveIntensity: 0.9,
+      transparent: true,
+      opacity: 0.7,
+      side: THREE.DoubleSide,
+      wireframe,
+    });
+
+    const leftWing = new THREE.Mesh(wingGeo, wingMat);
+    leftWing.position.set(-0.15, -0.1, -0.2);
+    leftWing.rotation.y = -0.3;
+    avatarGroup.add(leftWing);
+    leftWingRef.current = leftWing;
+
+    const rightWing = new THREE.Mesh(wingGeo, wingMat.clone());
+    rightWing.scale.x = -1;
+    rightWing.position.set(0.15, -0.1, -0.2);
+    rightWing.rotation.y = 0.3;
+    avatarGroup.add(rightWing);
+    rightWingRef.current = rightWing;
+
+    // 8. Particle Aura Emitter System
     const particleCount = 180;
     const particleGeo = new THREE.BufferGeometry();
     const particlePos = new Float32Array(particleCount * 3);
