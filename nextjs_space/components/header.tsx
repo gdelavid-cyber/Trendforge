@@ -22,10 +22,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
 export function Header(props?: any) {
   const { data: session } = useSession() || {};
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const pathname = usePathname();
 
   const navItems = session?.user
@@ -102,6 +104,14 @@ export function Header(props?: any) {
 
           {/* User & Action Controls */}
           <div className="hidden md:flex items-center gap-2.5">
+            <Button
+              onClick={() => setIsCompanionOpen(true)}
+              size="sm"
+              variant="outline"
+              className="border-[#00F0FF]/30 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase h-8 px-3 hover:bg-[#00F0FF]/20 shadow-[0_0_12px_rgba(0,240,255,0.15)] font-bold"
+            >
+              <Bot className="w-3.5 h-3.5 mr-1 text-[#00F0FF] animate-pulse" /> 🎙️ Talk
+            </Button>
             {session?.user ? (
               <>
                 <Link href="/profile">
@@ -229,6 +239,13 @@ export function Header(props?: any) {
           )}
         </AnimatePresence>
       </header>
+
+      {/* Global AI Companion Header Modal */}
+      <AgentCompanionModal
+        isOpen={isCompanionOpen}
+        onClose={() => setIsCompanionOpen(false)}
+        user={session?.user}
+      />
     </div>
   );
 }
