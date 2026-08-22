@@ -31,19 +31,20 @@ export function Header(props?: any) {
   const navItems = session?.user
     ? [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/tasks', label: 'Tasks', icon: Zap },
-        { href: '/agents', label: 'Swarm Agents', icon: Bot, isSpecial: true },
-        { href: '/workflows', label: 'Workflows', icon: Layers },
-        { href: '/trends', label: 'Trends', icon: Flame },
+        { href: '/agents/web4', label: 'Web4 Agents', icon: Bot, isSpecial: true },
+        { href: '/builder', label: 'Agent Studio', icon: Layers },
+        { href: '/avatar-studio', label: 'Avatar Studio', icon: Sparkles },
+        { href: '/marketplace/web4', label: 'Marketplace', icon: Flame },
+        { href: '/battles', label: 'Battles', icon: Zap },
         { href: '/community', label: 'Community', icon: User },
-        { href: '/marketplace', label: 'Marketplace', icon: Flame },
       ]
     : [
-        { href: '/agents', label: 'Swarm Agents', icon: Bot, isSpecial: true },
-        { href: '/workflows', label: 'Workflows', icon: Layers },
-        { href: '/enterprise', label: 'Enterprise', icon: Cpu },
-        { href: '/pricing', label: 'Pricing', icon: Zap },
-        { href: '/stories', label: 'Wins', icon: Flame },
+        { href: '/agents/web4', label: 'Web4 Agents', icon: Bot, isSpecial: true },
+        { href: '/builder', label: 'Agent Studio', icon: Layers },
+        { href: '/avatar-studio', label: 'Avatar Studio', icon: Sparkles },
+        { href: '/marketplace/web4', label: 'Marketplace', icon: Flame },
+        { href: '/battles', label: 'Battles', icon: Zap },
+        { href: '/pricing', label: 'Pricing', icon: Cpu },
       ];
 
   return (

@@ -125,6 +125,11 @@ model User {
   referralsMade         Referral[]       @relation("ReferralsMade")
   referredBy            Referral?        @relation("ReferredUser")
   workflows             AgentWorkflow[]
+  web4Agents            Web4Agent[]
+  userCosmetics         UserCosmetic[]
+  marketplaceListings   MarketplaceListing[] @relation("SellerListings")
+  cosmeticPurchases     CosmeticTransaction[] @relation("BuyerTransactions")
+  cosmeticSales         CosmeticTransaction[] @relation("SellerTransactions")
 
   @@index([role])
   @@index([email])
@@ -480,3 +485,180 @@ model Referral {
   @@index([referrerId])
   @@index([code])
 }
+
+// ==========================================
+// TRENDLY WEB4 — THE WEALTH OPERATING SYSTEM
+// ==========================================
+
+enum AgentStatus {
+  CREATED
+  ACTIVE
+  PAUSED
+  DYING
+  DEAD
+  REPRODUCING
+}
+
+enum CosmeticCategory {
+  SKIN
+  ACCESSORY
+  ANIMATION
+  EFFECT
+  BACKGROUND
+  VOICE
+}
+
+enum CosmeticRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+  MYTHIC
+}
+
+model Web4Agent {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  name              String
+  description       String?
+  archetype         String          @default("GENERALIST") // "DATA_MINER", "DEFI_ARBITRAGEUR", "LEAD_HUNTER", "VIRAL_CREATOR", "SAAS_ARCHITECT"
+  walletAddress     String          @unique
+  walletBalance     Float           @default(100.0) // Initial test liquidity (USDC)
+  status            AgentStatus     @default(ACTIVE)
+  creationDate      DateTime        @default(now())
+  lastActive        DateTime        @default(now())
+  totalEarnings     Float           @default(0)
+  totalCosts        Float           @default(0)
+  profit            Float           @default(0)
+  survivalScore     Float           @default(85) // 0-100 score
+  riskExposure      Float           @default(0.2) // 0-1
+  gracePeriodEnds   DateTime?
+  parentAgentId     String?         // Lineage / genetic inheritance
+  skills            Json            // Workflow DAG nodes
+  memory            Json?           // Experience reflection logs
+  constitution      Json?           // Operational guardrails
+  avatarConfig      Json?           // GTA skin, accessories, animations, particle auras
+  eip8004Hash       String?         // Verifiable on-chain identity hash
+  mcpEndpoints      Json?           // Registered MCP tool servers
+  generation        Int             @default(1)
+  reproductionCount Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  marketplaceListings MarketplaceListing[]
+  battlesAsChallenger AgentBattle[]        @relation("ChallengerAgent")
+  battlesAsDefender   AgentBattle[]        @relation("DefenderAgent")
+  survivalLogs        AgentSurvivalLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([survivalScore])
+}
+
+model Cosmetic {
+  id            String            @id @default(cuid())
+  name          String
+  description   String?
+  category      CosmeticCategory
+  rarity        CosmeticRarity    @default(COMMON)
+  previewUrl    String
+  modelUrl      String?
+  thumbnailUrl  String
+  price         Float             @default(0) // in TREND tokens / USD
+  marketable    Boolean           @default(true)
+  season        String?           @default("Season 1: Genesis")
+  unlockMethod  String?           @default("FREE_QUEST") // quest, achievement, referral, battlepass, shop
+  createdAt     DateTime          @default(now())
+
+  userCosmetics       UserCosmetic[]
+  marketplaceListings MarketplaceListing[]
+  transactions        CosmeticTransaction[]
+
+  @@index([category])
+  @@index([rarity])
+}
+
+model UserCosmetic {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  cosmeticId  String
+  cosmetic    Cosmetic  @relation(fields: [cosmeticId], references: [id])
+  equipped    Boolean   @default(false)
+  unlockedAt  DateTime  @default(now())
+  unlockedVia String    @default("INVENTORY_GENESIS")
+
+  @@unique([userId, cosmeticId])
+  @@index([userId])
+}
+
+model MarketplaceListing {
+  id               String     @id @default(cuid())
+  sellerId         String
+  seller           User       @relation("SellerListings", fields: [sellerId], references: [id])
+  agentId          String?
+  agent            Web4Agent? @relation(fields: [agentId], references: [id])
+  cosmeticId       String?
+  cosmetic         Cosmetic?  @relation(fields: [cosmeticId], references: [id])
+  price            Float
+  currency         String     @default("USDC") // USD, USDC, TREND
+  status           String     @default("ACTIVE") // ACTIVE, SOLD, CANCELLED
+  itemType         String     @default("AGENT") // AGENT, COSMETIC, HIRE_SERVICE
+  hireDurationDays Int?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([itemType])
+}
+
+model CosmeticTransaction {
+  id          String    @id @default(cuid())
+  buyerId     String
+  buyer       User      @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  sellerId    String?
+  seller      User?     @relation("SellerTransactions", fields: [sellerId], references: [id])
+  cosmeticId  String
+  cosmetic    Cosmetic  @relation(fields: [cosmeticId], references: [id])
+  amount      Float
+  currency    String    @default("USDC")
+  status      String    @default("COMPLETED")
+  createdAt   DateTime  @default(now())
+
+  @@index([buyerId])
+}
+
+model AgentBattle {
+  id             String    @id @default(cuid())
+  challengerId   String
+  challenger     Web4Agent @relation("ChallengerAgent", fields: [challengerId], references: [id])
+  defenderId     String
+  defender       Web4Agent @relation("DefenderAgent", fields: [defenderId], references: [id])
+  arenaType      String    @default("ARBITRAGE_SHOWDOWN") // ARBITRAGE_SHOWDOWN, SCRAPER_SPEEDRUN, SAAS_HACKATHON, VIRAL_TRAFFIC_DUEL
+  winnerId       String?
+  yieldGenerated Float     @default(0)
+  logs           Json      // Turn-by-turn simulation logs
+  status         String    @default("COMPLETED")
+  createdAt      DateTime  @default(now())
+
+  @@index([challengerId])
+  @@index([defenderId])
+}
+
+model AgentSurvivalLog {
+  id           String    @id @default(cuid())
+  agentId      String
+  agent        Web4Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  event        String    // BALANCE_CHECK, COMPUTE_BURN, PROFIT_INFLOW, SOS_TRIGGERED, SELF_DESTRUCT, REPRODUCED
+  burnAmount   Float     @default(0)
+  yieldAmount  Float     @default(0)
+  balanceAfter Float     @default(0)
+  details      Json?
+  createdAt    DateTime  @default(now())
+
+  @@index([agentId])
+  @@index([createdAt])
+}
+
