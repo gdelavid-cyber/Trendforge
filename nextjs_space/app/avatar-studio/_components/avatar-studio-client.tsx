@@ -129,6 +129,66 @@ export function AvatarStudioClient({ user }: { user: any }) {
     }
   };
 
+  const applyPreset = (presetName: string) => {
+    switch (presetName) {
+      case 'CYBER_RONIN':
+        setBaseModel('CYBER_HUMANOID');
+        setSelectedSkin('Neon Cyan');
+        setSelectedAccessory('Cyber Blade Wings');
+        setSelectedAura('Plasma Fire Aura');
+        setSelectedAnimation('Cyber Combat Stance');
+        toast.success('Applied Cyber Ronin 3D Preset!');
+        break;
+      case 'QUANTUM_VOID':
+        setBaseModel('QUANTUM_ANDROID');
+        setSelectedSkin('Quantum Void');
+        setSelectedAccessory('Quantum Overclock Wings');
+        setSelectedAura('Matrix Digital Rain Glitch');
+        setSelectedAnimation('Hover Levitation Idle');
+        toast.success('Applied Quantum Void 3D Preset!');
+        break;
+      case 'WALL_STREET_TITAN':
+        setBaseModel('WALL_STREET_TITAN');
+        setSelectedSkin('Gold Chrome');
+        setSelectedAccessory('Solana Diamond Crown');
+        setSelectedAura('Golden Wealth Sparkles');
+        setSelectedAnimation('Profit Rain Celebration');
+        toast.success('Applied Wall Street Sovereign Preset!');
+        break;
+      case 'COSMIC_DEITY':
+        setBaseModel('COSMIC_ENTITY');
+        setSelectedSkin('Cosmic Nebula');
+        setSelectedAccessory('Quantum Overclock Wings');
+        setSelectedAura('Interstellar Nebula Fog');
+        setSelectedAnimation('Hover Levitation Idle');
+        toast.success('Applied Cosmic Entity Preset!');
+        break;
+    }
+  };
+
+  const handleExport3DManifest = () => {
+    const manifest = {
+      formatVersion: 'WEB4-AVATAR-3D-1.0',
+      timestamp: new Date().toISOString(),
+      avatarConfig: {
+        baseModel,
+        skin: selectedSkin,
+        accessory: selectedAccessory,
+        aura: selectedAura,
+        animation: selectedAnimation,
+        voiceId,
+        personality: personalityText,
+      },
+    };
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${baseModel.toLowerCase()}-3d-spec.json`;
+    a.click();
+    toast.success('Downloaded 3D Avatar Spec Manifest!');
+  };
+
   const getAvatarImageSrc = (model: string) => {
     switch (model) {
       case 'QUANTUM_ANDROID': return '/avatars/quantum_android_animated.webp';
@@ -181,16 +241,24 @@ export function AvatarStudioClient({ user }: { user: any }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => setIsCompanionModalOpen(true)}
             size="sm"
             variant="outline"
             className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase font-bold hover:bg-[#00F0FF]/20 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
           >
-            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF] animate-pulse" /> Talk to Agent (3D Voice)
+            <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF] animate-pulse" /> Talk (3D Voice)
           </Button>
-          <Link href="/marketplace/web4">
+          <Button
+            onClick={handleExport3DManifest}
+            size="sm"
+            variant="outline"
+            className="border-white/10 text-xs font-mono uppercase text-[#CCD6F6] bg-black/40 hover:text-white hover:border-[#00F0FF]/30"
+          >
+            <Sliders className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF]" /> Export 3D Spec (.json)
+          </Button>
+          <Link href="/cosmetics">
             <Button variant="outline" size="sm" className="border-white/10 text-xs font-mono uppercase text-white bg-white/[0.03]">
               <ShoppingBag className="w-3.5 h-3.5 mr-1.5 text-[#FFD700]" /> Cosmetics Shop
             </Button>
@@ -204,6 +272,25 @@ export function AvatarStudioClient({ user }: { user: any }) {
             <Check className="w-3.5 h-3.5 mr-1.5 stroke-[3]" /> {saving ? 'Syncing...' : 'Equip to Agent'}
           </Button>
         </div>
+      </div>
+
+      {/* 3D Presets Quick-Bar */}
+      <div className="flex items-center gap-2 mb-6 p-2.5 bg-black/50 rounded-xl border border-white/5 overflow-x-auto scrollbar-hide">
+        <span className="text-[10px] font-mono text-[#8E9BB4] uppercase whitespace-nowrap px-2">3D Presets:</span>
+        {[
+          { id: 'CYBER_RONIN', label: '🥷 Cyber Ronin' },
+          { id: 'QUANTUM_VOID', label: '🤖 Quantum Singularity' },
+          { id: 'WALL_STREET_TITAN', label: '👑 Wall Street Sovereign' },
+          { id: 'COSMIC_DEITY', label: '🌌 Cosmic Deity' },
+        ].map((preset) => (
+          <button
+            key={preset.id}
+            onClick={() => applyPreset(preset.id)}
+            className="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-white/5 hover:bg-[#00F0FF]/15 text-[#CCD6F6] hover:text-[#00F0FF] border border-white/10 hover:border-[#00F0FF]/30 whitespace-nowrap transition-all"
+          >
+            {preset.label}
+          </button>
+        ))}
       </div>
 
       {/* Render Mode Switcher Banner */}

@@ -107,6 +107,43 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
       {/* 5-Step Interactive Onboarding Modal */}
       <OnboardingTour user={user} />
 
+      {/* 3D AI Companion Spoken Daily Debrief Banner */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-card p-5 mb-8 border border-[#00F0FF]/30 bg-gradient-to-r from-[#00F0FF]/10 via-black/60 to-[#FFD700]/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(0,240,255,0.15)]"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-black/60 border border-[#00F0FF]/40 flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(0,240,255,0.3)] animate-pulse">
+            🤖
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#00F0FF]/20 text-[#00F0FF] px-2 py-0.5 rounded border border-[#00F0FF]/30">
+                LIVE 3D COMPANION DEBRIEF
+              </span>
+              <span className="text-[10px] font-mono text-green-400 font-bold">READY TO SPEAK</span>
+            </div>
+            <h3 className="text-sm font-bold text-white font-mono">
+              Morning Market Signals & Agent Wallet Status Briefing
+            </h3>
+            <p className="text-xs text-[#8E9BB4] font-sans mt-0.5">
+              Listen to your sovereign 3D agent synthesize real-time Reddit SaaS demand and Polymarket spreads with synchronized lip-sync.
+            </p>
+          </div>
+        </div>
+
+        <Button
+          onClick={() => {
+            setCompanionInitialMessage("Operative, I am ready to deliver your daily intelligence briefing. We have 6 high-velocity market signals active on HackerNews and Reddit, and our autonomous Conway wallet balance is primed. Let's extract yield!");
+            setIsCompanionOpen(true);
+          }}
+          className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-5 holographic-btn font-mono whitespace-nowrap shadow-[0_0_20px_rgba(0,240,255,0.4)]"
+        >
+          <Bot className="w-4 h-4 mr-2 fill-current" /> 🎙️ Play Spoken Market Debrief
+        </Button>
+      </motion.div>
+
       {/* Quick Launch Swarm Dock */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         {swarmShortcuts.map((s, idx) => (
