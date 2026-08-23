@@ -9,19 +9,24 @@
 ## 1 · Vision
 
 Everyone uses AI, but nobody has ever *seen* theirs. Trendly is the first
-platform where you customize your AI companion — give it a face, a style, a
-identity — and then put it to work earning money through trending,
+platform where you customize your AI companion — give it a face, a style, an
+identity you **own** — and then put it to work earning money through trending,
 executable wealth-tasks.
 
 **The loop:**
 
 1. **Forge** your companion (look, personality, skills)
-2. Pick a trending money-task from this week's radar
+2. Pick a trending money-task
 3. Choose your involvement: **DIY** · **Co-pilot** · **Autopilot**
-4. Your companion works: researches clients, drafts pitches, preps deliverables
-5. You receive an email → review → **one-click approve-to-send → get paid**
+4. Your companion executes the task's steps adaptively — whatever the task
+   requires, the AI does it and makes it easy
+5. You receive an email → review → **one-click finalize → get paid**
 
-The human clicks two buttons total. The AI does 95%.
+The human clicks one button. The AI does the rest.
+
+**Ownership:** companions and cosmetics are the user's property — ownable
+web4 assets, not rented skins. The goal is portability: what you forge here
+goes with you everywhere.
 
 ## 2 · Brand
 
@@ -40,11 +45,13 @@ The human clicks two buttons total. The AI does 95%.
 |---|---|
 | Dashboard | `/dashboard` |
 | **Earn ▾** | Weekly Tasks `/tasks` · Trends Radar `/trends` · Success Stories `/stories` |
-| **My Companion ▾** | The Forge `/avatar-studio` · Approval Inbox *(S2)* · Activity Feed *(S3)* |
-| **Arena ▾** | Arena `/arena` · Battles `/battles` · Cosmetics `/cosmetics` |
+| **My Companion ▾** | The Forge `/avatar-studio` · Approval Inbox *(S2)* · Activity Feed *(S4)* |
+| **The World** | `/arena` — full-3D explorable space; cosmetics showcase & fun |
 | **Build ▾** | Agent Studio `/builder` · My Agents `/agents` · Workflows `/workflows` |
 | Community | `/community` |
 | **Market ▾** | Marketplace `/marketplace` · Referrals `/referrals` · Pricing `/pricing` |
+
+Battles/combat is demoted off-nav (systems stay in code and API).
 
 Anonymous nav: Earn ▾ (preview), Arena, Marketplace, Pricing + Sign In /
 Launch Free. Mobile mirrors desktop groups as accordions.
@@ -60,75 +67,102 @@ Profile stays in the right-side user cluster; Sign Out unchanged.
 
 No routes move. No redirects required.
 
-## 4 · Task Execution Modes (the money loop, S2)
+## 4 · Task Execution Engine (the money loop, S2)
 
 Per-task mode selection: `DIY | CO_PILOT | AUTOPILOT`.
 
-**Autopilot = approve-to-send.** The companion drafts everything; the human
-approves outbound actions. Rationale: Upwork/Fiverr prohibit fully automated
-bidding; auto-sending would endanger users' accounts and livelihoods.
-Approve-to-send keeps users safe AND preserves the product promise ("I just
-approved the payday").
+**Autopilot = approve-to-finalize.** The companion reads the task's structured
+`steps` and executes them adaptively — research, drafting, prep — whatever the
+task requires. Any step that sends something to an external party (an
+application, an email, a listing) pauses at a **gate**: the user approves with
+one click before it goes out. Fully-automated outbound actions on third-party
+platforms are a non-goal (account-ban risk to users); everything else runs
+hands-off.
 
 ### 4.1 Data model (additive, Prisma)
 
 ```
 enum ExecutionMode   { DIY CO_PILOT AUTOPILOT }
-enum SubmissionState { DRAFTING PENDING_REVIEW APPROVED_SENT CLIENT_REPLIED DELIVERED PAID FAILED }
+enum SubmissionState { DRAFTING STEP_EXECUTING PENDING_APPROVAL APPROVED_SENT
+                       DELIVERED PAID FAILED }
 
 model TaskSubmission {
-  id            String          @id @default(cuid())
-  userTaskId    String          @unique
-  userTask      UserTask        @relation(fields:[userTaskId], references:[id])
-  mode          ExecutionMode
-  state         SubmissionState @default(DRAFTING)
-  platform      String?         // upwork | fiverr | direct | ...
-  clientResearch Json?          // scraped/summarized prospect intel
-  pitchDraft    String?
-  deliverable   String?
-  submittedAt   DateTime?
-  paidAmount    Float?
-  companionId   String?         // free-form until S3 adds the avatar↔agent
-                                // relation; tracks which companion did the work
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  userTaskId     String          @unique
+  userTask       UserTask        @relation(fields:[userTaskId], references:[id])
+  mode           ExecutionMode
+  state          SubmissionState @default(DRAFTING)
+  currentStep    Int?            // index into Task.steps being executed
+  stepResults    Json?           // per-step execution log (companion's work)
+  pendingAction  Json?           // queued external action awaiting approval
+  targetPlatform String?         // wherever THIS task leads (upwork, etsy,
+                                 // direct client, ...) — task-defined, not fixed
+  deliverable    String?
+  paidAmount     Float?
+  companionId    String?         // free-form until S4 adds the avatar↔agent
+                                 // relation; tracks which companion did the work
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 ```
 
 Emails fire at each gate (existing Abacus notification pattern):
-draft ready → approval needed → sent confirmation → payment reminder.
+steps executed → approval needed → sent confirmation → payment reminder.
 
 ### 4.2 Mode behaviors
 
 | Mode | Companion does | Human does |
 |---|---|---|
-| DIY | Nothing (advisory tips only) | Everything |
-| Co-pilot | Drafts pitch/deliverable sections on request | Edits, sends, delivers |
-| Autopilot | Client research, pitch draft, deliverable prep, queues submission | Reviews inbox → Approve-to-send → Finalize-for-payment |
+| DIY | Advisory tips only | Everything |
+| Co-pilot | Executes steps on request, drafts sections | Guides, approves each send |
+| Autopilot | Executes all steps adaptively; queues external actions at gates | One click per approval gate; finalize for payment |
 
-## 5 · Roadmap (each phase ships independently)
+## 5 · The World (3D playground)
+
+`/arena` is reimagined: combat goes out, **self-expression comes in**. A
+GTA-style explorable 3D space where users walk their customized companion
+around, show off owned cosmetics, and have fun. No battles, no scores — the
+city is a stage for identity.
+
+- Built on the existing `three`/R3F stack and procedural GLB pipeline.
+- Equipped cosmetics render on the avatar in-world (already proven by the
+  Stage3D work).
+- Battles systems remain in code/API but are demoted off-nav.
+
+## 6 · Ownership & portability (web4)
+
+Companions and cosmetics are the user's **property**, not rentals:
+
+- Cosmetics purchases/ownership continue through the existing web4 marketplace.
+- Each owned asset gets an export bundle (GLB + metadata JSON) so what users
+  forge can leave Trendly with them — portability is a first-class promise,
+  not an afterthought.
+- The Forge is framed as *minting your companion's identity*, not customizing
+  a profile picture.
+
+## 7 · Roadmap (each phase ships independently)
 
 | Phase | Scope | Depends on |
 |---|---|---|
-| **S1 — Skeleton** | Nav IA + demotions + Trendly brand sweep + landing/dashboard retell toward companion-first story | nothing |
-| **S2 — Money loop** | Execution modes, TaskSubmission model, Approval Inbox page, gate emails | S1 nav slot exists |
-| **S3 — Companion identity** | Avatar↔agent binding surfaced during tasks; Activity Feed ("your companion researched 12 clients…"); cosmetics as task rewards | S2 |
-| **S4 — Lead-gen assistant** | Upwork/Fiverr prospect discovery → research cards feeding Autopilot drafts | S2 |
-| Later | Real payout integrations, multi-companion workforces | out of scope here |
+| **S1 — Skeleton** | Nav IA + demotions + Trendly brand sweep + landing/dashboard retell (companion-first) | nothing |
+| **S2 — Money loop** | Execution modes, TaskSubmission model + step-executor, Approval Inbox page, gate emails | S1 |
+| **S3 — The World** | 3D playground replacing arena combat; cosmetics in-world showcase | S1 (Stage3D exists) |
+| **S4 — Companion identity** | Avatar↔agent binding during tasks; Activity Feed ("your companion researched 12 clients…"); cosmetics as task rewards; export bundles v1 | S2 |
+| Later | Deeper ownership/portability standards, multi-companion workforces | out of scope here |
 
-## 6 · Non-goals (explicit)
+## 8 · Non-goals (explicit)
 
-- No fully-automated platform bidding (ToS risk to users).
-- No route renames/moves in S1–S2.
-- No payment processing changes — earnings arrive via the external platforms;
-  Trendly tracks and celebrates them.
-- No removal of existing features (demote ≠ delete).
+- Fully-automated outbound actions on third-party platforms (ban risk).
+- Route renames/moves in S1–S2.
+- Payment processing changes — earnings arrive externally; Trendly tracks,
+  celebrates, and proves them.
+- Removing existing features (demote ≠ delete).
 
-## 7 · Safety & verification per phase
+## 9 · Safety & verification per phase
 
 - `tsc --noEmit` + Vitest suite green before every commit.
 - Post-deploy probe of changed surfaces (nav render, footer, admin menu auth).
-- S2 adds unit tests for submission state machine transitions before enabling
-  Autopilot for any real user.
+- S2 adds unit tests for submission state-machine transitions before any real
+  Autopilot usage.
 - Schema additions are additive-only; `prisma db push` against shared Supabase
   with dev-server stopped (Windows DLL lock), matching established procedure.
