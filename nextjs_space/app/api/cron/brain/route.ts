@@ -5,17 +5,24 @@ import { collectBrainMetrics } from '@/lib/brain/metrics';
 import { detectAnomalies } from '@/lib/brain/anomaly';
 import { generateBrainDecisions } from '@/lib/brain/decisions';
 
-const CRON_SECRET = process.env.PIPELINE_API_KEY || '4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b';
+const CRON_SECRET = process.env.PIPELINE_API_KEY;
 
-function isAuthorized(request: Request): boolean {
+function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
+  if (!CRON_SECRET) {
+    return { authorized: false, error: 'CRON auth not configured', status: 500 };
+  }
+
   const authHeader = request.headers.get('authorization')?.replace('Bearer ', '');
   const apiKeyHeader = request.headers.get('x-api-key');
-  const url = new URL(request.url);
-  const queryKey = url.searchParams.get('key');
 
-  const providedKey = authHeader || apiKeyHeader || queryKey;
-  return providedKey === CRON_SECRET || providedKey === '4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b';
+  const providedKey = authHeader || apiKeyHeader;
+  if (providedKey !== CRON_SECRET) {
+    return { authorized: false, error: 'Unauthorized', status: 401 };
+  }
+
+  return { authorized: true };
 }
+
 
 async function runBrainCycle() {
   const startTime = Date.now();
@@ -34,17 +41,27 @@ async function runBrainCycle() {
 }
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = checkCronAuth(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const result = await runBrainCycle();
-  return NextResponse.json(result);
+  try {
+    const result = await runBrainCycle();
+    return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Brain cron cycle failed' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = checkCronAuth(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const result = await runBrainCycle();
-  return NextResponse.json(result);
+  try {
+    const result = await runBrainCycle();
+    return NextResponse.json(result);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Brain cron cycle failed' }, { status: 500 });
+  }
 }

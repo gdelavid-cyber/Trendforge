@@ -3,16 +3,29 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const HIDDEN_TEST_EMAIL = process.env.HIDDEN_TEST_EMAIL;
+const HIDDEN_TEST_PASSWORD = process.env.HIDDEN_TEST_PASSWORD;
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !HIDDEN_TEST_EMAIL || !HIDDEN_TEST_PASSWORD || !DEMO_PASSWORD) {
+  console.error(
+    'Seed aborted: set ADMIN_EMAIL, ADMIN_PASSWORD, HIDDEN_TEST_EMAIL, HIDDEN_TEST_PASSWORD and DEMO_PASSWORD in nextjs_space/.env'
+  );
+  process.exit(1);
+}
+
 async function main() {
   console.log('Seeding TrendForge database...');
 
   // Hidden test account (mandatory)
-  const hiddenTestHash = await bcrypt.hash('mlk21$DkMy', 10);
+  const hiddenTestHash = await bcrypt.hash(HIDDEN_TEST_PASSWORD!, 10);
   await prisma.user.upsert({
-    where: { email: 'abacus-d49a98d8@example.com' },
-    update: {},
+    where: { email: HIDDEN_TEST_EMAIL! },
+    update: { passwordHash: hiddenTestHash },
     create: {
-      email: 'abacus-d49a98d8@example.com',
+      email: HIDDEN_TEST_EMAIL!,
       name: 'Test Admin',
       passwordHash: hiddenTestHash,
       role: 'ADMIN',
@@ -21,12 +34,12 @@ async function main() {
   });
 
   // Requested admin user
-  const adminHash = await bcrypt.hash('Admin123!', 10);
+  const adminHash = await bcrypt.hash(ADMIN_PASSWORD!, 10);
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@trendforge.ai' },
-    update: {},
+    where: { email: ADMIN_EMAIL! },
+    update: { passwordHash: adminHash },
     create: {
-      email: 'admin@trendforge.ai',
+      email: ADMIN_EMAIL!,
       name: 'TrendForge Admin',
       passwordHash: adminHash,
       role: 'ADMIN',
@@ -38,10 +51,10 @@ async function main() {
   });
 
   // Demo users for stories/community
-  const demoHash = await bcrypt.hash('Demo123!', 10);
+  const demoHash = await bcrypt.hash(DEMO_PASSWORD!, 10);
   const demoUser1 = await prisma.user.upsert({
     where: { email: 'sarah@demo.com' },
-    update: {},
+    update: { passwordHash: demoHash },
     create: {
       email: 'sarah@demo.com',
       name: 'Sarah Chen',
@@ -54,7 +67,7 @@ async function main() {
   });
   const demoUser2 = await prisma.user.upsert({
     where: { email: 'marcus@demo.com' },
-    update: {},
+    update: { passwordHash: demoHash },
     create: {
       email: 'marcus@demo.com',
       name: 'Marcus Johnson',
@@ -67,7 +80,7 @@ async function main() {
   });
   const demoUser3 = await prisma.user.upsert({
     where: { email: 'elena@demo.com' },
-    update: {},
+    update: { passwordHash: demoHash },
     create: {
       email: 'elena@demo.com',
       name: 'Elena Rodriguez',

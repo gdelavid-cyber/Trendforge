@@ -8,20 +8,63 @@ import { toast } from 'sonner';
 
 export function BrainDashboard({ user }: { user: any }) {
   const [data, setData] = useState<any>(null);
+  const [swarmData, setSwarmData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [togglingSwarm, setTogglingSwarm] = useState(false);
 
   const fetchBrainData = async () => {
     try {
-      const res = await fetch('/api/admin/brain/metrics');
-      const json = await res.json();
-      if (json.success) {
-        setData(json);
-      }
+      const [brainRes, swarmRes] = await Promise.all([
+        fetch('/api/admin/brain/metrics'),
+        fetch('/api/admin/swarm'),
+      ]);
+      const json = await brainRes.json();
+      if (json.success) setData(json);
+
+      const swarmJson = await swarmRes.json();
+      if (swarmJson.success) setSwarmData(swarmJson);
     } catch {
-      toast.error('Failed to load Brain telemetry');
+      toast.error('Failed to load telemetry data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleKillswitch = async (currentState: boolean) => {
+    setTogglingSwarm(true);
+    try {
+      const res = await fetch('/api/admin/swarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'TOGGLE_KILLSWITCH', killSwitch: !currentState }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Swarm kill-switch ${!currentState ? 'ACTIVATED (HALTED)' : 'DEACTIVATED (ACTIVE)'}`);
+        fetchBrainData();
+      }
+    } catch {
+      toast.error('Failed to toggle killswitch');
+    } finally {
+      setTogglingSwarm(false);
+    }
+  };
+
+  const handleUpdateSpecies = async (speciesId: string, status: string) => {
+    try {
+      const res = await fetch('/api/admin/swarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'UPDATE_SPECIES', speciesId, status }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Species status updated to ${status}`);
+        fetchBrainData();
+      }
+    } catch {
+      toast.error('Failed to update species');
     }
   };
 
@@ -257,6 +300,153 @@ export function BrainDashboard({ user }: { user: any }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          FORGE SWARM CONTROL & PIPELINE MONITOR
+      ========================================================================= */}
+      <div className="mt-8 border-t border-white/10 pt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/25 text-[#00F0FF] text-xs font-mono uppercase tracking-wider mb-2">
+              <Bot className="w-3.5 h-3.5" />
+              <span>AUTONOMOUS PIPELINE // FORGE SWARM</span>
+            </div>
+            <h2 className="text-2xl font-bold font-orbitron text-white">
+              Forge Swarm <span className="cyan-gold-gradient-text">Species Registry & Control</span>
+            </h2>
+            <p className="text-xs text-[#8892B0] font-mono mt-1">
+              Today's Swarm Spend: ${(swarmData?.totalSpendToday || 0).toFixed(2)} / $15.00 Cap
+            </p>
+          </div>
+
+          {/* Swarm Kill Switch Toggle */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-black/60 border border-white/10">
+            <span className="text-xs font-mono uppercase text-[#8892B0]">Kill-Switch:</span>
+            <Button
+              size="sm"
+              onClick={() => handleToggleKillswitch(swarmData?.killSwitchActive)}
+              disabled={togglingSwarm}
+              className={`text-xs font-bold font-mono uppercase h-8 px-4 ${
+                swarmData?.killSwitchActive
+                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                  : 'bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30'
+              }`}
+            >
+              {swarmData?.killSwitchActive ? 'EMERGENCY HALTED (LOCKED)' : 'SWARM ACTIVE'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Species Table */}
+        <div className="glass-card overflow-x-auto mb-6">
+          <table className="w-full text-left text-xs font-mono border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/[0.02] text-[#8892B0]">
+                <th className="p-3">Species Role</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Headcount (Target / Max)</th>
+                <th className="p-3">Spend Today / Budget</th>
+                <th className="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {(swarmData?.speciesList || []).map((sp: any) => (
+                <tr key={sp.id} className="hover:bg-white/[0.01]">
+                  <td className="p-3 font-bold text-white">
+                    <div>{sp.name}</div>
+                    <div className="text-[10px] text-[#8892B0] font-normal">{sp.role}</div>
+                  </td>
+                  <td className="p-3">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${
+                        sp.status === 'ACTIVE'
+                          ? 'bg-green-500/15 text-green-400 border border-green-500/30'
+                          : sp.status === 'THROTTLED'
+                          ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
+                          : 'bg-red-500/15 text-red-400 border border-red-500/30'
+                      }`}
+                    >
+                      {sp.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-white">
+                    {sp.targetHeadcount} / {sp.maxHeadcount} instances
+                  </td>
+                  <td className="p-3 text-white">
+                    ${(sp.currentSpendUsd || 0).toFixed(2)} / ${sp.dailyBudgetUsd.toFixed(2)}
+                  </td>
+                  <td className="p-3 text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleUpdateSpecies(sp.id, sp.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE')
+                      }
+                      className="h-7 text-[10px] font-mono uppercase border-white/20 text-[#8892B0] hover:text-white"
+                    >
+                      {sp.status === 'ACTIVE' ? 'Pause' : 'Activate'}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Recent Asset Jobs & QA Reviews Feed */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="glass-card p-4">
+            <h3 className="text-xs font-mono uppercase text-white font-bold mb-3">
+              Active & Recent Asset Jobs
+            </h3>
+            <div className="space-y-2 max-h-[260px] overflow-y-auto font-mono text-xs">
+              {(swarmData?.activeJobs || []).map((job: any) => (
+                <div key={job.id} className="p-2.5 rounded bg-black/40 border border-white/5 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-white">{job.catalogItemId}</div>
+                    <div className="text-[10px] text-[#8892B0]">
+                      {job.slot} &bull; {job.rarity} &bull; Attempts: {job.attempts}/{job.maxAttempts}
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-[#00F0FF]/15 text-[#00F0FF] uppercase">
+                    {job.stage}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-card p-4">
+            <h3 className="text-xs font-mono uppercase text-white font-bold mb-3">
+              Automated QA Reviews
+            </h3>
+            <div className="space-y-2 max-h-[260px] overflow-y-auto font-mono text-xs">
+              {(swarmData?.recentReviews || []).map((rev: any) => (
+                <div key={rev.id} className="p-2.5 rounded bg-black/40 border border-white/5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-bold">{rev.job?.catalogItemId || rev.jobId}</span>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
+                        rev.verdict === 'PASS'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {rev.verdict}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-[#8892B0] flex gap-2">
+                    <span>Binary: {rev.binaryValid ? 'OK' : 'FAIL'}</span>
+                    <span>Alpha: {rev.alphaValid ? 'OK' : 'FAIL'}</span>
+                    <span>Dim: {rev.dimensionValid ? 'OK' : 'FAIL'}</span>
+                    <span>GLB: {rev.glbParsedValid ? 'OK' : 'FAIL'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

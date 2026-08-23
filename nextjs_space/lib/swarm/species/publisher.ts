@@ -101,6 +101,3 @@ export async function runPublisher(
   }
 }
 
-export function canHandle(stage: JobStage): boolean {
-  return stage === JobStage.PUBLISHING;
-}

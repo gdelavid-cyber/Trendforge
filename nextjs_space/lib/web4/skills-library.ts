@@ -4,7 +4,7 @@ export interface SkillDefinition {
   category: 'SCRAPER' | 'FINANCE' | 'OUTREACH' | 'MEDIA' | 'CODE' | 'SOCIAL' | 'UTILITY';
   description: string;
   inputs: { name: string; type: string; default?: any; placeholder?: string; required?: boolean }[];
-  outputs: { name: string; type: string; description: string }[];
+  outputs: { name: string; type: string; description?: string }[];
   computeCostUsdc: number;
   icon: string;
 }

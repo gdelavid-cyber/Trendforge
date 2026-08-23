@@ -19,6 +19,7 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  Swords,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,19 +34,19 @@ export function Header(props?: any) {
   const navItems = session?.user
     ? [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/agents', label: 'Web4 Agents', icon: Bot, isSpecial: true },
-        { href: '/builder', label: 'Agent Studio', icon: Layers },
-        { href: '/avatar-studio', label: 'Avatar Studio', icon: Sparkles },
+        { href: '/arena', label: 'The Arena', icon: Swords, isSpecial: true },
+        { href: '/avatar-studio', label: 'The Forge', icon: Sparkles },
         { href: '/marketplace', label: 'Marketplace', icon: Flame },
         { href: '/battles', label: 'Battles', icon: Zap },
+        { href: '/builder', label: 'Agent Studio', icon: Layers },
         { href: '/community', label: 'Community', icon: User },
       ]
     : [
-        { href: '/agents', label: 'Web4 Agents', icon: Bot, isSpecial: true },
-        { href: '/builder', label: 'Agent Studio', icon: Layers },
-        { href: '/avatar-studio', label: 'Avatar Studio', icon: Sparkles },
+        { href: '/arena', label: 'The Arena', icon: Swords, isSpecial: true },
+        { href: '/avatar-studio', label: 'The Forge', icon: Sparkles },
         { href: '/marketplace', label: 'Marketplace', icon: Flame },
         { href: '/battles', label: 'Battles', icon: Zap },
+        { href: '/builder', label: 'Agent Studio', icon: Layers },
         { href: '/pricing', label: 'Pricing', icon: Cpu },
       ];
 

@@ -4,10 +4,6 @@ import { prisma } from '@/lib/db';
 import { AssetJob, JobStage } from '@prisma/client';
 import { SpeciesContext, SpeciesResult, AssetPromptSpec, ProviderMetadata } from './types';
 
-export function canHandle(stage: JobStage): boolean {
-  return stage === JobStage.ART_GENERATION;
-}
-
 // ---------------------------------------------------------------------------
 // Sanitize strings interpolated into prompts (letters, digits, spaces,
 // hyphens, underscores only).

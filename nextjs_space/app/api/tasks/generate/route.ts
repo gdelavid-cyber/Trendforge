@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         generatedAt: now,
         expiresAt,
         trendScore: 0.85,
-        isTrending: false, // On-demand tasks aren't marked as trending by default
+        isFeatured: false, // On-demand tasks aren't marked as featured by default
         requiresOptIn: parsedTask.risk_level === 'HIGH',
       },
     });

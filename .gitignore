@@ -21,6 +21,8 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+logs/
 
 # local env files
 .env*.local
@@ -32,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated tree dumps / scratch files
+tree.txt
+project_tree.txt

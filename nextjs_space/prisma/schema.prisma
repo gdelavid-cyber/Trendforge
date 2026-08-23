@@ -574,6 +574,8 @@ model Cosmetic {
   marketable    Boolean           @default(true)
   season        String?           @default("Season 1: Genesis")
   unlockMethod  String?           @default("FREE_QUEST") // quest, achievement, referral, battlepass, shop
+  renderConfig  Json?             // Swarm-published CosmeticRenderConfig override
+  assetUrl      String?           // Swarm-published 2D PNG asset URL
   createdAt     DateTime          @default(now())
 
   userCosmetics       UserCosmetic[]
@@ -718,5 +720,146 @@ model ComplianceAgreement {
 
   @@index([userId])
 }
+
+// ============================================================================
+// FORGE SWARM ENUMS & MODELS (ADDITIVE)
+// ============================================================================
+
+enum SpeciesRole {
+  SCOUT
+  DESIGNER
+  ART_WORKER
+  MODELER
+  QA_INSPECTOR
+  PUBLISHER
+}
+
+enum SpeciesStatus {
+  ACTIVE
+  PAUSED
+  THROTTLED
+  TERMINATED
+}
+
+enum InstanceStatus {
+  IDLE
+  WORKING
+  BACKOFF
+  ERROR
+}
+
+enum JobStage {
+  QUEUED
+  SPEC_DESIGN
+  ART_GENERATION
+  MODELING_3D
+  QA_INSPECTION
+  PUBLISHING
+  COMPLETED
+  FAILED
+  DEAD_LETTER
+}
+
+enum QAVerdict {
+  PASS
+  REJECT_RETRY
+  REJECT_FATAL
+  NEEDS_HUMAN_REVIEW
+}
+
+model AgentSpecies {
+  id              String         @id @default(cuid())
+  role            SpeciesRole    @unique
+  name            String
+  description     String
+  status          SpeciesStatus  @default(ACTIVE)
+  targetHeadcount Int            @default(1)
+  maxHeadcount    Int
+  dailyBudgetUsd  Float
+  currentSpendUsd Float          @default(0.0)
+  costPerUnitUsd  Float          @default(0.0)
+  spendResetAt    DateTime       @default(now())
+  config          Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  instances       AgentInstance[]
+  jobsProcessed   AssetJob[]     @relation("ProcessedBySpecies")
+
+  @@index([status])
+}
+
+model AgentInstance {
+  id              String         @id @default(cuid())
+  speciesId       String
+  species         AgentSpecies   @relation(fields: [speciesId], references: [id])
+  instanceIndex   Int
+  status          InstanceStatus @default(IDLE)
+  currentJobId    String?
+  heartbeatAt     DateTime       @default(now())
+  totalRuns       Int            @default(0)
+  failedRuns      Int            @default(0)
+  spendToDateUsd  Float          @default(0.0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([speciesId, instanceIndex])
+  @@index([status])
+  @@index([heartbeatAt])
+}
+
+model AssetJob {
+  id                String        @id @default(cuid())
+  catalogItemId     String
+  slot              String
+  rarity            String
+  stage             JobStage      @default(QUEUED)
+  priority          Int           @default(1) // 0=high, 1=normal, 2=low -> maps to queue tier
+  attempts          Int           @default(0)
+  maxAttempts       Int           @default(3)
+  promptSpec        Json?
+  imagePngPath      String?
+  modelGlbPath      String?
+  renderConfig      Json?
+  totalCostUsd      Float         @default(0.0)
+  errorMessage      String?
+  assignedSpeciesId String?
+  assignedSpecies   AgentSpecies? @relation("ProcessedBySpecies", fields: [assignedSpeciesId], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  qaReviews         QAReview[]
+
+  @@index([stage])
+  @@index([catalogItemId])
+  @@index([priority])
+}
+
+model QAReview {
+  id             String    @id @default(cuid())
+  jobId          String
+  job            AssetJob  @relation(fields: [jobId], references: [id])
+  inspectorId    String?
+  verdict        QAVerdict
+  binaryValid    Boolean   @default(false)
+  alphaValid     Boolean   @default(false)
+  dimensionValid Boolean   @default(false)
+  glbParsedValid Boolean   @default(false)
+  polyCount      Int?
+  fileSizeBytes  Int
+  failureReason  String?
+  createdAt      DateTime  @default(now())
+
+  @@index([jobId])
+  @@index([verdict])
+}
+
+// Singleton row (id = "global") holding cross-process swarm control state.
+model SwarmControl {
+  id         String   @id @default("global")
+  killSwitch Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+}
+
 
 

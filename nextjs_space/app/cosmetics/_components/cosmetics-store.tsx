@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -13,130 +13,174 @@ import {
   Check,
   Loader2,
   Filter,
+  Shield,
+  Swords,
+  DollarSign,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { COSMETICS_CATALOG, COSMETIC_TIERS, CatalogItem } from '@/lib/cosmetics/catalog';
+import { COSMETICS_CATALOG, COSMETIC_TIERS, CatalogItem, CombatSlot } from '@/lib/cosmetics/catalog';
 import Link from 'next/link';
 
 export function CosmeticsStore({ user }: { user: any }) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedSlot, setSelectedSlot] = useState<string>('ALL');
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set(['head_tactical_visor', 'skin_neon_cyber']));
 
-  const filteredItems = selectedCategory === 'ALL'
-    ? COSMETICS_CATALOG
-    : COSMETICS_CATALOG.filter((c) => c.category === selectedCategory);
+  const filteredItems =
+    selectedSlot === 'ALL'
+      ? COSMETICS_CATALOG
+      : COSMETICS_CATALOG.filter((c) => c.slot === selectedSlot || c.category === selectedSlot);
 
   const handlePurchase = async (item: CatalogItem) => {
     setPurchasingId(item.id);
     setTimeout(() => {
       setPurchasingId(null);
-      toast.success(`Successfully unlocked ${item.name}! Equip it in Avatar Studio.`);
-    }, 900);
+      setUnlockedIds((prev) => new Set([...Array.from(prev), item.id]));
+      toast.success(`Successfully unlocked ${item.name}! Equip it in The Forge.`);
+    }, 700);
   };
 
+  const slotTabs = [
+    { id: 'ALL', label: 'All Assets', icon: ShoppingBag },
+    { id: 'HEAD', label: 'Headwear', icon: Crown },
+    { id: 'BODY', label: 'Skins & Plates', icon: Shield },
+    { id: 'AURA', label: 'Auras', icon: Flame },
+    { id: 'TRAIL', label: 'Wings & Trails', icon: Zap },
+    { id: 'FINISHER', label: 'Finishers', icon: Swords },
+  ];
+
   return (
-    <div className="max-w-[1360px] mx-auto px-4 py-8">
+    <div className="max-w-[1400px] mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-white/10 pb-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20 text-[#FFD700] text-xs font-mono mb-2">
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>GTA-STYLE 50+ ITEM COSMETICS STORE // WEARABLE NFT ASSETS</span>
+            <span>FIGHTING GEAR ARMORY // 50+ WEARABLE COMBAT ASSETS</span>
           </div>
           <h1 className="font-orbitron text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
             Cosmetics <span className="cyan-gold-gradient-text">Black Market</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#8E9BB4] font-sans mt-1">
-            Equip your autonomous economic agents with 50+ GTA skins, holographic tactical visors, plasma wings, and custom animations.
+          <p className="text-xs sm:text-sm text-[#8E9BB4] font-mono mt-1">
+            Equip your autonomous economic combatants with tactical visors, plasma auras, dragon wings, and finisher stances.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 font-mono">
+          <Link href="/arena">
+            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 text-xs h-10 font-bold uppercase">
+              The Arena
+            </Button>
+          </Link>
           <Link href="/avatar-studio">
-            <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono">
-              Open Avatar Studio &rarr;
+            <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-5 holographic-btn">
+              The Forge &rarr;
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Pricing Tier Legend */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-8">
-        {Object.entries(COSMETIC_TIERS).map(([key, tier]) => (
-          <div key={key} className={`p-2.5 rounded-xl border ${tier.color} text-center font-mono`}>
-            <div className="text-xs font-bold uppercase">{tier.label}</div>
-            <div className="text-[11px] font-black mt-0.5">{tier.price > 0 ? `$${tier.price}` : 'Quest Drop'}</div>
-          </div>
-        ))}
+      {/* Slot Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 font-mono scrollbar-none">
+        {slotTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = selectedSlot === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedSlot(tab.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-2 transition-all ${
+                isActive
+                  ? 'bg-[#00F0FF] text-black shadow-[0_0_15px_rgba(0,240,255,0.35)]'
+                  : 'bg-[#0B0B14] text-[#8E9BB4] hover:text-white border border-white/10'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Category Navigation Pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {['ALL', 'SKIN', 'HEADWEAR', 'WINGS', 'AURA', 'ANIMATION'].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all ${
-              selectedCategory === cat
-                ? 'cyan-gradient text-black shadow-[0_0_15px_rgba(0,240,255,0.3)]'
-                : 'bg-black/40 border border-white/10 text-[#8E9BB4] hover:text-white'
-            }`}
-          >
-            {cat === 'ALL' ? '🌟 All 50+ Items' : cat}
-          </button>
-        ))}
-      </div>
-
-      {/* 50+ Items Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {/* Catalog Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredItems.map((item) => {
-          const isBuying = purchasingId === item.id;
-          const tierStyle = COSMETIC_TIERS[item.rarity];
+          const isUnlocked = unlockedIds.has(item.id);
+          const tier = COSMETIC_TIERS[item.rarity];
+          const isPurchasing = purchasingId === item.id;
 
           return (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-4 flex flex-col justify-between relative border border-white/10 hover:border-[#00F0FF]/40 transition-all group"
+              whileHover={{ scale: 1.02, y: -4 }}
+              className="glass-card p-4 rounded-2xl border border-white/10 bg-[#0B0B14]/80 flex flex-col justify-between overflow-hidden"
             >
               <div>
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border ${tierStyle.color}`}>
-                    {item.rarity}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${tier.color}`}>
+                    {item.rarity} // {item.slot}
                   </span>
-                  <span className="text-xs font-mono font-bold text-green-400">
-                    {item.price > 0 ? `$${item.price}` : 'FREE'}
+                  <span className="text-xs font-mono font-extrabold text-[#FFD700]">
+                    {item.price > 0 ? `$${item.price.toFixed(2)}` : 'QUEST REWARD'}
                   </span>
                 </div>
 
-                <div className="w-16 h-16 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-center text-3xl mx-auto my-3 group-hover:scale-110 transition-transform">
-                  {item.previewUrl}
+                {/* Art Frame (Zero Emojis) */}
+                <div className={`w-full h-32 rounded-xl flex items-center justify-center mb-3 border ${tier.color} bg-black/40 relative overflow-hidden`}>
+                  {!item.artPending ? (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-contain p-2 filter drop-shadow-[0_0_12px_currentColor]"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-1.5 text-center p-3">
+                      <Sparkles className="w-6 h-6 opacity-70" />
+                      <span className="text-[9px] font-mono uppercase tracking-widest text-[#8E9BB4] font-bold">
+                        {item.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <h3 className="text-xs font-bold text-white font-mono truncate text-center mb-1">
-                  {item.name}
-                </h3>
-                <p className="text-[10px] text-[#8E9BB4] font-sans line-clamp-2 text-center mb-4">
-                  {item.desc}
-                </p>
+                <h3 className="text-sm font-bold font-mono text-white truncate">{item.name}</h3>
+                <p className="text-[11px] text-[#8E9BB4] font-mono line-clamp-2 mt-1 leading-relaxed">{item.desc}</p>
+
+                {/* Stat Modifiers */}
+                <div className="flex items-center gap-2 pt-2 text-[10px] font-mono text-emerald-400 font-bold">
+                  {item.statModifiers.pwr && <span>+{item.statModifiers.pwr} PWR</span>}
+                  {item.statModifiers.spd && <span>+{item.statModifiers.spd} SPD</span>}
+                  {item.statModifiers.def && <span>+{item.statModifiers.def} DEF</span>}
+                  {item.statModifiers.syn && <span>+{item.statModifiers.syn} SYN</span>}
+                </div>
               </div>
 
-              <Button
-                onClick={() => handlePurchase(item)}
-                disabled={isBuying}
-                size="sm"
-                className="w-full cyan-gradient text-black font-extrabold uppercase text-[10px] h-8 holographic-btn font-mono"
-              >
-                {isBuying ? (
-                  <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+              {/* Action Button */}
+              <div className="pt-4 border-t border-white/5 mt-3 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-[#8E9BB4] uppercase">{item.unlockMethod}</span>
+                {isUnlocked ? (
+                  <Link href="/avatar-studio">
+                    <Button size="sm" variant="outline" className="h-7 text-[10px] font-mono border-white/20 text-[#00F0FF]">
+                      EQUIP IN FORGE
+                    </Button>
+                  </Link>
                 ) : (
-                  <>
-                    <Coins className="w-3 h-3 mr-1" /> {item.price > 0 ? `Unlock $${item.price}` : 'Claim Quest'}
-                  </>
+                  <Button
+                    size="sm"
+                    disabled={isPurchasing}
+                    onClick={() => handlePurchase(item)}
+                    className="h-7 text-[10px] font-mono font-bold uppercase cyan-gradient text-black px-3"
+                  >
+                    <DollarSign className="w-3 h-3 mr-0.5" />
+                    {isPurchasing ? 'UNLOCKING...' : 'UNLOCK'}
+                  </Button>
                 )}
-              </Button>
+              </div>
             </motion.div>
           );
         })}

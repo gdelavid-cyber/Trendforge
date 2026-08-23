@@ -6,7 +6,6 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
 import { DashboardClient } from './_components/dashboard-client';
-import { OnboardingTour } from '@/components/onboarding-tour';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -61,7 +60,6 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
       <Header userStats={headerStats} />
-      <OnboardingTour isNewUser={completedCount === 0} />
       <DashboardClient
         user={
           user

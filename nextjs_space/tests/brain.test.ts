@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { encryptSecret, decryptSecret, maskSecret } from '../lib/encryption';
 import { getCircuitState, recordFailure, recordSuccess, canExecute } from '../lib/agents/circuit-breaker';
 import { detectAnomalies } from '../lib/brain/anomaly';

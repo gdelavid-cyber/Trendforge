@@ -371,7 +371,7 @@ export function BuilderCanvas({ user }: { user: any }) {
                           </label>
                           <Input
                             value={node.params[input.name] ?? ''}
-                            onChange={(e) => updateNodeParam(node.id, input.name, e.target.value)}
+                            onChange={(e) => handleParamChange(node.id, input.name, e.target.value)}
                             placeholder={input.placeholder || ''}
                             className="bg-black/80 border-white/10 text-white font-mono text-[11px] h-7"
                           />

@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         const now = new Date();
         const topTrending = await prisma.task.findMany({
           where: {
-            isTrending: true,
+            isFeatured: true,
             OR: [
               { expiresAt: null },
               { expiresAt: { gt: now } }

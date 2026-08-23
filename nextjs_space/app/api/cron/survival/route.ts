@@ -3,21 +3,29 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { runSurvivalCycle } from '@/lib/web4/survival-engine';
 
-const CRON_SECRET = process.env.PIPELINE_API_KEY || '4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b';
+const CRON_SECRET = process.env.PIPELINE_API_KEY;
 
-function isAuthorized(request: Request): boolean {
+function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
+  if (!CRON_SECRET) {
+    return { authorized: false, error: 'CRON auth not configured', status: 500 };
+  }
+
   const authHeader = request.headers.get('authorization')?.replace('Bearer ', '');
   const apiKeyHeader = request.headers.get('x-api-key');
-  const url = new URL(request.url);
-  const queryKey = url.searchParams.get('key');
 
-  const providedKey = authHeader || apiKeyHeader || queryKey;
-  return providedKey === CRON_SECRET || providedKey === '4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b';
+  const providedKey = authHeader || apiKeyHeader;
+  if (providedKey !== CRON_SECRET) {
+    return { authorized: false, error: 'Unauthorized survival daemon trigger', status: 401 };
+  }
+
+  return { authorized: true };
 }
 
+
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized survival daemon trigger' }, { status: 401 });
+  const auth = checkCronAuth(request);
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
   try {

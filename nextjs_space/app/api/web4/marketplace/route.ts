@@ -5,18 +5,23 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 
-export async function GET() {
-  const listings = await prisma.marketplaceListing.findMany({
-    where: { status: 'ACTIVE' },
-    include: {
-      agent: true,
-      cosmetic: true,
-      seller: { select: { name: true, email: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+import { loadMergedCatalog } from '@/lib/cosmetics/server-catalog';
 
-  return NextResponse.json({ success: true, listings });
+export async function GET() {
+  const [listings, catalog] = await Promise.all([
+    prisma.marketplaceListing.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        agent: true,
+        cosmetic: true,
+        seller: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    loadMergedCatalog(),
+  ]);
+
+  return NextResponse.json({ success: true, listings, catalog });
 }
 
 export async function POST(request: Request) {

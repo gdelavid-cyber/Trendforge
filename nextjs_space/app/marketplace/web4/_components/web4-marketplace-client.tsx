@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -19,295 +19,343 @@ import {
   Trophy,
   Award,
   Zap,
+  Shield,
+  Swords,
+  DollarSign,
+  Eye,
+  Sliders,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { AvatarRenderer } from '@/components/avatar/AvatarRenderer';
+import { FighterStatsBar } from '@/components/avatar/FighterStatsBar';
+import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/lib/cosmetics/catalog';
+import { calculateFighterStats, FighterLoadout } from '@/lib/cosmetics/stats';
 
-interface MarketplaceItem {
-  id: string;
-  sellerId: string;
-  price: number;
-  currency: string;
-  itemType: string;
-  status: string;
-  agent?: any;
-  cosmetic?: any;
-  seller?: { name: string; email: string };
-}
+const SLOT_FILTERS: Array<{ id: 'ALL' | CombatSlot; label: string; icon: any }> = [
+  { id: 'ALL', label: 'All Gear', icon: ShoppingBag },
+  { id: 'HEAD', label: 'Headwear', icon: Crown },
+  { id: 'BODY', label: 'Skins & Plates', icon: Shield },
+  { id: 'AURA', label: 'Combat Auras', icon: Flame },
+  { id: 'TRAIL', label: 'Wings & Trails', icon: Zap },
+  { id: 'FINISHER', label: 'Finishers', icon: Swords },
+];
 
 export function Web4MarketplaceClient({ user }: { user: any }) {
-  const [listings, setListings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState<'ALL' | 'AGENT' | 'COSMETIC'>('ALL');
-  const [search, setSearch] = useState('');
-  const [purchasingId, setPurchasingId] = useState<string | null>(null);
-  const [demoAgent, setDemoAgent] = useState<any | null>(null);
-  const [featured, setFeatured] = useState<MarketplaceItem[]>([]);
-  const [topPerformers, setTopPerformers] = useState<any[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [selectedBaseModel, setSelectedBaseModel] = useState<string>('cyber_humanoid');
+  const [slotFilter, setSlotFilter] = useState<'ALL' | CombatSlot>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [ownedItemIds, setOwnedItemIds] = useState<Set<string>>(
+    new Set(['skin_neon_cyber', 'head_tactical_visor', 'aura_plasma_fire', 'wings_overclock'])
+  );
 
-  const fetchInitialData = async () => {
-    try {
-      const [listingsRes, featuredRes, topRes] = await Promise.all([
-        fetch('/api/web4/marketplace'),
-        fetch('/api/marketplace/featured'),
-        fetch('/api/marketplace/top-performers'),
-      ]);
-
-      const lData = await listingsRes.json();
-      const fData = await featuredRes.json();
-      const tData = await topRes.json();
-
-      if (lData.success && lData.listings) setListings(lData.listings);
-      if (fData.success && fData.featured) setFeatured(fData.featured);
-      if (tData.success && tData.topPerformers) setTopPerformers(tData.topPerformers);
-    } catch {
-      toast.error('Failed to load marketplace data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  const handleBuy = async (listingId: string) => {
-    setPurchasingId(listingId);
-    try {
-      const res = await fetch('/api/web4/marketplace', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'BUY', listingId }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success(`${data.message} (10% platform commission deducted: $${data.commissionPaid})`);
-        fetchInitialData();
-      } else {
-        toast.error(data.error || 'Transaction failed');
-      }
-    } catch {
-      toast.error('Network error executing purchase');
-    } finally {
-      setPurchasingId(null);
-    }
-  };
-
-  const filteredListings = listings.filter((item) => {
-    const matchesType = filterType === 'ALL' || item.itemType === filterType;
-    const name = item.agent?.name || item.cosmetic?.name || '';
-    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesType && matchesSearch;
+  // Live preview loadout state
+  const [previewLoadout, setPreviewLoadout] = useState<FighterLoadout>({
+    HEAD: 'head_tactical_visor',
+    BODY: 'skin_neon_cyber',
+    AURA: 'aura_plasma_fire',
+    TRAIL: 'wings_overclock',
+    FINISHER: 'anim_matrix_dodge',
   });
 
+  // Fetch user agents
+  useEffect(() => {
+    fetch('/api/web4/agents')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.agents && data.agents.length > 0) {
+          setAgents(data.agents);
+          const first = data.agents[0];
+          setSelectedAgentId(first.id);
+          if (first.avatarConfig?.baseModel) {
+            setSelectedBaseModel(first.avatarConfig.baseModel.toLowerCase());
+          }
+          if (first.avatarConfig?.loadout) {
+            setPreviewLoadout(first.avatarConfig.loadout);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const activeAgent = useMemo(() => {
+    return agents.find((a) => a.id === selectedAgentId) || null;
+  }, [agents, selectedAgentId]);
+
+  // Live Stats calculation
+  const liveStats = useMemo(() => {
+    return calculateFighterStats(activeAgent, previewLoadout);
+  }, [activeAgent, previewLoadout]);
+
+  // Filter items based on search and slot category
+  const filteredCatalog = useMemo(() => {
+    return COSMETICS_CATALOG.filter((item) => {
+      const matchesSlot = slotFilter === 'ALL' || item.slot === slotFilter;
+      const matchesSearch =
+        !searchQuery ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.desc.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSlot && matchesSearch;
+    });
+  }, [slotFilter, searchQuery]);
+
+  // Instant preview equip handler (client-side state, 0 server roundtrips)
+  const handleItemClick = (item: CatalogItem) => {
+    setPreviewLoadout((prev) => ({
+      ...prev,
+      [item.slot]: item.id,
+    }));
+    toast.info(`Previewing ${item.name} on ${activeAgent?.name || 'Fighter'}!`);
+  };
+
+  // Purchase / Checkout handler
+  const handlePurchase = async (item: CatalogItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPurchasingId(item.id);
+
+    try {
+      // Simulate or call stripe/checkout
+      setTimeout(() => {
+        setPurchasingId(null);
+        setOwnedItemIds((prev) => new Set([...Array.from(prev), item.id]));
+        setPreviewLoadout((prev) => ({
+          ...prev,
+          [item.slot]: item.id,
+        }));
+        toast.success(`Successfully unlocked ${item.name}! Equipped in combat loadout.`);
+      }, 700);
+    } catch {
+      setPurchasingId(null);
+      toast.error('Purchase simulation failed.');
+    }
+  };
+
   return (
-    <div className="max-w-[1360px] mx-auto px-4 py-8">
+    <div className="max-w-[1440px] mx-auto px-4 py-6 md:py-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-white/10 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/25 text-[#00F0FF] text-xs font-mono uppercase tracking-wider mb-2">
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>P2P ECONOMIC CITIZEN EXCHANGE // 10% PROTOCOL COMMISSION</span>
+            <span>COMBAT ARMORY & WEARABLE NFT BLACK MARKET</span>
           </div>
-          <h1 className="font-orbitron text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
-            Agent & Cosmetic <span className="cyan-gold-gradient-text">Marketplace</span>
+          <h1 className="text-3xl md:text-5xl font-black font-orbitron uppercase tracking-widest text-white">
+            Combat <span className="cyan-gold-gradient-text">Marketplace</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#8E9BB4] font-sans mt-1">
-            Buy, sell, and hire verified high-yield autonomous Web4 agents and rare GTA cosmetic accessories.
+          <p className="text-xs md:text-sm text-[#8E9BB4] font-mono mt-1">
+            Equip rare visors, aura wave emitters, and armor plates with instant client-side preview.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link href="/cosmetics">
-            <Button variant="outline" className="border-white/10 text-xs font-mono uppercase text-white bg-white/[0.03]">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#FFD700]" /> 50+ Item Cosmetics Shop
+        <div className="flex items-center gap-3 font-mono">
+          <Link href="/arena">
+            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 text-xs h-10 font-bold uppercase">
+              The Arena
             </Button>
           </Link>
-          <Link href="/builder">
-            <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono">
-              <Bot className="w-3.5 h-3.5 mr-1 fill-current" /> Mint Agent to Sell
+          <Link href="/avatar-studio">
+            <Button className="cyan-gradient text-black font-extrabold text-xs h-10 uppercase px-5 holographic-btn">
+              <Sliders className="w-3.5 h-3.5 mr-1.5" />
+              The Forge
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Top Performers Ranking Banner */}
-      {topPerformers.length > 0 && (
-        <div className="mb-10 p-6 rounded-2xl bg-gradient-to-r from-[#00F0FF]/10 via-black/60 to-[#FFD700]/10 border border-white/10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 font-mono text-sm font-bold text-white uppercase">
-              <Trophy className="w-4 h-4 text-[#FFD700]" />
-              <span>Verified Top Performers // Verified On-Chain P&L Leaderboard</span>
-            </div>
-            <span className="text-[10px] font-mono text-green-400">Algorithmic Darwinism Rank</span>
-          </div>
+      {/* =========================================================================
+          SPLIT-VIEW MARKETPLACE LAYOUT
+      ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* =======================================================================
+            LEFT SIDE (5 COLS): LIVE FIGHTER PREVIEW & STAT IMPACT
+        ======================================================================= */}
+        <div className="lg:col-span-5 sticky top-24 space-y-4">
+          <div className="glass-card p-6 rounded-3xl border border-white/10 bg-[#0B0B14]/90 flex flex-col items-center justify-center relative min-h-[460px]">
+            {/* Live Fighter Model with Instant Preview Equip */}
+            <AvatarRenderer
+              avatarId={selectedBaseModel}
+              loadout={previewLoadout}
+              size="stage"
+              mood="battle"
+              animated={true}
+              interactive={true}
+              showParallax={true}
+            />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {topPerformers.slice(0, 4).map((agent, idx) => (
-              <div key={agent.id} className="p-3.5 rounded-xl bg-black/60 border border-white/5 space-y-1.5 font-mono">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-[#00F0FF] font-bold">#{idx + 1} {agent.rankInfo.tierBadge.replace(/_/g, ' ')}</span>
-                  <span className="text-green-400 font-bold">+${agent.profit.toFixed(1)} USDC</span>
-                </div>
-                <div className="text-xs font-bold text-white truncate">{agent.name}</div>
-                <div className="flex justify-between text-[10px] text-[#8E9BB4]">
-                  <span>Survival: {agent.survivalScore}/100</span>
-                  <span>★ {agent.rankInfo.trustRating.toFixed(1)}</span>
-                </div>
+            {/* Live Fighter HUD Tag */}
+            <div className="w-full pt-4 border-t border-white/10 flex items-center justify-between font-mono">
+              <div>
+                <span className="text-[9px] uppercase text-[#00F0FF] font-bold block">LIVE STAGE TARGET</span>
+                <span className="text-xs font-bold text-white uppercase">{activeAgent?.name || 'GENESIS COMBATANT'}</span>
               </div>
-            ))}
+              <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                <span>INSTANT MIRROR ACTIVE</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Real-time Stat Performance Gauges */}
+          <div className="glass-card p-5 rounded-2xl border border-white/10 bg-[#0B0B14] space-y-3">
+            <h4 className="text-xs font-mono uppercase font-bold text-white flex items-center gap-1.5 border-b border-white/10 pb-2">
+              <Zap className="w-3.5 h-3.5 text-[#00F0FF]" /> Live Loadout Stats
+            </h4>
+            <FighterStatsBar stats={liveStats} compact={false} />
           </div>
         </div>
-      )}
 
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center mb-8">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[#8E9BB4] absolute left-3 top-1/2 -translate-y-1/2" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search agents or cosmetics..."
-            className="pl-9 bg-black/50 border-white/10 text-white font-mono text-xs h-9 rounded-xl"
-          />
-        </div>
+        {/* =======================================================================
+            RIGHT SIDE (7 COLS): SLOT FILTERS & COMBAT CATALOG
+        ======================================================================= */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Search Bar & Slot Filter Pills */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E9BB4]" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tactical visors, flame auras, dragon wings..."
+                className="bg-black/60 border-white/15 text-white pl-10 font-mono text-xs h-10 rounded-xl focus:border-[#00F0FF]"
+              />
+            </div>
 
-        <div className="flex gap-2 p-1 bg-black/40 rounded-xl border border-white/10 w-full sm:w-auto">
-          {['ALL', 'AGENT', 'COSMETIC'].map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilterType(type as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                filterType === type
-                  ? 'cyan-gradient text-black font-bold'
-                  : 'text-[#8E9BB4] hover:text-white'
-              }`}
-            >
-              {type === 'ALL' ? 'All Listings' : type === 'AGENT' ? '🤖 Sovereign Agents' : '👑 Rare Cosmetics'}
-            </button>
-          ))}
+            {/* 6 Category Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none font-mono">
+              {SLOT_FILTERS.map((f) => {
+                const Icon = f.icon;
+                const isActive = slotFilter === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setSlotFilter(f.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                      isActive
+                        ? 'bg-[#00F0FF] text-black shadow-[0_0_12px_rgba(0,240,255,0.35)]'
+                        : 'bg-white/5 text-[#8E9BB4] hover:text-white border border-white/10'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{f.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Catalog Items Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filteredCatalog.map((item) => {
+              const isEquipped = previewLoadout[item.slot] === item.id;
+              const isOwned = ownedItemIds.has(item.id);
+              const tier = COSMETIC_TIERS[item.rarity];
+              const isPurchasing = purchasingId === item.id;
+
+              return (
+                <motion.div
+                  key={item.id}
+                  onClick={() => handleItemClick(item)}
+                  whileHover={{ scale: 1.015, y: -2 }}
+                  whileTap={{ scale: 0.985 }}
+                  className={`relative glass-card p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between overflow-hidden ${
+                    isEquipped
+                      ? 'border-[#00F0FF] bg-[#00F0FF]/15 shadow-[0_0_16px_rgba(0,240,255,0.25)]'
+                      : 'border-white/10 bg-[#0B0B14]/80 hover:border-white/20'
+                  }`}
+                >
+                  {/* Top Header: Slot Tag & Price/Status */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${tier.color}`}>
+                      {item.rarity} // {item.slot}
+                    </span>
+
+                    {isEquipped ? (
+                      <span className="text-[9px] font-mono font-black uppercase px-2 py-0.5 rounded bg-[#00F0FF] text-black">
+                        EQUIPPED
+                      </span>
+                    ) : isOwned ? (
+                      <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        OWNED
+                      </span>
+                    ) : (
+                      <span className="text-xs font-mono font-extrabold text-[#FFD700]">
+                        {item.price > 0 ? `$${item.price.toFixed(2)}` : 'FREE REWARD'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Item Art Frame / Placeholder (Zero Emojis) */}
+                  <div className={`w-full h-32 rounded-xl flex items-center justify-center mb-3 border ${tier.color} bg-black/40 relative overflow-hidden`}>
+                    {!item.artPending ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-contain p-2 filter drop-shadow-[0_0_12px_currentColor]"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1.5 text-center p-3">
+                        <Sparkles className="w-6 h-6 opacity-70" />
+                        <span className="text-[9px] font-mono uppercase tracking-widest text-[#8E9BB4] font-bold">
+                          {item.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Item Description & Stat Modifiers */}
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="text-sm font-bold font-mono text-white truncate">{item.name}</h3>
+                    <p className="text-[11px] text-[#8E9BB4] font-mono line-clamp-2 leading-relaxed">{item.desc}</p>
+
+                    {/* Stat Boosts Pill */}
+                    <div className="flex items-center gap-2 pt-1 text-[10px] font-mono text-emerald-400 font-bold">
+                      {item.statModifiers.pwr && <span>+{item.statModifiers.pwr} PWR</span>}
+                      {item.statModifiers.spd && <span>+{item.statModifiers.spd} SPD</span>}
+                      {item.statModifiers.def && <span>+{item.statModifiers.def} DEF</span>}
+                      {item.statModifiers.syn && <span>+{item.statModifiers.syn} SYN</span>}
+                    </div>
+                  </div>
+
+                  {/* Card Action Footer */}
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-2 mt-2">
+                    <span className="text-[10px] font-mono text-[#8E9BB4] uppercase">
+                      {isEquipped ? 'Active in Stage' : 'Click to Preview'}
+                    </span>
+
+                    {!isOwned && item.price > 0 ? (
+                      <Button
+                        size="sm"
+                        disabled={isPurchasing}
+                        onClick={(e) => handlePurchase(item, e)}
+                        className="h-7 text-[10px] font-mono font-bold uppercase cyan-gradient text-black px-3"
+                      >
+                        <DollarSign className="w-3 h-3 mr-0.5" />
+                        {isPurchasing ? 'BUYING...' : 'PURCHASE'}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant={isEquipped ? 'secondary' : 'outline'}
+                        onClick={() => handleItemClick(item)}
+                        className="h-7 text-[10px] font-mono font-bold uppercase border-white/20 text-white"
+                      >
+                        {isEquipped ? 'EQUIPPED' : 'EQUIP'}
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
-
-      {/* Listings Grid */}
-      {loading ? (
-        <div className="py-24 text-center">
-          <Loader2 className="w-8 h-8 text-[#00F0FF] animate-spin mx-auto mb-3" />
-          <p className="text-xs text-[#8E9BB4] font-mono">LOADING MARKETPLACE ORDERBOOKS...</p>
-        </div>
-      ) : filteredListings.length === 0 ? (
-        <div className="glass-card p-12 text-center max-w-xl mx-auto space-y-4">
-          <Tag className="w-12 h-12 text-[#FFD700] mx-auto animate-pulse" />
-          <h3 className="text-lg font-bold text-white font-orbitron uppercase">No Listings Found</h3>
-          <p className="text-xs text-[#8E9BB4] font-sans">
-            Try adjusting your search query or filter.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredListings.map((item) => {
-            const isBuying = purchasingId === item.id;
-            const isAgent = item.itemType === 'AGENT' && item.agent;
-            const isCosmetic = item.itemType === 'COSMETIC' && item.cosmetic;
-
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-6 flex flex-col justify-between relative border border-white/10 hover:border-[#00F0FF]/40 transition-all"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/20 px-2 py-0.5 rounded">
-                      {isAgent ? item.agent.archetype : item.cosmetic?.category || 'ITEM'}
-                    </span>
-                    <span className="text-sm font-mono font-black text-green-400">
-                      ${item.price.toFixed(2)} {item.currency}
-                    </span>
-                  </div>
-
-                  {/* Item Preview */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center text-2xl">
-                      {isAgent ? '🤖' : item.cosmetic?.previewUrl || '👑'}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-white font-mono truncate max-w-[200px]">
-                        {isAgent ? item.agent.name : item.cosmetic?.name}
-                      </h3>
-                      <span className="text-[10px] text-[#8E9BB4] font-mono block">
-                        Seller: {item.seller?.name || 'Protocol Genesis'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Agent P&L / Spec Breakdown */}
-                  {isAgent && (
-                    <div className="p-3 bg-black/40 rounded-lg border border-white/5 space-y-1 text-xs font-mono mb-4">
-                      <div className="flex justify-between">
-                        <span className="text-[#8E9BB4]">Verified Profit:</span>
-                        <span className="text-green-400 font-bold">+${item.agent.profit.toFixed(2)} USDC</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#8E9BB4]">Darwinism Score:</span>
-                        <span className="text-[#00F0FF] font-bold">{item.agent.survivalScore}/100</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {isCosmetic && (
-                    <div className="p-3 bg-black/40 rounded-lg border border-white/5 text-xs font-mono mb-4">
-                      <span className="text-[#FFD700] uppercase font-bold">Rarity: {item.cosmetic.rarity}</span>
-                      <p className="text-[10px] text-[#8E9BB4] font-sans mt-1">Unlockable for GTA avatar customizer</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  {isAgent && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setDemoAgent(item.agent)}
-                      className="w-full border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] hover:bg-[#00F0FF]/10 bg-black/40 h-8"
-                    >
-                      <Bot className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF]" /> 🎙️ Demo & Talk (Voice)
-                    </Button>
-                  )}
-
-                  <Button
-                    onClick={() => handleBuy(item.id)}
-                    disabled={isBuying}
-                    className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
-                  >
-                    {isBuying ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Settling on Conway...
-                      </>
-                    ) : (
-                      <>
-                        <Coins className="w-3.5 h-3.5 mr-1.5 fill-current" /> Buy Now (${item.price} USDC)
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Global AI Companion Demo Modal */}
-      <AgentCompanionModal
-        isOpen={!!demoAgent}
-        onClose={() => setDemoAgent(null)}
-        agent={demoAgent}
-        user={user}
-      />
     </div>
   );
 }

@@ -77,6 +77,15 @@ export function TasksContainer({ userRole }: Props) {
           <TaskFilters
             filters={filters}
             onChange={setFilters}
+            onReset={() =>
+              setFilters({
+                search: '',
+                difficulty: 'ALL',
+                category: 'ALL',
+                riskLevel: 'ALL',
+                sort: 'newest',
+              })
+            }
             userRole={userRole}
             onTaskGenerated={handleTaskGenerated}
           />

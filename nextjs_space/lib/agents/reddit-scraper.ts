@@ -2,7 +2,7 @@ import { callLLM } from '@/lib/pipeline';
 import { sendNotificationEmail } from '@/lib/email';
 
 export interface RedditScraperParams {
-  subreddit: string;
+  subreddit?: string;
   topic?: string;
   maxPosts?: number;
   userEmail?: string;

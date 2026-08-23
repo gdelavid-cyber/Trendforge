@@ -81,21 +81,12 @@ export async function POST(request: Request) {
             generatedAt: now,
             expiresAt,
             trendScore,
-            isTrending,
+            isFeatured: isTrending,
             requiresOptIn: t?.risk_level === 'HIGH',
           },
         });
 
         if (isTrending) {
-          // Record TrendingSnapshot
-          await prisma.trendingSnapshot.create({
-            data: {
-              taskId: newTask.id,
-              trendScore,
-              capturedAt: now,
-            }
-          });
-
           // Publish real-time notification to Redis
           try {
             await redis.publish('trending-tasks', JSON.stringify({
@@ -112,7 +103,7 @@ export async function POST(request: Request) {
                 timeToFirstDollar: newTask.timeToFirstDollar,
                 category: newTask.category,
                 trendScore: newTask.trendScore,
-                isTrending: newTask.isTrending,
+                isFeatured: isTrending,
                 generatedAt: now.toISOString(),
                 expiresAt: expiresAt.toISOString(),
               }

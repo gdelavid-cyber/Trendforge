@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const { targetAgentId } = body;
 
     const result = await claimUserGrant(user.id, targetAgentId);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Grant claim failed' }, { status: 400 });
   }

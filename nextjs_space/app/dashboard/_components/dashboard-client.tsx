@@ -40,6 +40,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary }: DashboardClientProps) {
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
+  const [companionInitialMessage, setCompanionInitialMessage] = useState<string | undefined>(undefined);
   const earnings = user?.totalEarnings ?? 0;
   const completedCount = user?.completedCount ?? 0;
   const userTasksList = user?.userTasks ?? [];

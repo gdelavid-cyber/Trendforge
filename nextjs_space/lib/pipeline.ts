@@ -1,10 +1,11 @@
 // Enhanced Autonomous Viral Intelligence & Multi-Source Scraper Engine
 
 export function validatePipelineKey(request: Request): boolean {
+  const valid = process.env.PIPELINE_API_KEY;
+  if (!valid) return false;
   const key = request.headers.get('x-api-key') || request.headers.get('authorization')?.replace('Bearer ', '');
   const url = new URL(request.url);
   const queryKey = url.searchParams.get('key');
-  const valid = process.env.PIPELINE_API_KEY || '4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b';
   return key === valid || queryKey === valid;
 }
 

@@ -1,4 +1,4 @@
-export interface BattleTierConfig {
+export type BattleTierConfig = {
   tier: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
   name: string;
   entryFeeUsdc: number;
