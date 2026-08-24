@@ -50,6 +50,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await prisma.approval.deleteMany({ where: { userId } });
   await prisma.userTask.deleteMany({ where: { userId } });
+  await prisma.companion.deleteMany({ where: { userId } });
   await prisma.task.deleteMany({ where: { trendId } });
   await prisma.trend.deleteMany({ where: { id: trendId } });
   await prisma.user.deleteMany({ where: { id: userId } });
