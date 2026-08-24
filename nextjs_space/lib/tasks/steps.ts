@@ -123,3 +123,43 @@ export function parseSteps(raw: unknown): ParsedStep[] {
     .filter((s): s is ParsedStep => s !== null)
     .sort((a, b) => a.index - b.index);
 }
+
+/**
+ * Keyword classifier for legacy free-text step strings. Ordered by
+ * specificity: outbound verbs win over drafting verbs ("Send personalized
+ * recordings" is a send even though it contains production language).
+ */
+export function classifyAction(text: string): StepAction {
+  const t = text.toLowerCase();
+  if (/\b(scrape|harvest|apollo|clay|lead list|google maps)\b/.test(t)) return 'scrape';
+  if (/\b(send|outreach|cold email|sequence|dm |pitch them|follow.?up)\b/.test(t)) return 'send';
+  if (/\b(deploy|launch|publish|ship)\b/.test(t)) return 'deploy';
+  if (/\b(draft|write)\b/.test(t)) return 'draft';
+  if (/\b(generate|create|design|record|produce|splice|synthesize|build|set up)\b/.test(t)) return 'generate';
+  if (/\b(research|identify|analyze|study|scout)\b/.test(t)) return 'research';
+  return 'analyze';
+}
+
+/**
+ * Converts whatever shape of steps arrived from generation (legacy string[],
+ * structured objects, or an already-parsed array) into a JSON string of
+ * structured steps suitable for storage in the Task.steps Json column.
+ * New writes to the DB should go through this so every new task is
+ * engine-executable.
+ */
+export function toStructuredStepsJson(rawSteps: unknown): string {
+  const structured = parseSteps(rawSteps).map((step) => {
+    if (step.source !== 'legacy') return step;
+    // Upgrade legacy advisory text into an executable step: classify the
+    // action from its wording and gate it exactly like native steps.
+    const action = classifyAction(step.title);
+    return {
+      ...step,
+      action,
+      external: EXTERNAL_BY_DEFAULT.has(action),
+      outputType: 'text' as const,
+      source: 'structured' as const,
+    };
+  });
+  return JSON.stringify(structured);
+}

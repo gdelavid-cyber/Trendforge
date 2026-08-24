@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { callLLM } from '@/lib/pipeline';
+import { toStructuredStepsJson } from '@/lib/tasks/steps';
 
 export async function POST(request: Request) {
   try {
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
         trendId: trend.id,
         title: parsedTask.title ?? `Custom ${topic} Task`,
         description: parsedTask.description ?? '',
-        steps: JSON.stringify(parsedTask.steps ?? []),
+          steps: toStructuredStepsJson(parsedTask.steps ?? []),
         difficulty: parsedTask.difficulty ?? 'LOW',
         startupCost: parsedTask.startup_cost ?? 0,
         timeToFirstDollar: parsedTask.time_to_first_dollar ?? '1-7 days',

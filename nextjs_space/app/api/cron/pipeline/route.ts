@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { toStructuredStepsJson } from '@/lib/tasks/steps';
 import {
   callLLM,
   scrapeHackerNewsViral,
@@ -170,7 +171,11 @@ async function runPipelineCycle() {
           title: taskTitle,
           description: parsedTask.description || `Step-by-step blueprint to monetize ${trend.name}.`,
           category: trend.category,
-          steps: Array.isArray(parsedTask.steps) && parsedTask.steps.length > 0 ? parsedTask.steps : ['Identify demand', 'Deploy solution', 'Acquire clients'],
+          steps: toStructuredStepsJson(
+            Array.isArray(parsedTask.steps) && parsedTask.steps.length > 0
+              ? parsedTask.steps
+              : ['Identify demand', 'Deploy solution', 'Acquire clients']
+          ),
           difficulty: ['ZERO', 'LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.difficulty) ? parsedTask.difficulty : 'LOW',
           startupCost: typeof parsedTask.startup_cost === 'number' ? parsedTask.startup_cost : 0,
           timeToFirstDollar: parsedTask.time_to_first_dollar || '1-3 days',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSteps } from '../lib/tasks/steps';
+import { classifyAction, parseSteps, toStructuredStepsJson } from '../lib/tasks/steps';
 
 describe('task steps parser', () => {
   it('returns an empty list for null/undefined/empty input', () => {
@@ -73,5 +73,36 @@ describe('task steps parser', () => {
     const steps = parseSteps(arr);
     expect(steps).toHaveLength(1);
     expect(steps[0]).toMatchObject({ action: 'scrape', tools: ['scraper'], estimatedTime: '10m' });
+  });
+
+  describe('classifyAction (legacy text → executable action)', () => {
+    it('classifies outbound wording as send regardless of drafting verbs', () => {
+      expect(classifyAction('Send personalized 45-second screen recordings to owners')).toBe('send');
+      expect(classifyAction('Warm up domains and sequence 3-step outreach')).toBe('send');
+    });
+
+    it('classifies research/scrape/draft/generate families', () => {
+      expect(classifyAction('Scrape Google Maps for local businesses')).toBe('scrape');
+      expect(classifyAction('Identify high-intent buyer personas')).toBe('research');
+      expect(classifyAction('Draft a pitch per prospect')).toBe('draft');
+      expect(classifyAction('Build a demo agent for a restaurant')).toBe('generate');
+      expect(classifyAction('Review the numbers')).toBe('analyze');
+    });
+  });
+
+  describe('toStructuredStepsJson (storage upgrade path)', () => {
+    it('upgrades legacy string steps into gated structured steps', () => {
+      const out = JSON.parse(toStructuredStepsJson(['Research 20 clients', 'Send cold emails']));
+      expect(out).toHaveLength(2);
+      expect(out[0]).toMatchObject({ action: 'research', external: false, source: 'structured' });
+      expect(out[1]).toMatchObject({ action: 'send', external: true });
+    });
+
+    it('passes through already-structured steps unchanged in kind', () => {
+      const src = [{ id: 's1', title: 'Deploy landing page', action: 'deploy' }];
+      const out = JSON.parse(toStructuredStepsJson(src));
+      expect(out[0].source).toBe('structured');
+      expect(out[0].external).toBe(true);
+    });
   });
 });
