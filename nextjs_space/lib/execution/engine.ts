@@ -41,6 +41,17 @@ function runnerFor(deps: EngineDeps) {
   return createInternalRunner(deps.llm ?? makeLlm());
 }
 
+/** Brain priority: user's own key â†’ platform default (opencode dev / Gemini / Abacus). */
+async function resolveDeps(userId: string, deps: EngineDeps): Promise<EngineDeps> {
+  if (deps.llm) return deps;
+  try {
+    const { getUserLlm } = await import('@/lib/llm/user-llm');
+    const userLlm = await getUserLlm(userId);
+    if (userLlm) return { ...deps, llm: userLlm };
+  } catch {}
+  return deps;
+}
+
 async function appendStepResult(userTaskId: string, index: number, entry: Record<string, unknown>) {
   const current = await prisma.userTask.findUnique({
     where: { id: userTaskId },
@@ -74,7 +85,9 @@ export async function startExecution(
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (!task) return { ok: false, error: 'Task not found' };
 
-  // Resolve the executing companion (explicit → primary).
+  const effectiveDeps = await resolveDeps(userId, deps);
+
+  // Resolve the executing companion (explicit â†’ primary).
   let companionId = opts.companionId;
   if (!companionId) {
     try {
@@ -126,12 +139,12 @@ export async function startExecution(
       : userTask.currentStep ?? 0;
 
   if (mode === 'CO_PILOT') {
-    const result = await runSingleStep(userTask.id, userId, taskId, steps, startIndex, deps);
+    const result = await runSingleStep(userTask.id, userId, taskId, steps, startIndex, effectiveDeps);
     return { ok: result.ok, error: result.error, userTaskId: userTask.id, stepResult: result.outcome };
   }
 
-  // AUTOPILOT — loop (awaited only under test for determinism)
-  const loop = runAutopilot(userTask.id, userId, taskId, steps, startIndex, deps);
+  // AUTOPILOT â€” loop (awaited only under test for determinism)
+  const loop = runAutopilot(userTask.id, userId, taskId, steps, startIndex, effectiveDeps);
   if (deps.awaitLoops) await loop;
   return { ok: true, userTaskId: userTask.id, status: 'STEP_EXECUTING' };
 }
@@ -242,6 +255,7 @@ async function queueApproval(
 
 /** Approving a gate marks it approved and resumes an AUTOPILOT run after it. */
 export async function approveGate(approvalId: string, userId: string, deps: EngineDeps = {}): Promise<StartResult> {
+  deps = await resolveDeps(userId, deps);
   const approval = await prisma.approval.findUnique({ where: { id: approvalId }, include: { userTask: true } });
   if (!approval || approval.userId !== userId) return { ok: false, error: 'Not found' };
   if (approval.status !== 'PENDING') return { ok: false, error: 'Already reviewed' };
@@ -260,6 +274,7 @@ export async function approveGate(approvalId: string, userId: string, deps: Engi
 }
 
 export async function rejectGate(approvalId: string, userId: string, deps: EngineDeps = {}): Promise<StartResult> {
+  deps = await resolveDeps(userId, deps);
   const approval = await prisma.approval.findUnique({ where: { id: approvalId }, include: { userTask: true } });
   if (!approval || approval.userId !== userId) return { ok: false, error: 'Not found' };
   if (approval.status !== 'PENDING') return { ok: false, error: 'Already reviewed' };
@@ -291,3 +306,5 @@ async function buildContext(userTaskId: string, taskTitle: string) {
   }
   return { taskTitle, companionName, previousResults };
 }
+
+

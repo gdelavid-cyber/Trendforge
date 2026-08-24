@@ -114,10 +114,26 @@ export async function processAgentConversation(params: {
     userContext,
   }) + (taskContext ? `\n\n${taskContext}` : '');
 
-  // 3. Call LLM — provider chain: opencode (dev) → Gemini → heuristic fallback
+  // 3. Call LLM — provider chain: user BYOK → opencode (dev) → Gemini → heuristic
   let rawResponseText = '';
 
-  if (process.env.LLM_PROVIDER === 'opencode') {
+  if (userId) {
+    try {
+      const { getUserLlm } = await import('@/lib/llm/user-llm');
+      const userLlm = await getUserLlm(userId);
+      if (userLlm) {
+        rawResponseText = await userLlm([
+          { role: 'system', content: systemPrompt },
+          ...history.slice(-6),
+          { role: 'user', content: message },
+        ]);
+      }
+    } catch (err: any) {
+      console.warn('[Agent Brain] user brain failed, falling back:', err.message);
+    }
+  }
+
+  if (!rawResponseText && process.env.LLM_PROVIDER === 'opencode') {
     try {
       const llm = makeLlm();
       rawResponseText = await llm([

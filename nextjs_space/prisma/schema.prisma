@@ -116,6 +116,7 @@ model User {
   userTasks             UserTask[]
   approvals             Approval[]
   companions            Companion[]
+  llmKey                UserLlmKey?
   successStories        SuccessStory[]
   sentFavors            Favor[]          @relation("FavorFrom")
   receivedFavors        Favor[]          @relation("FavorTo")
@@ -910,6 +911,20 @@ model Companion {
   updatedAt      DateTime @updatedAt
 
   @@index([userId])
+}
+
+// Bring-your-own-key companion brain. Encrypted at rest; used by the
+// execution engine and chat brain ahead of platform defaults.
+model UserLlmKey {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  provider     String   // 'openrouter' | 'custom'
+  model        String
+  baseUrl      String?
+  encryptedKey String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 

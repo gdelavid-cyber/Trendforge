@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -16,6 +16,7 @@ import {
   Sparkles,
   HeartHandshake,
   Share2,
+  BrainCircuit,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,6 +81,16 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  // Personal brain (BYOK) state
+  const [brainConnected, setBrainConnected] = useState(false);
+  const [brainProvider, setBrainProvider] = useState('openrouter');
+  const [brainModel, setBrainModel] = useState('');
+  const [brainBaseUrl, setBrainBaseUrl] = useState('');
+  const [brainApiKey, setBrainApiKey] = useState('');
+  const [brainMaskedKey, setBrainMaskedKey] = useState('');
+  const [savingBrain, setSavingBrain] = useState(false);
+  const [loadingBrain, setLoadingBrain] = useState(true);
 
   const toggleSkill = (skill: string) => {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]));
@@ -153,6 +164,92 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
       toast.error('Error changing password');
     } finally {
       setUpdatingPassword(false);
+    }
+  };
+
+  const loadBrain = async () => {
+    setLoadingBrain(true);
+    try {
+      const res = await fetch('/api/settings/llm');
+      const data = await res.json();
+      if (res.ok && data.connected) {
+        setBrainConnected(true);
+        setBrainProvider(data.config.provider);
+        setBrainModel(data.config.model);
+        setBrainBaseUrl(data.config.baseUrl ?? '');
+        setBrainMaskedKey(data.config.maskedKey);
+      } else {
+        setBrainConnected(false);
+        setBrainMaskedKey('');
+      }
+    } catch {
+      // Non-fatal — section just shows defaults.
+    } finally {
+      setLoadingBrain(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBrain();
+  }, []);
+
+  const handleSaveBrain = async () => {
+    if (!brainModel.trim()) {
+      toast.error('Model is required');
+      return;
+    }
+    if (!brainApiKey.trim() && !brainConnected) {
+      toast.error('API key is required');
+      return;
+    }
+    if (brainProvider === 'custom' && !brainBaseUrl.trim()) {
+      toast.error('Base URL is required for custom providers');
+      return;
+    }
+    setSavingBrain(true);
+    try {
+      const res = await fetch('/api/settings/llm', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: brainProvider,
+          model: brainModel,
+          baseUrl: brainProvider === 'custom' ? brainBaseUrl : undefined,
+          apiKey: brainApiKey,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Personal brain connected! Your companion now uses it for every task.');
+        setBrainApiKey('');
+        setBrainMaskedKey(data.config.maskedKey);
+        setBrainConnected(true);
+      } else {
+        toast.error(data.error ?? 'Failed to connect brain');
+      }
+    } catch {
+      toast.error('Error connecting brain');
+    } finally {
+      setSavingBrain(false);
+    }
+  };
+
+  const handleDisconnectBrain = async () => {
+    setSavingBrain(true);
+    try {
+      const res = await fetch('/api/settings/llm', { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Personal brain disconnected — platform default restored.');
+        setBrainConnected(false);
+        setBrainMaskedKey('');
+        setBrainApiKey('');
+      } else {
+        toast.error('Failed to disconnect');
+      }
+    } catch {
+      toast.error('Error disconnecting brain');
+    } finally {
+      setSavingBrain(false);
     }
   };
 
@@ -257,6 +354,94 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
           >
             {successFeeOptIn ? '✓ Active (+2 Runs)' : 'Enable 5% Success-Fee'}
           </Button>
+        </div>
+      </motion.div>
+
+      {/* Personal Brain (BYOK) */}
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8 border border-[#FFD700]/20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <BrainCircuit className="w-4 h-4 text-[#FFD700]" />
+            <h3 className="text-base font-bold text-white uppercase tracking-wider">Personal Brain (BYOK)</h3>
+            {loadingBrain ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8892B0]" />
+            ) : brainConnected ? (
+              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/30 flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" /> Connected {brainMaskedKey && `· ${brainMaskedKey}`}
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-black/60 text-[#8892B0] border border-white/10">
+                Platform Default
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="text-xs text-[#8892B0] font-sans max-w-xl mb-4">
+          Plug in your own OpenAI-compatible key and your companion uses it as its brain for every task and chat — encrypted at rest, never shown again. Falls back to the platform default when disconnected.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-sans">
+          <div>
+            <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Provider</label>
+            <select
+              value={brainProvider}
+              onChange={(e) => setBrainProvider(e.target.value)}
+              className="w-full bg-black/50 border border-white/10 rounded-md text-white text-xs h-9 px-2"
+            >
+              <option value="openrouter">OpenRouter</option>
+              <option value="custom">Custom (OpenAI-compatible URL)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Model</label>
+            <Input
+              placeholder={brainProvider === 'openrouter' ? 'e.g. anthropic/claude-sonnet-4' : 'e.g. qwen3-coder'}
+              value={brainModel}
+              onChange={(e) => setBrainModel(e.target.value)}
+              className="bg-black/50 border-white/10 text-white text-xs h-9"
+            />
+          </div>
+          {brainProvider === 'custom' && (
+            <div className="md:col-span-2">
+              <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Base URL</label>
+              <Input
+                placeholder="https://your-gateway.com/v1"
+                value={brainBaseUrl}
+                onChange={(e) => setBrainBaseUrl(e.target.value)}
+                className="bg-black/50 border-white/10 text-white text-xs h-9"
+              />
+            </div>
+          )}
+          <div className="md:col-span-2">
+            <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">
+              API Key {brainConnected && <span className="normal-case">(leave blank to keep current)</span>}
+            </label>
+            <Input
+              type="password"
+              placeholder={brainConnected ? '••••••••••••' : 'sk-or-v1-…'}
+              value={brainApiKey}
+              onChange={(e) => setBrainApiKey(e.target.value)}
+              className="bg-black/50 border-white/10 text-white text-xs h-9"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mt-4">
+          <Button
+            onClick={handleSaveBrain}
+            disabled={savingBrain || loadingBrain}
+            className="cyan-gradient text-black font-extrabold uppercase text-xs h-8 px-4"
+          >
+            {savingBrain ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : brainConnected ? 'Update Brain' : 'Connect Brain'}
+          </Button>
+          {brainConnected && (
+            <Button
+              onClick={handleDisconnectBrain}
+              disabled={savingBrain}
+              variant="outline"
+              className="border-red-500/40 text-red-400 hover:text-red-300 text-xs font-mono uppercase h-8 px-4"
+            >
+              Disconnect
+            </Button>
+          )}
         </div>
       </motion.div>
 
