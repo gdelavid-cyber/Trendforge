@@ -1,19 +1,35 @@
-import { makeLlm } from '@/lib/execution/llm';
 import type { ParsedStep } from '@/lib/tasks/steps';
 
-// Step handlers turn a step into work. Internal actions run through the LLM;
-// external actions never execute here — the engine converts them into
-// Approval rows before any handler would fire.
+// Step handlers turn a step into real work. Internal actions run through the
+// LLM (grounded by earlier steps); external actions run live integrations from
+// the user's vault via the runner registry — and never fake success.
+// The engine still converts gated external actions into Approval rows first.
 
 export interface StepContext {
   taskTitle: string;
   companionName: string;
   previousResults: string[];
+  userId: string;
+  userTaskId: string;
+  stepIndex: number;
+  /** Resolved brain for drafting; the registry binds one when omitted. */
+  llm?: LlmFn;
+}
+
+export interface StepArtifact {
+  kind: string; // 'FILE' | 'EMAIL' | 'POST' | 'TRADE' | 'RESEARCH'
+  name: string;
+  url?: string | null;
+  meta?: Record<string, unknown>;
 }
 
 export interface StepOutcome {
   output: string;
   costUsd: number;
+  /** True when the step could not really run (missing key/integration). */
+  blocked?: boolean;
+  /** Real-world deliverable produced by the step, persisted by the engine. */
+  artifact?: StepArtifact;
 }
 
 export type LlmFn = (messages: { role: string; content: string }[], jsonMode?: boolean) => Promise<string>;
@@ -23,36 +39,4 @@ export interface StepRunner {
   run(step: ParsedStep, ctx: StepContext): Promise<StepOutcome>;
 }
 
-const UNIT_COST = 0.005;
-
-function buildPrompt(step: ParsedStep, ctx: StepContext): { system: string; user: string } {
-  const history = ctx.previousResults.length
-    ? `Prior step results:\n${ctx.previousResults.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
-    : 'This is the first step.';
-
-  return {
-    system: `You are ${ctx.companionName}, an autonomous money-making companion executing "${ctx.taskTitle}". Produce concrete, usable output for the current step — no filler, no disclaimers.`,
-    user: `${history}\n\nCurrent step (${step.action}): ${step.title}\n${step.description}\nDeliver the actual result for this step now.`,
-  };
-}
-
-async function llmStep(step: ParsedStep, ctx: StepContext, llm: LlmFn): Promise<StepOutcome> {
-  const { system, user } = buildPrompt(step, ctx);
-  const output = await llm(
-    [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
-    ],
-    false
-  );
-  return { output: output || '(no output produced)', costUsd: UNIT_COST };
-}
-
-export function createInternalRunner(llm: LlmFn = makeLlm()): StepRunner {
-  return {
-    canHandle(action: string) {
-      return ['research', 'draft', 'generate', 'analyze', 'scrape'].includes(action);
-    },
-    run: (step, ctx) => llmStep(step, ctx, llm),
-  };
-}
+export { createSkillRunner } from './runners';

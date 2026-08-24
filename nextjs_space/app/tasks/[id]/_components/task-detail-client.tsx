@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, Shield, Clock, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy, Bot, Zap, Wrench, Loader2 } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, Clock, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy, Bot, Zap, Wrench, Loader2, FileText, Mail, Share2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,9 +17,18 @@ interface Props {
   task: any;
   userTask: any;
   stories: { id: string; earningsAmount: number; description: string; userName: string }[];
+  artifacts?: { id: string; stepIndex: number; kind: string; name: string; url: string | null; createdAt: string | null }[];
 }
 
-export function TaskDetailClient({ task, userTask: initialUserTask, stories }: Props) {
+const ARTIFACT_META: Record<string, { label: string; icon: typeof FileText }> = {
+  FILE: { label: 'File', icon: FileText },
+  EMAIL: { label: 'Email', icon: Mail },
+  POST: { label: 'Post', icon: Share2 },
+  TRADE: { label: 'Trade', icon: TrendingUp },
+  RESEARCH: { label: 'Research', icon: Search },
+};
+
+export function TaskDetailClient({ task, userTask: initialUserTask, stories, artifacts = [] }: Props) {
   const [userTask, setUserTask] = useState(initialUserTask);
   const [optedIn, setOptedIn] = useState(initialUserTask?.hasOptedInRisk ?? false);
   const [voting, setVoting] = useState(false);
@@ -417,6 +426,42 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
             </div>
           )}
         </div>
+
+        {/* Actual Outputs — real artifacts the companion produced */}
+        {artifacts.length > 0 && (
+          <div className="glass-card border border-green-500/20 rounded-xl p-6">
+            <h3 className="font-display font-black text-sm text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-green-400" /> Actual Outputs
+              <span className="text-[10px] font-mono font-normal text-muted-foreground normal-case tracking-normal">— real deliverables from this run, nothing simulated</span>
+            </h3>
+            <div className="space-y-2">
+              {artifacts.map((a) => {
+                const meta = ARTIFACT_META[a.kind] ?? { label: a.kind, icon: FileText };
+                const Icon = meta.icon;
+                return (
+                  <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg border border-white/5 bg-[#11111E]/30">
+                    <span className="w-7 h-7 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-3.5 h-3.5 text-green-400" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-mono font-bold text-white truncate">{a.name || meta.label}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono uppercase">
+                        {meta.label} · Step {a.stepIndex + 1}
+                      </div>
+                    </div>
+                    {a.url && (
+                      <a href={a.url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm" className="border-white/10 text-white h-8 text-xs">
+                          Open <ExternalLink className="w-3 h-3 ml-1" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Recommended Tool Links */}
         {(toolLinks?.length ?? 0) > 0 && (

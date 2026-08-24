@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { parseSteps } from '@/lib/tasks/steps';
 import { makeLlm } from '@/lib/execution/llm';
-import { createInternalRunner, type LlmFn, type StepOutcome } from './skills';
+import { createSkillRunner, type LlmFn, type StepContext, type StepOutcome } from './skills';
 
 export type ExecutionMode = 'DIY' | 'CO_PILOT' | 'AUTOPILOT';
 
@@ -38,7 +38,7 @@ const DEFAULT_NOTIFY = async (userId: string, subject: string, body: string) => 
 };
 
 function runnerFor(deps: EngineDeps) {
-  return createInternalRunner(deps.llm ?? makeLlm());
+  return createSkillRunner(deps.llm ?? makeLlm());
 }
 
 /** Brain priority: user's own key â†’ platform default (opencode dev / Gemini / Abacus). */
@@ -67,6 +67,31 @@ async function appendStepResult(userTaskId: string, index: number, entry: Record
       stepsCompleted: log.filter((e: any) => e.status === 'done').length,
     },
   });
+}
+
+/**
+ * Logs a step outcome and persists any real-world artifact it produced.
+ * Blocked outcomes are recorded honestly as 'blocked' — never 'done'.
+ */
+async function recordOutcome(userTaskId: string, index: number, step: { title: string; action: string }, outcome: StepOutcome) {
+  await appendStepResult(userTaskId, index, {
+    title: step.title,
+    action: step.action,
+    status: outcome.blocked ? 'blocked' : 'done',
+    output: outcome.output,
+  });
+  if (outcome.artifact) {
+    await prisma.taskArtifact.create({
+      data: {
+        userTaskId,
+        stepIndex: index,
+        kind: outcome.artifact.kind,
+        name: outcome.artifact.name,
+        url: outcome.artifact.url ?? null,
+        meta: (outcome.artifact.meta ?? undefined) as any,
+      },
+    });
+  }
 }
 
 /**
@@ -166,9 +191,9 @@ async function runSingleStep(
     return { ok: true };
   }
 
-  const ctx = await buildContext(userTaskId, task?.title ?? 'task');
+  const ctx = await buildContext(userTaskId, userId, index, task?.title ?? 'task');
   const outcome = await runnerFor(deps).run(step, ctx);
-  await appendStepResult(userTaskId, index, { title: step.title, action: step.action, status: 'done', output: outcome.output });
+  await recordOutcome(userTaskId, index, step, outcome);
   return { ok: true, outcome };
 }
 
@@ -203,7 +228,7 @@ async function runAutopilot(
         return;
       }
 
-      const ctx = await buildContext(userTaskId, task?.title ?? 'task');
+      const ctx = await buildContext(userTaskId, userId, i, task?.title ?? 'task');
       let outcome: StepOutcome;
       try {
         outcome = await runner.run(step, ctx);
@@ -211,7 +236,7 @@ async function runAutopilot(
         await appendStepResult(userTaskId, i, { title: step.title, action: step.action, status: 'failed', output: err.message });
         continue; // adapt: skip failed step, keep moving
       }
-      await appendStepResult(userTaskId, i, { title: step.title, action: step.action, status: 'done', output: outcome.output });
+      await recordOutcome(userTaskId, i, step, outcome);
     }
 
     // Companion stats: completed runs level the companion up.
@@ -263,10 +288,29 @@ export async function approveGate(approvalId: string, userId: string, deps: Engi
   await prisma.approval.update({ where: { id: approvalId }, data: { status: 'APPROVED', reviewedAt: new Date() } });
 
   const ut = approval.userTask;
-  await appendStepResult(ut.id, approval.stepIndex, { status: 'approved_by_user' });
+  const taskRow = await prisma.task.findUnique({ where: { id: ut.taskId }, select: { title: true, steps: true } });
+  const steps = parseSteps(taskRow?.steps);
+  const step = steps[approval.stepIndex];
+
+  // The gate was the only thing holding this step back — now it actually runs.
+  if (step) {
+    try {
+      const ctx = await buildContext(ut.id, userId, approval.stepIndex, taskRow?.title ?? 'task');
+      const outcome = await runnerFor(deps).run(step, ctx);
+      await recordOutcome(ut.id, approval.stepIndex, step, outcome);
+    } catch (err: any) {
+      await appendStepResult(ut.id, approval.stepIndex, {
+        title: step.title,
+        action: step.action,
+        status: 'failed',
+        output: err.message,
+      });
+    }
+  } else {
+    await appendStepResult(ut.id, approval.stepIndex, { status: 'approved_by_user' });
+  }
 
   if (ut.mode === 'AUTOPILOT') {
-    const steps = parseSteps((await prisma.task.findUnique({ where: { id: ut.taskId }, select: { steps: true } }))?.steps);
     const resume = runAutopilot(ut.id, userId, ut.taskId, steps, approval.stepIndex + 1, deps);
     if (deps.awaitLoops) await resume;
   }
@@ -291,7 +335,7 @@ export async function rejectGate(approvalId: string, userId: string, deps: Engin
   return { ok: true, userTaskId: ut.id };
 }
 
-async function buildContext(userTaskId: string, taskTitle: string) {
+async function buildRunContext(userTaskId: string, taskTitle: string) {
   const ut = await prisma.userTask.findUnique({
     where: { id: userTaskId },
     select: { stepResults: true, companionId: true },
@@ -305,6 +349,16 @@ async function buildContext(userTaskId: string, taskTitle: string) {
     if (c?.name) companionName = c.name;
   }
   return { taskTitle, companionName, previousResults };
+}
+
+async function buildContext(
+  userTaskId: string,
+  userId: string,
+  stepIndex: number,
+  taskTitle: string
+): Promise<StepContext> {
+  const base = await buildRunContext(userTaskId, taskTitle);
+  return { ...base, userId, userTaskId, stepIndex };
 }
 
 

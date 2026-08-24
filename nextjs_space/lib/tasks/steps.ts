@@ -12,15 +12,18 @@ export const STEP_ACTIONS = [
   'send',
   'deploy',
   'trade',
+  'post',
   'scrape',
   'analyze',
+  'export',
 ] as const;
 
 export type StepAction = (typeof STEP_ACTIONS)[number];
 
 // Actions that reach outside the platform require an approval gate before
-// they can be considered executed.
-const EXTERNAL_BY_DEFAULT: ReadonlySet<string> = new Set(['send', 'deploy', 'trade']);
+// they can be considered executed. 'export' stays internal: it only produces
+// a file deliverable, it never contacts a third party.
+const EXTERNAL_BY_DEFAULT: ReadonlySet<string> = new Set(['send', 'deploy', 'trade', 'post']);
 
 export interface ParsedStep {
   id: string;

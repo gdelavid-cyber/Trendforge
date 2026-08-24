@@ -1,10 +1,18 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { prisma } from '../lib/db';
 import { approveGate, rejectGate, startExecution } from '../lib/execution/engine';
 
 // Execution-engine state machine, exercised against ephemeral rows in the dev
 // database with a stubbed LLM and notification sink. These tests are the
 // safety gate for enabling Autopilot in production.
+
+// Force the FileRunner's inline path so tests never touch S3.
+vi.mock('@/lib/aws-config', () => ({
+  getBucketConfig: () => ({ bucketName: '', folderPrefix: '' }),
+  createS3Client: () => {
+    throw new Error('S3 must not be constructed in engine tests');
+  },
+}));
 
 const RUN = `exec-test-${Date.now()}`;
 
@@ -49,6 +57,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.approval.deleteMany({ where: { userId } });
+  await prisma.taskArtifact.deleteMany({ where: { userTask: { userId } } });
   await prisma.userTask.deleteMany({ where: { userId } });
   await prisma.companion.deleteMany({ where: { userId } });
   await prisma.task.deleteMany({ where: { trendId } });
@@ -78,9 +87,10 @@ describe('execution engine state machine', () => {
 
   it('AUTOPILOT runs internal steps then halts at an external gate', async () => {
     const taskId = await makeTask([
-      { id: 's1', title: 'Research 20 clients', action: 'research' },
-      { id: 's2', title: 'Send pitches', action: 'send' }, // gate
-      { id: 's3', title: 'Draft follow-ups', action: 'draft' },
+      { id: 's1', title: 'Summarize the market', action: 'analyze' },
+      { id: 's2', title: 'Build the lead sheet', action: 'export' },
+      { id: 's3', title: 'Send pitches', action: 'send' }, // gate
+      { id: 's4', title: 'Draft follow-ups', action: 'draft' },
     ]);
     const notifications: string[] = [];
 
@@ -93,26 +103,34 @@ describe('execution engine state machine', () => {
     expect(res.ok).toBe(true);
     const ut = await getUserTask(res.userTaskId!);
     expect(ut.status).toBe('PENDING_APPROVAL');
-    expect(ut.currentStep).toBe(1);
+    expect(ut.currentStep).toBe(2);
 
-    // Step 1 executed hands-off.
+    // Internal steps executed hands-off.
     const log = ut.stepResults as any[];
     expect(log[0]).toMatchObject({ index: 0, status: 'done', output: 'STUB_OUTPUT' });
+    expect(log[1]).toMatchObject({ index: 1, status: 'done' });
+
+    // The export step produced a real deliverable row (inline FILE — S3 mocked off).
+    const artifacts = await prisma.taskArtifact.findMany({ where: { userTaskId: ut.id } });
+    expect(artifacts).toHaveLength(1);
+    expect(artifacts[0]).toMatchObject({ stepIndex: 1, kind: 'FILE' });
+    expect(artifacts[0].url).toBeNull();
+    expect((artifacts[0].meta as any)?.inline).toBe(true);
 
     // Gate row created; nothing beyond it ran.
     const approvals = await prisma.approval.findMany({ where: { userTaskId: ut.id } });
     expect(approvals).toHaveLength(1);
     expect(approvals[0].status).toBe('PENDING');
-    expect(approvals[0].stepIndex).toBe(1);
-    expect(log.some((e) => e.index === 2)).toBe(false);
+    expect(approvals[0].stepIndex).toBe(2);
+    expect(log.some((e) => e.index === 3)).toBe(false);
 
     // The user was notified exactly once about the gate.
     expect(notifications).toHaveLength(1);
   });
 
-  it('approving a gate resumes the run to completion', async () => {
+  it('approving a gate runs the real step and resumes the run to completion', async () => {
     const taskId = await makeTask([
-      { id: 's1', title: 'Research market', action: 'research' },
+      { id: 's1', title: 'Research market', action: 'analyze' },
       { id: 's2', title: 'Send application', action: 'send' },
     ]);
     const res = await startExecution(userId, taskId, 'AUTOPILOT', {}, {
@@ -128,12 +146,17 @@ describe('execution engine state machine', () => {
     const ut = await getUserTask(res.userTaskId!);
     expect(ut.status).toBe('COMPLETED');
     const log = ut.stepResults as any[];
-    expect(log.map((e) => e.status)).toEqual(['done', 'approved_by_user']);
+    // Approval actually executes the gated step now. With no email key
+    // connected it records an honest BLOCKED outcome — never a faked send.
+    expect(log.map((e) => e.status)).toEqual(['done', 'blocked']);
+    expect(log[1].output).toContain('BLOCKED');
+    const artifacts = await prisma.taskArtifact.findMany({ where: { userTaskId: ut.id } });
+    expect(artifacts).toHaveLength(0);
   });
 
   it('rejecting a gate skips the step but still finishes the run', async () => {
     const taskId = await makeTask([
-      { id: 's1', title: 'Research market', action: 'research' },
+      { id: 's1', title: 'Research market', action: 'analyze' },
       { id: 's2', title: 'Deploy bot to production', action: 'deploy' },
     ]);
     const res = await startExecution(userId, taskId, 'AUTOPILOT', {}, {
@@ -174,7 +197,7 @@ describe('execution engine state machine', () => {
   });
 
   it('a live STEP_EXECUTING run cannot be re-entered', async () => {
-    const taskId = await makeTask([{ id: 's1', title: 'Research', action: 'research' }]);
+    const taskId = await makeTask([{ id: 's1', title: 'Analyze', action: 'analyze' }]);
     const res = await startExecution(userId, taskId, 'AUTOPILOT', {}, { llm: stubLlm, awaitLoops: true });
 
     await prisma.userTask.update({ where: { id: res.userTaskId! }, data: { status: 'STEP_EXECUTING' } });

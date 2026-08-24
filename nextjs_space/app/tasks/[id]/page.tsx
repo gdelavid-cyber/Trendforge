@@ -15,6 +15,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   let task: any = null;
   let userTask: any = null;
   let stories: any[] = [];
+  let artifacts: any[] = [];
   let headerStats: any = null;
 
   try {
@@ -39,6 +40,12 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
     userTask = await prisma.userTask.findUnique({
       where: { userId_taskId: { userId, taskId: params.id } },
     });
+    if (userTask) {
+      artifacts = await prisma.taskArtifact.findMany({
+        where: { userTaskId: userTask.id },
+        orderBy: [{ stepIndex: 'asc' }, { createdAt: 'asc' }],
+      });
+    }
     stories = await prisma.successStory.findMany({
       where: { taskId: params.id, isPublished: true, verificationStatus: 'VERIFIED' },
       include: { user: { select: { name: true } } },
@@ -63,6 +70,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
       <TaskDetailClient
         task={serialized}
         userTask={userTask ? { ...userTask, launchedAt: userTask.launchedAt?.toISOString() ?? null, completedAt: userTask.completedAt?.toISOString() ?? null, createdAt: userTask.createdAt?.toISOString() ?? null } : null}
+        artifacts={artifacts.map((a: any) => ({ id: a.id, stepIndex: a.stepIndex, kind: a.kind, name: a.name, url: a.url ?? null, createdAt: a.createdAt?.toISOString() ?? null }))}
         stories={stories.map((s: any) => ({ id: s.id, earningsAmount: s.earningsAmount, description: s.description, userName: s.user?.name ?? 'Anonymous' }))}
       />
     </div>
