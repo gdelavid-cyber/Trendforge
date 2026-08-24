@@ -8,6 +8,51 @@ import { buildAgentCompanionPrompt, ARCHETYPE_PERSONALITIES } from '@/lib/agent/
 import { generateSpeechAudio } from '@/lib/agent/tts';
 import { generateVisemesFromText, VisemeKeyframe } from '@/lib/agent/lipsync';
 import { launchAgentRun } from '@/lib/agents/orchestrator';
+import { makeLlm } from '@/lib/execution/llm';
+import { startExecution } from '@/lib/execution/engine';
+import { parseSteps } from '@/lib/tasks/steps';
+
+/**
+ * Latest active run for the user, shaped into a prompt block so the companion
+ * can guide them through THEIR task instead of generic advice.
+ */
+async function buildTaskContextBlock(userId?: string): Promise<string> {
+  if (!userId) return '';
+  try {
+    const ut = await prisma.userTask.findFirst({
+      where: { userId, status: { in: ['IN_PROGRESS', 'STEP_EXECUTING', 'PENDING_APPROVAL'] } },
+      include: { task: { select: { id: true, title: true, steps: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!ut) return '';
+
+    const steps = parseSteps(ut.task.steps);
+    const current = steps[ut.currentStep ?? 0];
+    const pending = ut.status === 'PENDING_APPROVAL'
+      ? await prisma.approval.findFirst({ where: { userTaskId: ut.id, status: 'PENDING' } })
+      : null;
+
+    let companionName = 'your companion';
+    if (ut.companionId) {
+      const c = await prisma.companion.findUnique({ where: { id: ut.companionId }, select: { name: true } });
+      if (c) companionName = c.name;
+    }
+
+    return `
+ACTIVE TASK CONTEXT (ground all advice in this):
+- Task: "${ut.task.title}" (id: ${ut.task.id})
+- Mode: ${ut.mode ?? 'DIY'} · Status: ${ut.status}
+- Progress: step ${(ut.currentStep ?? 0) + 1} of ${steps.length}${current ? ` — "${current.title}"` : ''}
+${pending ? '- A gate is PENDING: the user must approve it in /approvals before work continues.\n' : ''}
+
+You may execute for the user by emitting exactly ONE marker on its own line:
+[RUN_NEXT_STEP ${ut.task.id}]  → runs the current step now (Co-pilot)
+[START_AUTOPILOT ${ut.task.id}]  → hands the whole task to you (respects platform gates)
+Use markers only when the user asks you to act; otherwise advise concretely.`.trim();
+  } catch {
+    return '';
+  }
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -56,7 +101,9 @@ export async function processAgentConversation(params: {
   const voiceId = agent?.voiceId || ARCHETYPE_PERSONALITIES[archetype]?.defaultVoiceId || '21m00Tcm4TlvDq8ikWAM';
   const skills = (agent?.skills as any[]) || ['reddit_scraper', 'prediction_arbitrage', 'micro_saas_builder', 'openclaw_deployer', 'ai_video_maker'];
 
-  // 2. Build Dynamic System Prompt
+  // 2. Build Dynamic System Prompt (+ live task context so the companion
+  // helps with the user's actual task)
+  const taskContext = await buildTaskContextBlock(userId);
   const systemPrompt = buildAgentCompanionPrompt({
     name: agentName,
     archetype,
@@ -65,10 +112,24 @@ export async function processAgentConversation(params: {
     survivalScore,
     availableSkills: skills,
     userContext,
-  });
+  }) + (taskContext ? `\n\n${taskContext}` : '');
 
-  // 3. Call LLM (Gemini API or intelligent heuristic fallback)
+  // 3. Call LLM — provider chain: opencode (dev) → Gemini → heuristic fallback
   let rawResponseText = '';
+
+  if (process.env.LLM_PROVIDER === 'opencode') {
+    try {
+      const llm = makeLlm();
+      rawResponseText = await llm([
+        { role: 'system', content: systemPrompt },
+        ...history.slice(-6),
+        { role: 'user', content: message },
+      ]);
+    } catch (err: any) {
+      console.warn('[Agent Brain] opencode brain failed, falling back:', err.message);
+    }
+  }
+
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
   if (geminiApiKey && geminiApiKey !== 'your-gemini-api-key') {
@@ -179,10 +240,33 @@ export async function processAgentConversation(params: {
     }
   }
 
+  // 6b. Parse Conversational Execution markers ([RUN_NEXT_STEP id] / [START_AUTOPILOT id])
+  let conversationalAction: { tool: string; taskId?: string; status: string } | undefined;
+  const markerMatch = rawResponseText.match(/\[(RUN_NEXT_STEP|START_AUTOPILOT):\s*([a-z0-9]+)\]/i);
+  if (markerMatch && userId) {
+    const kind = markerMatch[1].toUpperCase();
+    const tid = markerMatch[2];
+    try {
+      if (kind === 'START_AUTOPILOT' && process.env.AUTOPILOT_ENABLED !== '1') {
+        conversationalAction = { tool: 'start_autopilot', taskId: tid, status: 'blocked: autopilot not enabled' };
+      } else {
+        const res = await startExecution(userId, tid, kind === 'START_AUTOPILOT' ? 'AUTOPILOT' : 'CO_PILOT');
+        conversationalAction = {
+          tool: kind === 'START_AUTOPILOT' ? 'start_autopilot' : 'run_next_step',
+          taskId: tid,
+          status: res.ok ? `started (${res.status ?? 'ok'})` : `failed: ${res.error}`,
+        };
+      }
+    } catch (e: any) {
+      conversationalAction = { tool: kind.toLowerCase(), taskId: tid, status: `failed: ${e.message}` };
+    }
+  }
+
   // Clean conversational text for display & speech
   const cleanText = rawResponseText
     .replace(/\[EMOTION:.*?\]/g, '')
     .replace(/\[EXECUTE_TOOL:.*?\]/g, '')
+    .replace(/\[(RUN_NEXT_STEP|START_AUTOPILOT):.*?\]/gi, '')
     .trim();
 
   // 7. Generate Speech Audio via TTS
@@ -202,7 +286,9 @@ export async function processAgentConversation(params: {
     audioProvider: speechRes.provider,
     emotion,
     lipSync,
-    toolExecution,
+    toolExecution: toolExecution ?? (conversationalAction
+      ? { tool: conversationalAction.tool, params: { taskId: conversationalAction.taskId }, runId: conversationalAction.taskId, status: conversationalAction.status }
+      : undefined),
     durationEstimate: speechRes.durationEstimate,
   };
 }

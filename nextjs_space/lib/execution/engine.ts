@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
 import { parseSteps } from '@/lib/tasks/steps';
-import { callLLM } from '@/lib/pipeline';
+import { makeLlm } from '@/lib/execution/llm';
 import { createInternalRunner, type LlmFn, type StepOutcome } from './skills';
 
 export type ExecutionMode = 'DIY' | 'CO_PILOT' | 'AUTOPILOT';
@@ -38,7 +38,7 @@ const DEFAULT_NOTIFY = async (userId: string, subject: string, body: string) => 
 };
 
 function runnerFor(deps: EngineDeps) {
-  return createInternalRunner(deps.llm ?? callLLM);
+  return createInternalRunner(deps.llm ?? makeLlm());
 }
 
 async function appendStepResult(userTaskId: string, index: number, entry: Record<string, unknown>) {

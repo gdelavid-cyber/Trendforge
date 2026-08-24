@@ -1,4 +1,4 @@
-import { callLLM } from '@/lib/pipeline';
+import { makeLlm } from '@/lib/execution/llm';
 import type { ParsedStep } from '@/lib/tasks/steps';
 
 // Step handlers turn a step into work. Internal actions run through the LLM;
@@ -48,7 +48,7 @@ async function llmStep(step: ParsedStep, ctx: StepContext, llm: LlmFn): Promise<
   return { output: output || '(no output produced)', costUsd: UNIT_COST };
 }
 
-export function createInternalRunner(llm: LlmFn = callLLM): StepRunner {
+export function createInternalRunner(llm: LlmFn = makeLlm()): StepRunner {
   return {
     canHandle(action: string) {
       return ['research', 'draft', 'generate', 'analyze', 'scrape'].includes(action);
