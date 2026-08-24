@@ -152,7 +152,7 @@ export function ReferralsClient() {
         agent={{
           name: 'Nexus Viral Growth Lead',
           archetype: 'COSMIC_ENTITY',
-          walletBalance: 100,
+          walletBalance: 0,
           survivalScore: 96,
         }}
         initialMessage={`Greetings Operative. I am your 3D Viral Growth Partner. I am holding your unique invite link: ${data?.referralUrl || 'https://trendly.io/ref/...'}. Every invite earns you +1 stackable Swarm Agent run and 10% lifetime recurring Stripe commission. Would you like me to generate a viral X (Twitter) thread or a LinkedIn growth case study now?`}

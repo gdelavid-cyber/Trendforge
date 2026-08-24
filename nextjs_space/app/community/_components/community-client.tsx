@@ -557,7 +557,7 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
         agent={{
           name: 'Nexus Community Strategist',
           archetype: 'CYBER_HUMANOID',
-          walletBalance: 100,
+          walletBalance: 0,
           survivalScore: 94,
         }}
         initialMessage={

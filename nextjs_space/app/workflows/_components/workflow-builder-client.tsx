@@ -132,7 +132,7 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
                       setConsultAgent({
                         name: step.name,
                         archetype: getStepArchetype(step.agentType),
-                        walletBalance: 100,
+                        walletBalance: 0,
                         survivalScore: 90,
                       })
                     }

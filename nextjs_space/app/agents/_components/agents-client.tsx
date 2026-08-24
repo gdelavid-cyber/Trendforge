@@ -450,7 +450,7 @@ export function AgentsClient({ user }: { user: any }) {
                       setTalkAgent({
                         name: agent.name,
                         archetype: getAgentArchetype(agent.type),
-                        walletBalance: 100,
+                        walletBalance: 0,
                         survivalScore: 88,
                       })
                     }

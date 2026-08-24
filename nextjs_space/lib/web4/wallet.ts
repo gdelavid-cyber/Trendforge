@@ -26,7 +26,7 @@ export function generateConwayWallet(agentId: string, chain: 'SOLANA' | 'BASE' =
     publicKey: 'pk_' + seed.substring(0, 32),
     chain,
     currency: 'USDC',
-    balance: 100.0, // Initial liquidity allocation for testing
+    balance: 0.0, // Real funds only — agents start dormant until a deposit credits the ledger
   };
 }
 

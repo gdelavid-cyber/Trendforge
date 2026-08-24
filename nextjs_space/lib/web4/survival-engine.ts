@@ -2,12 +2,14 @@ import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { generateConwayWallet } from './wallet';
 import { generateEIP8004Identity } from './eip8004';
+import { isFunded, postEntry } from './ledger';
 
 /**
  * Economic Darwinism Survival Engine
  * Enforces "Make Money or Die" rules across all autonomous Web4 agents.
+ * Pass agentIds to scope a cycle (tests / targeted runs); default = all.
  */
-export async function runSurvivalCycle() {
+export async function runSurvivalCycle(scopeAgentIds?: string[]) {
   const startTime = Date.now();
   const logs: string[] = [];
   let evaluatedCount = 0;
@@ -16,12 +18,36 @@ export async function runSurvivalCycle() {
   let reproducedCount = 0;
 
   const agents = await prisma.web4Agent.findMany({
-    where: { status: { in: ['ACTIVE', 'DYING', 'REPRODUCING'] } },
+    where: {
+      status: { in: ['CREATED', 'DORMANT', 'ACTIVE', 'DYING', 'REPRODUCING'] },
+      ...(scopeAgentIds ? { id: { in: scopeAgentIds } } : {}),
+    },
     include: { user: { select: { email: true, name: true } } },
   });
 
   for (const agent of agents) {
     evaluatedCount++;
+
+    // 0. Dormant gate: agents with no ledger history have never held real
+    // funds. Darwinism does not apply to them — they sleep until funded.
+    if (!(await isFunded(agent.id))) {
+      if (agent.status !== 'DORMANT') {
+        await prisma.web4Agent.update({
+          where: { id: agent.id },
+          data: { status: 'DORMANT' },
+        });
+        logs.push(`Agent [${agent.name}] has no funding history -> DORMANT (survival rules suspended)`);
+      }
+      continue;
+    }
+    if (agent.status === 'DORMANT') {
+      await prisma.web4Agent.update({
+        where: { id: agent.id },
+        data: { status: 'ACTIVE' },
+      });
+      logs.push(`Agent [${agent.name}] funded -> reactivated from DORMANT`);
+    }
+
     const dailyEstimatedCost = Math.max(0.5, agent.totalCosts / Math.max(1, (Date.now() - new Date(agent.creationDate).getTime()) / (1000 * 60 * 60 * 24)));
     const balance = agent.walletBalance;
 
@@ -38,7 +64,7 @@ export async function runSurvivalCycle() {
           creationTimestamp: Date.now(),
         });
 
-        // Child inherits skills with minor hyperparameter evolution
+        // Child starts unfunded; the parent's seed moves through the ledger.
         const childAgent = await prisma.web4Agent.create({
           data: {
             userId: agent.userId,
@@ -46,7 +72,7 @@ export async function runSurvivalCycle() {
             description: `Autonomous offspring of ${agent.name}. Inherited optimized trading/scraping vectors.`,
             archetype: agent.archetype,
             walletAddress: childWallet.address,
-            walletBalance: 50.0, // Parent seeds $50 USDC
+            walletBalance: 0.0,
             status: 'ACTIVE',
             parentAgentId: agent.id,
             skills: agent.skills as any,
@@ -58,13 +84,28 @@ export async function runSurvivalCycle() {
           },
         });
 
-        // Deduct seed liquidity from parent
+        // Deduct seed liquidity from parent, credit it to the child — one
+        // pot, two labeled entries, no money created.
+        const reproRef = `repro-${agent.id}-${agent.reproductionCount + 1}`;
+        await postEntry({
+          agentId: agent.id,
+          userId: agent.userId,
+          type: 'ADJUSTMENT',
+          amountUsdc: -50.0,
+          ref: reproRef,
+          note: `Seed liquidity for child ${childName}`,
+        });
+        await postEntry({
+          agentId: childAgent.id,
+          userId: agent.userId,
+          type: 'ADJUSTMENT',
+          amountUsdc: 50.0,
+          ref: reproRef,
+          note: `Seed liquidity from parent ${agent.name}`,
+        });
         await prisma.web4Agent.update({
           where: { id: agent.id },
-          data: {
-            walletBalance: { decrement: 50.0 },
-            reproductionCount: { increment: 1 },
-          },
+          data: { reproductionCount: { increment: 1 } },
         });
 
         await prisma.agentSurvivalLog.create({

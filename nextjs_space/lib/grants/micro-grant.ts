@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { postEntry } from '@/lib/web4/ledger';
 
 export async function getUserGrantStatus(userId: string) {
   let grant = await prisma.grant.findFirst({
@@ -45,16 +46,25 @@ export async function claimUserGrant(userId: string, targetAgentId?: string) {
     },
   });
 
-  // If a target agent is specified, credit the grant directly to the agent's Conway wallet
+  // If a target agent is specified, credit the grant to the agent's Conway
+  // wallet via a labeled ledger adjustment — platform credit, never counted
+  // as real earnings.
   if (targetAgentId) {
+    const agent = await prisma.web4Agent.findUnique({ where: { id: targetAgentId } });
+    if (!agent || agent.userId !== userId) {
+      throw new Error('Target agent not found.');
+    }
+    await postEntry({
+      agentId: agent.id,
+      userId,
+      type: 'ADJUSTMENT',
+      amountUsdc: status.grant.amount,
+      ref: `platform-grant-${status.grant.id}`,
+      note: 'Bootstrap micro-grant (platform credit, not earnings).',
+    });
     await prisma.web4Agent.update({
       where: { id: targetAgentId },
-      data: {
-        walletBalance: { increment: status.grant.amount },
-        totalEarnings: { increment: status.grant.amount },
-        profit: { increment: status.grant.amount },
-        survivalScore: 95,
-      },
+      data: { survivalScore: 95 },
     });
   }
 

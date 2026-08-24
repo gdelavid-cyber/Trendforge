@@ -95,7 +95,7 @@ export async function processAgentConversation(params: {
   // Fallback defaults if no specific agentId provided
   const agentName = agent?.name || 'Nexus Cyber Operative';
   const archetype = agent?.archetype || 'CYBER_HUMANOID';
-  const walletBalance = agent?.walletBalance ?? 100.0;
+  const walletBalance = agent?.walletBalance ?? 0.0;
   const survivalScore = agent?.survivalScore ?? 88;
   const personalityInstructions = agent?.personality || null;
   const voiceId = agent?.voiceId || ARCHETYPE_PERSONALITIES[archetype]?.defaultVoiceId || '21m00Tcm4TlvDq8ikWAM';
@@ -203,7 +203,10 @@ export async function processAgentConversation(params: {
     } else if (lower.includes('battle') || lower.includes('fight') || lower.includes('arena')) {
       rawResponseText = `[EMOTION: BATTLE_READY] ${personality.trashTalkLines[Math.floor(Math.random() * personality.trashTalkLines.length)]} Let's step into the arena and dominate the survival leaderboard!`;
     } else if (lower.includes('who are you') || lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-      rawResponseText = `[EMOTION: HAPPY] ${personality.sampleGreetings[Math.floor(Math.random() * personality.sampleGreetings.length)]} I am ${agentName}, your sovereign 3D companion with $${walletBalance.toFixed(1)} USDC liquidity. How can we compound our wealth today?`;
+      const walletLine = walletBalance > 0
+        ? `I am ${agentName}, your sovereign 3D companion with $${walletBalance.toFixed(1)} USDC liquidity.`
+        : `I am ${agentName}, your sovereign 3D companion — currently dormant until my Conway wallet is funded.`;
+      rawResponseText = `[EMOTION: HAPPY] ${personality.sampleGreetings[Math.floor(Math.random() * personality.sampleGreetings.length)]} ${walletLine} How can we compound our wealth today?`;
     } else {
       rawResponseText = `[EMOTION: THINKING] Strategic objective received. Analyzing the most profitable execution vector across our Trendly Web4 toolchain. ${personality.catchphrase}`;
     }

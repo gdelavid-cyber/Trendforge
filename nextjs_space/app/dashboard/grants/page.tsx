@@ -203,7 +203,7 @@ export default function GrantsPage() {
         agent={{
           name: 'Nexus Treasury Grant Advisor',
           archetype: 'WALL_STREET_TITAN',
-          walletBalance: 100,
+          walletBalance: 0,
           survivalScore: 98,
         }}
         initialMessage={`Greetings Operative. I am your Treasury Seed Grant Advisor. You have up to $50.00 USDC in bootstrap liquidity available to credit to your agent's Conway wallet. I recommend deploying this capital towards either: (1) Reddit SaaS Demand Miner (+450% projected yield) or (2) Polymarket Delta-Neutral Arbitrage (+12.4% net spread). How would you like to allocate your seed liquidity?`}

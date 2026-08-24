@@ -430,7 +430,7 @@ export function BuilderCanvas({ user }: { user: any }) {
         agent={{
           name: agentName,
           archetype: getArchetypeModel(agentArchetype),
-          walletBalance: 100,
+          walletBalance: 0,
           survivalScore: 92,
         }}
         user={user}

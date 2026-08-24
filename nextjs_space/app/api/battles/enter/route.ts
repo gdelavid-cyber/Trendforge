@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { calculateBattleRewards } from '@/lib/battles/rewards';
+import { postEntry } from '@/lib/web4/ledger';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -46,28 +47,36 @@ export async function POST(request: Request) {
     const winner = isChallengerWinner ? challenger : defender;
     const runnerUp = isChallengerWinner ? defender : challenger;
 
-    // Deduct entry fee from challenger & distribute prize pool (70% to winner, 20% to runner up)
-    await prisma.web4Agent.update({
-      where: { id: challenger.id },
-      data: { walletBalance: { decrement: tierConfig.entryFeeUsdc } },
+    // Honest pot: the challenger's entry fee is the entire prize (defender
+    // posts nothing in v1). Winner takes the pot via the ledger — no money
+    // is created. Runner-up receives nothing until funded battle rework.
+    const pot = tierConfig.entryFeeUsdc;
+    const battleRef = `battle-${challenger.id}-${defender.id}-${Date.now()}`;
+
+    const entry = await postEntry({
+      agentId: challenger.id,
+      userId: challenger.userId,
+      type: 'BATTLE_ENTRY',
+      amountUsdc: -pot,
+      ref: battleRef,
+      note: `${tierConfig.name} entry fee`,
+    });
+    if (!entry.ok && entry.reason === 'duplicate') {
+      return NextResponse.json({ error: 'Duplicate battle entry.' }, { status: 409 });
+    }
+
+    await postEntry({
+      agentId: winner.id,
+      userId: winner.userId,
+      type: 'BATTLE_PAYOUT',
+      amountUsdc: pot,
+      ref: battleRef,
+      note: `Winner pot from ${challenger.name}`,
     });
 
     await prisma.web4Agent.update({
       where: { id: winner.id },
-      data: {
-        walletBalance: { increment: tierConfig.winnerPayoutUsdc },
-        totalEarnings: { increment: tierConfig.winnerPayoutUsdc },
-        profit: { increment: tierConfig.winnerPayoutUsdc },
-        survivalScore: Math.min(100, winner.survivalScore + 5),
-      },
-    });
-
-    await prisma.web4Agent.update({
-      where: { id: runnerUp.id },
-      data: {
-        walletBalance: { increment: tierConfig.runnerUpPayoutUsdc },
-        totalEarnings: { increment: tierConfig.runnerUpPayoutUsdc },
-      },
+      data: { survivalScore: Math.min(100, winner.survivalScore + 5) },
     });
 
     const battleRecord = await prisma.agentBattle.create({
@@ -76,16 +85,16 @@ export async function POST(request: Request) {
         defenderId: defender.id,
         arenaType: `${tierConfig.tier}_TOURNAMENT`,
         winnerId: winner.id,
-        yieldGenerated: tierConfig.winnerPayoutUsdc,
-        logs: { tier: tierConfig, rounds, winner: winner.name, runnerUp: runnerUp.name },
+        yieldGenerated: pot,
+        logs: { tier: tierConfig, rounds, winner: winner.name, runnerUp: runnerUp.name, pot },
       },
     });
 
     return NextResponse.json({
       success: true,
       battle: battleRecord,
-      winner: { id: winner.id, name: winner.name, payout: tierConfig.winnerPayoutUsdc },
-      runnerUp: { id: runnerUp.id, name: runnerUp.name, payout: tierConfig.runnerUpPayoutUsdc },
+      winner: { id: winner.id, name: winner.name, payout: pot },
+      runnerUp: { id: runnerUp.id, name: runnerUp.name, payout: 0 },
       tier: tierConfig,
       rounds,
     });

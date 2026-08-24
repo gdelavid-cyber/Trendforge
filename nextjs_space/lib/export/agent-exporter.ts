@@ -84,8 +84,8 @@ export async function importAgentFromJSON(userId: string, pkg: StandardAgentExpo
       description: pkg.metadata.description || 'Imported Web4 Sovereign Agent',
       archetype: pkg.metadata.archetype || 'DATA_MINER',
       walletAddress: wallet.address,
-      walletBalance: 100.0, // Seed test liquidity
-      status: 'ACTIVE',
+      walletBalance: 0.0, // Dormant until funded
+      status: 'DORMANT',
       skills: pkg.skillsDag as any,
       avatarConfig: pkg.avatarConfiguration as any,
       eip8004Hash: identity.identityHash,

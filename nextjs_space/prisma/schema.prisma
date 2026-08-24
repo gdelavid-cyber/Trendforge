@@ -132,6 +132,9 @@ model User {
   referredBy            Referral?        @relation("ReferredUser")
   workflows             AgentWorkflow[]
   web4Agents            Web4Agent[]
+  ledgerEntries         LedgerEntry[]
+  deposits              Deposit[]
+  withdrawalRequests    WithdrawalRequest[]
   userCosmetics         UserCosmetic[]
   marketplaceListings   MarketplaceListing[] @relation("SellerListings")
   cosmeticPurchases     CosmeticTransaction[] @relation("BuyerTransactions")
@@ -224,6 +227,7 @@ model UserTask {
   companionId      String?
 
   approvals        Approval[]
+  artifacts        TaskArtifact[]
   createdAt        DateTime       @default(now())
 
   @@unique([userId, taskId])
@@ -504,6 +508,7 @@ model Referral {
 
 enum AgentStatus {
   CREATED
+  DORMANT
   ACTIVE
   PAUSED
   DYING
@@ -536,7 +541,7 @@ model Web4Agent {
   description       String?
   archetype         String          @default("GENERALIST") // "DATA_MINER", "DEFI_ARBITRAGEUR", "LEAD_HUNTER", "VIRAL_CREATOR", "SAAS_ARCHITECT"
   walletAddress     String          @unique
-  walletBalance     Float           @default(100.0) // Initial test liquidity (USDC)
+  walletBalance     Float           @default(0.0) // Real funds only — ledger-backed, see LedgerEntry
   status            AgentStatus     @default(ACTIVE)
   creationDate      DateTime        @default(now())
   lastActive        DateTime        @default(now())
@@ -567,6 +572,9 @@ model Web4Agent {
   battlesAsChallenger AgentBattle[]        @relation("ChallengerAgent")
   battlesAsDefender   AgentBattle[]        @relation("DefenderAgent")
   survivalLogs        AgentSurvivalLog[]
+  ledgerEntries       LedgerEntry[]
+  deposits            Deposit[]
+  withdrawalRequests  WithdrawalRequest[]
 
   @@index([userId])
   @@index([status])
@@ -687,6 +695,8 @@ model OnboardingProgress {
   step        Int       @default(0) // 0 to 5
   isCompleted Boolean   @default(false)
   completedAt DateTime?
+  tourDone    Boolean   @default(false) // spotlight tour shown once
+  guideSeenAt DateTime? // /guide hub visited
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -925,6 +935,79 @@ model UserLlmKey {
   encryptedKey String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// Append-only real-money ledger. Every walletBalance change on a Web4Agent
+// MUST have a matching entry; balance is a denormalized cache of the sum.
+model LedgerEntry {
+  id         String    @id @default(cuid())
+  agentId    String
+  agent      Web4Agent @relation(fields: [agentId], references: [id])
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  type       String    // 'DEPOSIT' | 'TRADE_ALLOCATION' | 'TRADE_PROCEEDS'
+                       // | 'BATTLE_ENTRY' | 'BATTLE_PAYOUT' | 'MISSION_BURN'
+                       // | 'WITHDRAWAL' | 'ADJUSTMENT'
+  amountUsdc Float     // signed: positive credits the agent, negative debits
+  ref        String    // tx signature / approval id / admin note — idempotency key
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([agentId, type, ref])
+  @@index([agentId])
+  @@index([userId])
+}
+
+// An on-chain USDC transfer awaiting (or completing) credit to an agent.
+model Deposit {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  agentId       String
+  agent         Web4Agent @relation(fields: [agentId], references: [id])
+  chain         String    @default("SOLANA")
+  referenceCode String    // 8-char memo code the sender includes
+  txSignature   String    @unique
+  amountUsdc    Float
+  status        String    @default("PENDING") // PENDING -> CREDITED | REJECTED
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([referenceCode])
+  @@index([agentId])
+}
+
+// Real deliverable produced by an execution step (file, email, post, trade).
+model TaskArtifact {
+  id         String   @id @default(cuid())
+  userTaskId String
+  userTask   UserTask @relation(fields: [userTaskId], references: [id])
+  stepIndex  Int
+  kind       String   // 'FILE' | 'EMAIL' | 'POST' | 'TRADE' | 'RESEARCH'
+  name       String
+  url        String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userTaskId])
+}
+
+// Withdrawals of real funds are admin-reviewed in v1; no auto-payout.
+model WithdrawalRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  agentId     String
+  agent       Web4Agent @relation(fields: [agentId], references: [id])
+  amountUsdc  Float
+  destination String    // user-supplied Solana address, captured at request time
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedBy  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([agentId])
 }
 
 

@@ -63,15 +63,14 @@ export async function POST(request: Request) {
     rounds.push({ round: 3, name: 'B2B Client Conversion Sprint', challengerScore: cR3, defenderScore: dR3, roundWinner: cR3 > dR3 ? challenger.name : defender.name });
 
     const winner = challengerPoints >= defenderPoints ? challenger : defender;
-    const bountyYield = Math.floor(150 + Math.random() * 350);
 
-    // Credit winner with bounty
+    // Exhibition match: no money moves until funded battles land with the
+    // deposit system. Winner takes a survival-score bump only.
+    const bountyYield = 0;
+
     await prisma.web4Agent.update({
       where: { id: winner.id },
       data: {
-        walletBalance: { increment: bountyYield },
-        totalEarnings: { increment: bountyYield },
-        profit: { increment: bountyYield },
         survivalScore: Math.min(100, winner.survivalScore + 5),
       },
     });

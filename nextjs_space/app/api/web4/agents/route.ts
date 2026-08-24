@@ -65,8 +65,8 @@ export async function POST(request: Request) {
         description: description || 'Autonomous Web4 Economic Agent',
         archetype: archetype || 'DATA_MINER',
         walletAddress: wallet.address,
-        walletBalance: 100.0, // Seed test grant of 100 USDC
-        status: 'ACTIVE',
+        walletBalance: 0.0, // Dormant until funded — see LedgerEntry / deposit flow
+        status: 'DORMANT',
         skills: Array.isArray(skills) && skills.length > 0 ? skills : [
           { skillId: 'scrape_reddit_painpoints', params: { subreddit: 'SaaS' } },
           { skillId: 'nextjs_microsaas_builder', params: { niche: 'SaaS' } },

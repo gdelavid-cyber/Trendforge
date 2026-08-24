@@ -140,7 +140,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
 
         <Button
           onClick={() => {
-            setCompanionInitialMessage("Operative, I am ready to deliver your daily intelligence briefing. We have 6 high-velocity market signals active on HackerNews and Reddit, and our autonomous Conway wallet balance is primed. Let's extract yield!");
+            setCompanionInitialMessage("Operative, I am ready to deliver your daily intelligence briefing. Ask me what I can do, or put me on a task and I'll walk you through it step by step.");
             setIsCompanionOpen(true);
           }}
           className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-5 holographic-btn font-mono whitespace-nowrap shadow-[0_0_20px_rgba(0,240,255,0.4)]"
