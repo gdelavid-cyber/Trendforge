@@ -36,9 +36,9 @@ export async function GET() {
     const companion = await getOrCreatePrimary(user.id);
 
     const runs = await prisma.userTask.findMany({
-      where: { userId: user.id, stepResults: { not: undefined } },
+      where: { userId: user.id },
       include: { task: { select: { title: true } } },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 10,
     });
 
@@ -51,13 +51,13 @@ export async function GET() {
         const e = log[i];
         if (e.status === 'done') {
           events.push({
-            at: e.at ?? run.updatedAt?.toISOString() ?? new Date().toISOString(),
+            at: e.at ?? new Date().toISOString(),
             text: `${verbFor(e.action)} "${run.task.title}" — ${String(e.title ?? '').slice(0, 80)}`,
             taskId: run.taskId,
           });
         } else if (e.status === 'approved_by_user') {
           events.push({
-            at: e.at ?? run.updatedAt?.toISOString(),
+            at: e.at ?? new Date().toISOString(),
             text: `sent an approved action for "${run.task.title}"`,
             taskId: run.taskId,
           });
