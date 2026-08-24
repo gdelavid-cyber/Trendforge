@@ -4,45 +4,51 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
-import { ArenaSelectClient } from './_components/arena-select-client';
-import { loadMergedCatalog } from '@/lib/cosmetics/server-catalog';
+import { WorldClient } from './_components/world-client';
 
 export const metadata = {
   title: 'The World // Trendly',
-  description: 'Select your autonomous AI combatant, customize combat loadouts, and enter high-stakes battle arena tournaments.',
+  description: 'Walk your customized AI companion through a neon open plaza. Show off owned cosmetics. Pure identity, pure fun.',
 };
 
 export default async function ArenaPage() {
-  const [session, mergedCatalog] = await Promise.all([
-    getServerSession(authOptions),
-    loadMergedCatalog(),
-  ]);
+  const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
 
-  let agents: any[] = [];
-  let user: any = null;
+  let loadout: Record<string, string> | undefined;
+  let companionName: string | undefined;
 
   if (userEmail) {
-    user = await prisma.user.findUnique({
-      where: { email: userEmail },
-    });
-
+    const user = await prisma.user.findUnique({ where: { email: userEmail } });
     if (user) {
-      agents = await prisma.web4Agent.findMany({
-        where: { userId: user.id },
-        include: {
-          battlesAsChallenger: { orderBy: { createdAt: 'desc' }, take: 5 },
-          battlesAsDefender: { orderBy: { createdAt: 'desc' }, take: 5 },
-        },
-        orderBy: { profit: 'desc' },
-      });
+      const [equipped, agent] = await Promise.all([
+        prisma.userCosmetic.findMany({ where: { userId: user.id, equipped: true } }),
+        prisma.web4Agent.findFirst({
+          where: { userId: user.id },
+          orderBy: { profit: 'desc' },
+          select: { name: true },
+        }),
+      ]);
+
+      if (equipped.length > 0) {
+        // Map owned cosmetics onto world slots by their catalog slot.
+        const { COSMETICS_CATALOG } = await import('@/lib/cosmetics/catalog');
+        loadout = {};
+        for (const uc of equipped) {
+          const item = COSMETICS_CATALOG.find((c) => c.id === uc.cosmeticId);
+          if (item?.slot && !loadout[item.slot]) loadout[item.slot] = item.id;
+        }
+      }
+      companionName = agent?.name;
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white relative overflow-hidden">
-      <Header />
-      <ArenaSelectClient initialAgents={agents} user={user} initialCatalog={mergedCatalog} />
+    <div className="min-h-screen bg-[#04040A] text-white relative overflow-hidden">
+      <div className="relative z-20">
+        <Header />
+      </div>
+      <WorldClient loadout={loadout as any} />
     </div>
   );
 }
