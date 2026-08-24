@@ -42,6 +42,7 @@ const BASE_MODELS = [
 
 const SLOT_CONFIG: Record<CombatSlot, { label: string; icon: any; color: string; desc: string }> = {
   HEAD: { label: 'Headwear / Visor', icon: Crown, color: 'text-amber-400 border-amber-400/30', desc: 'HUDs, Visors, Crowns & Masks' },
+  EYEWEAR: { label: 'Eyewear', icon: Eye, color: 'text-sky-400 border-sky-400/30', desc: 'Monocles, Goggles & Shades' },
   BODY: { label: 'Body Armor / Skin', icon: Shield, color: 'text-[#00F0FF] border-[#00F0FF]/30', desc: 'Tactical Chassis & Plates' },
   AURA: { label: 'Combat Aura', icon: Flame, color: 'text-pink-500 border-pink-500/30', desc: 'Particle Waves & Lightning' },
   TRAIL: { label: 'Wings / Thruster', icon: Zap, color: 'text-purple-400 border-purple-400/30', desc: 'Thrusters, Fins & Wings' },
@@ -74,6 +75,7 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
   // Active loadout slots
   const [currentLoadout, setCurrentLoadout] = useState<FighterLoadout>({
     HEAD: 'head_tactical_visor',
+    EYEWEAR: 'eyes_cyber_visors',
     BODY: 'skin_neon_cyber',
     AURA: 'aura_plasma_fire',
     TRAIL: 'wings_overclock',

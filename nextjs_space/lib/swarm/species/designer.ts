@@ -26,10 +26,22 @@ export async function runDesigner(job: AssetJob, ctx: SpeciesContext = {}): Prom
 
   const palette = rarityColors[job.rarity.toUpperCase()] || { primary: '#00F0FF', emissive: '#00F0FF' };
 
-  // Archetype mapping for procedural 3D generation (HEAD and BODY geometric items only)
+  // Archetype mapping for procedural 3D generation (HEAD, EYEWEAR and BODY geometric items)
   let procedural3D: AssetPromptSpec['procedural3D'] = undefined;
 
-  if (job.slot.toUpperCase() === 'HEAD') {
+  if (job.slot.toUpperCase() === 'EYEWEAR') {
+    procedural3D = {
+      archetype: 'visor',
+      baseColor: palette.primary,
+      emissiveColor: palette.emissive,
+      emissiveIntensity: 1.8,
+      metalness: 0.7,
+      roughness: 0.15,
+      scale: [0.28, 0.28, 0.28],
+      position: [0, 1.24, 0.24],
+      rotation: [0, 0, 0],
+    };
+  } else if (job.slot.toUpperCase() === 'HEAD') {
     const archetype = catalogItem.name.toLowerCase().includes('crown') ? 'crown' : 'visor';
     procedural3D = {
       archetype,

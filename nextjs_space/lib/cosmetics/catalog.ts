@@ -6,7 +6,7 @@ export const COSMETIC_TIERS = {
   MYTHIC: { price: 0.0, label: 'Mythic (Ultra-Rare)', color: 'text-[#FF007A] border-[#FF007A]/30 bg-[#FF007A]/10' },
 };
 
-export type CombatSlot = 'HEAD' | 'BODY' | 'AURA' | 'TRAIL' | 'FINISHER';
+export type CombatSlot = 'HEAD' | 'EYEWEAR' | 'BODY' | 'AURA' | 'TRAIL' | 'FINISHER';
 
 export interface StatModifiers {
   pwr?: number; // Power: Execution Yield & Raw Damage
@@ -29,7 +29,7 @@ export type CosmeticRenderConfig =
 export interface CatalogItem {
   id: string;
   name: string;
-  category: 'SKIN' | 'HEADWEAR' | 'WINGS' | 'AURA' | 'ANIMATION'; // backward compatible
+  category: 'SKIN' | 'HEADWEAR' | 'EYEWEAR' | 'WINGS' | 'AURA' | 'ANIMATION'; // backward compatible
   slot: CombatSlot;
   rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY' | 'MYTHIC';
   price: number;
@@ -707,5 +707,85 @@ export const COSMETICS_CATALOG: CatalogItem[] = [
     desc: 'Slow-motion backbend dodging market volatility.',
     unlockMethod: 'EASTER_EGG',
     statModifiers: { spd: 14, syn: 10, def: 6 },
+  },
+
+  // EYEWEAR (6 items) -> Grants +SYN, +SPD
+  {
+    id: 'eyes_holo_monocle',
+    name: 'Holographic Monocle of Markets',
+    category: 'EYEWEAR',
+    slot: 'EYEWEAR',
+    rarity: 'RARE',
+    price: 6.99,
+    image: '/cosmetics/eyes_holo_monocle.png',
+    artPending: true,
+    desc: 'A rotating HUD monocle streaming live ticker data across one eye.',
+    unlockMethod: 'STORE',
+    statModifiers: { syn: 7, spd: 2 },
+  },
+  {
+    id: 'eyes_cyber_visors',
+    name: 'Slate Cyber Visor',
+    category: 'EYEWEAR',
+    slot: 'EYEWEAR',
+    rarity: 'COMMON',
+    price: 2.99,
+    image: '/cosmetics/eyes_cyber_visors.png',
+    artPending: true,
+    desc: 'Matte wrap-around visor with a single cyan scanline.',
+    unlockMethod: 'STORE',
+    statModifiers: { syn: 3, spd: 3 },
+  },
+  {
+    id: 'eyes_quantum_goggles',
+    name: 'Quantum Recon Goggles',
+    category: 'EYEWEAR',
+    slot: 'EYEWEAR',
+    rarity: 'EPIC',
+    price: 12.99,
+    image: '/cosmetics/eyes_quantum_goggles.png',
+    artPending: true,
+    desc: 'Dual-lens goggles parsing arbitrage windows before they exist.',
+    unlockMethod: 'STORE',
+    statModifiers: { syn: 9, spd: 5 },
+  },
+  {
+    id: 'eyes_gold_seer',
+    name: 'Golden Seer Lenses',
+    category: 'EYEWEAR',
+    slot: 'EYEWEAR',
+    rarity: 'LEGENDARY',
+    price: 24.99,
+    image: '/cosmetics/eyes_gold_seer.png',
+    artPending: true,
+    desc: 'Forged for those who saw the trend before it trended.',
+    unlockMethod: 'STORE',
+    statModifiers: { syn: 12, pwr: 4 },
+  },
+  {
+    id: 'eyes_void_shades',
+    name: 'Void Stepper Shades',
+    category: 'EYEWEAR',
+    slot: 'EYEWEAR',
+    rarity: 'RARE',
+    price: 5.99,
+    image: '/cosmetics/eyes_void_shades.png',
+    artPending: true,
+    desc: 'Pitch-black shades. Nobody knows what you are looking at. That is the point.',
+    unlockMethod: 'STORE',
+    statModifiers: { def: 4, syn: 4 },
+  },
+  {
+    id: 'eyes_plasma_spectacles',
+    name: 'Plasma Spectacles',
+    category: 'EYEWEAR',
+    slot: 'EYEWEAR',
+    rarity: 'MYTHIC',
+    price: 39.99,
+    image: '/cosmetics/eyes_plasma_spectacles.png',
+    artPending: true,
+    desc: 'Contained plasma arcs dance between the lenses as you think.',
+    unlockMethod: 'STORE',
+    statModifiers: { syn: 14, spd: 6, pwr: 3 },
   },
 ];
