@@ -115,6 +115,7 @@ model User {
 
   userTasks             UserTask[]
   approvals             Approval[]
+  companions            Companion[]
   successStories        SuccessStory[]
   sentFavors            Favor[]          @relation("FavorFrom")
   receivedFavors        Favor[]          @relation("FavorTo")
@@ -887,6 +888,28 @@ model Approval {
 
   @@index([userId])
   @@index([status])
+}
+
+// The user's forged AI companion — one owned identity across forge, world,
+// execution engine and export bundles.
+model Companion {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  name           String
+  config         Json?
+  personality    Json?
+  memory         Json?
+  skills         String[] @default([])
+  level          Int      @default(1)
+  totalEarnings  Float    @default(0)
+  tasksCompleted Int      @default(0)
+  rarity         String   @default("common")
+  isPrimary      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
 }
 
 

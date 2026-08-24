@@ -74,6 +74,18 @@ export async function startExecution(
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (!task) return { ok: false, error: 'Task not found' };
 
+  // Resolve the executing companion (explicit → primary).
+  let companionId = opts.companionId;
+  if (!companionId) {
+    try {
+      const { getOrCreatePrimary } = await import('@/lib/companion/service');
+      const companion = await getOrCreatePrimary(userId);
+      companionId = companion.id;
+    } catch {
+      companionId = undefined;
+    }
+  }
+
   const steps = parseSteps(task.steps);
 
   let userTask = await prisma.userTask.findUnique({
@@ -89,7 +101,7 @@ export async function startExecution(
         status: 'IN_PROGRESS',
         currentStep: 0,
         launchedAt: new Date(),
-        companionId: opts.companionId,
+        companionId,
       },
     });
   } else {
@@ -99,7 +111,7 @@ export async function startExecution(
     }
     userTask = await prisma.userTask.update({
       where: { id: userTask.id },
-      data: { mode, launchedAt: userTask.launchedAt ?? new Date(), ...(opts.companionId ? { companionId: opts.companionId } : {}) },
+      data: { mode, launchedAt: userTask.launchedAt ?? new Date(), ...(companionId ? { companionId } : {}) },
     });
   }
 
@@ -189,6 +201,15 @@ async function runAutopilot(
       await appendStepResult(userTaskId, i, { title: step.title, action: step.action, status: 'done', output: outcome.output });
     }
 
+    // Companion stats: completed runs level the companion up.
+    try {
+      const utRow = await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { companionId: true } });
+      if (utRow?.companionId) {
+        const { recordTaskCompleted } = await import('@/lib/companion/service');
+        await recordTaskCompleted(utRow.companionId);
+      }
+    } catch {}
+
     await prisma.userTask.update({ where: { id: userTaskId }, data: { status: 'COMPLETED', completedAt: new Date() } });
   } catch (err: any) {
     await prisma.userTask.update({ where: { id: userTaskId }, data: { status: 'FAILED' } });
@@ -256,8 +277,17 @@ export async function rejectGate(approvalId: string, userId: string, deps: Engin
 }
 
 async function buildContext(userTaskId: string, taskTitle: string) {
-  const ut = await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { stepResults: true } });
+  const ut = await prisma.userTask.findUnique({
+    where: { id: userTaskId },
+    select: { stepResults: true, companionId: true },
+  });
   const log = Array.isArray(ut?.stepResults) ? (ut!.stepResults as any[]) : [];
   const previousResults = log.filter((e) => e.status === 'done').map((e) => `${e.title}: ${String(e.output).slice(0, 400)}`);
-  return { taskTitle, companionName: 'Nova', previousResults };
+
+  let companionName = 'Nova';
+  if (ut?.companionId) {
+    const c = await prisma.companion.findUnique({ where: { id: ut.companionId }, select: { name: true } });
+    if (c?.name) companionName = c.name;
+  }
+  return { taskTitle, companionName, previousResults };
 }
