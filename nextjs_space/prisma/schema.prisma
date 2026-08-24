@@ -543,6 +543,7 @@ model Web4Agent {
   archetype         String          @default("GENERALIST") // "DATA_MINER", "DEFI_ARBITRAGEUR", "LEAD_HUNTER", "VIRAL_CREATOR", "SAAS_ARCHITECT"
   walletAddress     String          @unique
   walletBalance     Float           @default(0.0) // Real funds only — ledger-backed, see LedgerEntry
+  referenceCode     String?         @unique // 8-char memo code senders include with USDC deposits
   status            AgentStatus     @default(ACTIVE)
   creationDate      DateTime        @default(now())
   lastActive        DateTime        @default(now())
@@ -991,6 +992,16 @@ model Deposit {
 
   @@index([referenceCode])
   @@index([agentId])
+}
+
+// Verifier bookmark so each cron pass only scans on-chain signatures newer
+// than the last one processed. One row per chain/treasury.
+model DepositCursor {
+  id            String   @id @default(cuid())
+  chain         String   @unique // 'SOLANA'
+  treasury      String
+  lastSignature String?
+  updatedAt     DateTime @updatedAt
 }
 
 // Real deliverable produced by an execution step (file, email, post, trade).

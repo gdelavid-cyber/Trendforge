@@ -40,43 +40,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   try {
     const body = await request.json();
-    const { action, refuelAmount } = body;
+    const { action } = body;
 
-    // A. Action: Refuel Wallet Balance (simulated credit until real deposits land)
+    // A. Action: Refuel was retired with simulated money. Real funding is an
+    // on-chain USDC deposit matched by the agent's reference memo code.
     if (action === 'REFUEL') {
-      const amount = Math.max(0, Number(refuelAmount) || 50);
-      const move = await postEntry({
-        agentId: agent.id,
-        userId: agent.userId,
-        type: 'ADJUSTMENT',
-        amountUsdc: amount,
-        ref: `refuel-${Date.now()}`,
-        note: 'Simulated refuel — not real money. On-chain USDC deposits replace this.',
-      });
-      if (!move.ok && move.reason === 'duplicate') {
-        return NextResponse.json({ error: 'Duplicate refuel, try again.' }, { status: 409 });
-      }
-      const updated = await prisma.web4Agent.update({
-        where: { id: agent.id },
-        data: {
-          status: 'ACTIVE',
-          gracePeriodEnds: null,
-          survivalScore: Math.min(100, agent.survivalScore + 20),
-        },
-      });
-
-      await prisma.agentSurvivalLog.create({
-        data: {
-          agentId: agent.id,
-          event: 'BALANCE_REFUEL',
-          yieldAmount: amount,
-          burnAmount: 0,
-          balanceAfter: move.balance,
-          details: { note: `Simulated refuel of $${amount} (ledger ADJUSTMENT).` },
-        },
-      });
-
-      return NextResponse.json({ success: true, message: `Refueled $${amount} USDC (simulated).`, agent: updated });
+      return NextResponse.json({
+        error: 'Simulated refuel removed. Fund this agent with a real USDC deposit (Fund panel on the agent card).',
+        code: 'USE_DEPOSITS',
+      }, { status: 410 });
     }
 
     // B. Action: Execute Autonomous Mission Workflow

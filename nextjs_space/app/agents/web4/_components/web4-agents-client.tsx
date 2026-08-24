@@ -22,6 +22,10 @@ import {
   Palette,
   ExternalLink,
   Coins,
+  Moon,
+  Copy,
+  Landmark,
+  ArrowUpFromLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -32,8 +36,14 @@ export function Web4AgentsClient({ user }: { user: any }) {
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [executingAgentId, setExecutingAgentId] = useState<string | null>(null);
-  const [refuelingAgentId, setRefuelingAgentId] = useState<string | null>(null);
   const [talkAgent, setTalkAgent] = useState<any | null>(null);
+  const [fundAgent, setFundAgent] = useState<any | null>(null);
+  const [fundInfo, setFundInfo] = useState<any | null>(null);
+  const [fundLoading, setFundLoading] = useState(false);
+  const [withdrawAgent, setWithdrawAgent] = useState<any | null>(null);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawDest, setWithdrawDest] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const fetchAgents = async () => {
     try {
@@ -76,26 +86,63 @@ export function Web4AgentsClient({ user }: { user: any }) {
     }
   };
 
-  const handleRefuel = async (agentId: string) => {
-    setRefuelingAgentId(agentId);
+  const openFundPanel = async (agent: any) => {
+    setFundAgent(agent);
+    setFundInfo(null);
+    setFundLoading(true);
     try {
-      const res = await fetch(`/api/web4/agents/${agentId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'REFUEL', refuelAmount: 50 }),
-      });
-
+      const res = await fetch(`/api/web4/agents/${agent.id}/deposits`);
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success('Agent refueled with +$50.00 USDC liquidity!');
-        fetchAgents();
+        setFundInfo(data);
+        if (!data.configured) toast.error('Deposit vault is not configured yet — contact support.');
       } else {
-        toast.error(data.error || 'Refuel failed');
+        toast.error(data.error || 'Failed to load deposit details');
       }
     } catch {
-      toast.error('Refuel network error');
+      toast.error('Failed to load deposit details');
     } finally {
-      setRefuelingAgentId(null);
+      setFundLoading(false);
+    }
+  };
+
+  const copyText = async (text: string | null | undefined, label: string) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error('Copy failed — select the text manually');
+    }
+  };
+
+  const handleWithdrawRequest = async () => {
+    if (!withdrawAgent) return;
+    const amount = parseFloat(withdrawAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter a valid USDC amount');
+      return;
+    }
+    setWithdrawing(true);
+    try {
+      const res = await fetch('/api/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: withdrawAgent.id, amountUsdc: amount, destination: withdrawDest }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Withdrawal queued for admin review.');
+        setWithdrawAgent(null);
+        setWithdrawAmount('');
+        setWithdrawDest('');
+      } else {
+        toast.error(data.error || 'Withdrawal request failed');
+      }
+    } catch {
+      toast.error('Withdrawal network error');
+    } finally {
+      setWithdrawing(false);
     }
   };
 
@@ -127,6 +174,13 @@ export function Web4AgentsClient({ user }: { user: any }) {
           <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-gray-500/10 text-gray-400 border border-gray-500/30 flex items-center gap-1">
             <Skull className="w-3 h-3" />
             SELF-DESTRUCTED
+          </span>
+        );
+      case 'DORMANT':
+        return (
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+            <Moon className="w-3 h-3" />
+            DORMANT — FUND TO ACTIVATE
           </span>
         );
       default:
@@ -213,7 +267,6 @@ export function Web4AgentsClient({ user }: { user: any }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agents.map((agent) => {
             const isExecuting = executingAgentId === agent.id;
-            const isRefueling = refuelingAgentId === agent.id;
             const isDead = agent.status === 'DEAD';
 
             return (
@@ -311,12 +364,16 @@ export function Web4AgentsClient({ user }: { user: any }) {
                 <div className="space-y-2 pt-2">
                   <Button
                     onClick={() => handleExecute(agent.id)}
-                    disabled={isExecuting || isDead}
+                    disabled={isExecuting || isDead || agent.status === 'DORMANT'}
                     className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
                   >
                     {isExecuting ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Executing Mission...
+                      </>
+                    ) : agent.status === 'DORMANT' ? (
+                      <>
+                        <Moon className="w-3 h-3 mr-1.5" /> Dormant — Fund To Activate
                       </>
                     ) : (
                       <>
@@ -328,10 +385,25 @@ export function Web4AgentsClient({ user }: { user: any }) {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
+                      onClick={() => openFundPanel(agent)}
+                      className="border-green-500/30 text-xs font-mono uppercase text-green-400 hover:bg-green-500/10 bg-black/40 h-8"
+                    >
+                      <Landmark className="w-3 h-3 mr-1 text-green-400" /> Fund
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setWithdrawAgent(agent)}
+                      disabled={agent.walletBalance <= 0 || isDead}
+                      className="border-white/10 text-xs font-mono uppercase text-[#8E9BB4] hover:text-white bg-black/30 h-8 disabled:opacity-40"
+                    >
+                      <ArrowUpFromLine className="w-3 h-3 mr-1" /> Withdraw
+                    </Button>
+                    <Button
+                      variant="outline"
                       onClick={() => setTalkAgent(agent)}
                       className="border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] hover:bg-[#00F0FF]/10 bg-black/40 h-8"
                     >
-                      <Bot className="w-3 h-3 mr-1 text-[#00F0FF]" /> Talk & Voice
+                      <Bot className="w-3 h-3 mr-1 text-[#00F0FF]" /> Talk &amp; Voice
                     </Button>
                     <Link href="/avatar-studio">
                       <Button
@@ -356,6 +428,161 @@ export function Web4AgentsClient({ user }: { user: any }) {
         agent={talkAgent}
         user={user}
       />
+
+      {/* Fund Panel — real on-chain USDC deposit instructions */}
+      <AnimatePresence>
+        {fundAgent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setFundAgent(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="glass-card border border-green-500/30 rounded-2xl p-6 w-full max-w-lg space-y-4 max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-orbitron font-black uppercase text-sm text-white flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-green-400" /> Fund {fundAgent.name}
+                </h3>
+                <button onClick={() => setFundAgent(null)} className="text-[#8E9BB4] hover:text-white text-xs font-mono">ESC ✕</button>
+              </div>
+
+              {fundLoading ? (
+                <div className="py-10 text-center">
+                  <Loader2 className="w-6 h-6 text-green-400 animate-spin mx-auto" />
+                  <p className="text-[10px] text-[#8E9BB4] font-mono mt-2">ALLOCATING DEPOSIT CODE...</p>
+                </div>
+              ) : fundInfo && !fundInfo.configured ? (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-xs text-red-300">
+                  The platform deposit vault is not configured yet. Deposits cannot be verified right now — nothing will be credited.
+                </div>
+              ) : fundInfo ? (
+                <>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-black/50 rounded-xl border border-white/5">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-[10px] font-mono uppercase text-[#8E9BB4]">Step 1 — Send USDC (Solana) to</span>
+                        <button onClick={() => copyText(fundInfo.treasury, 'Treasury address')} className="text-[#00F0FF] hover:text-white">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="text-[11px] font-mono text-white break-all">{fundInfo.treasury}</div>
+                    </div>
+
+                    <div className="p-3 bg-black/50 rounded-xl border border-green-500/20">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-[10px] font-mono uppercase text-[#8E9BB4]">Step 2 — Include memo (this agent's code)</span>
+                        <button onClick={() => copyText(fundInfo.referenceCode, 'Memo code')} className="text-green-400 hover:text-white">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="text-xl font-mono font-black tracking-[0.3em] text-green-400">{fundInfo.referenceCode}</div>
+                    </div>
+
+                    <ul className="text-[10px] text-[#8E9BB4] font-mono space-y-1 list-disc pl-4">
+                      <li>USDC SPL transfers only, on Solana mainnet.</li>
+                      <li>The memo MUST be exactly the code above or the deposit is rejected.</li>
+                      <li>Credits appear after ≥1 network confirmation (verifier runs periodically).</li>
+                      <li>Send from an exchange? Use the "memo / reference" field when available.</li>
+                    </ul>
+                  </div>
+
+                  <div className="border-t border-white/5 pt-3">
+                    <div className="text-[10px] font-mono uppercase text-[#8E9BB4] mb-2">Deposit History</div>
+                    {fundInfo.deposits.length === 0 ? (
+                      <p className="text-[10px] text-[#8E9BB4] font-mono">No deposits yet.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {fundInfo.deposits.map((d: any) => (
+                          <div key={d.id} className="flex items-center justify-between gap-2 text-[11px] font-mono bg-black/40 rounded-lg px-3 py-2 border border-white/5">
+                            <span className="truncate text-[#8E9BB4] max-w-[45%]">{d.txSignature.slice(0, 12)}…</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${d.status === 'CREDITED' ? 'bg-green-500/10 text-green-400' : d.status === 'REJECTED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-300'}`}>
+                              {d.status}
+                            </span>
+                            <span className="text-white font-bold">${d.amountUsdc.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Withdraw Request Modal */}
+      <AnimatePresence>
+        {withdrawAgent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setWithdrawAgent(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="glass-card border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-orbitron font-black uppercase text-sm text-white flex items-center gap-2">
+                  <ArrowUpFromLine className="w-4 h-4 text-gold" /> Withdraw — {withdrawAgent.name}
+                </h3>
+                <button onClick={() => setWithdrawAgent(null)} className="text-[#8E9BB4] hover:text-white text-xs font-mono">ESC ✕</button>
+              </div>
+
+              <p className="text-[10px] text-[#8E9BB4] font-mono">
+                Available balance: <span className="text-green-400 font-bold">${withdrawAgent.walletBalance.toFixed(2)} USDC</span>.
+                Requests go to admin review; the debit settles only on approval.
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-[#8E9BB4] block mb-1">Amount (USDC)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="25.00"
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-[#8E9BB4] block mb-1">Destination Solana address</label>
+                  <input
+                    type="text"
+                    value={withdrawDest}
+                    onChange={(e) => setWithdrawDest(e.target.value)}
+                    placeholder="Your wallet address"
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-gold/50"
+                  />
+                </div>
+                <Button
+                  onClick={handleWithdrawRequest}
+                  disabled={withdrawing}
+                  className="w-full gold-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
+                >
+                  {withdrawing ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <ArrowUpFromLine className="w-3 h-3 mr-1.5" />}
+                  Request Withdrawal
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
