@@ -135,6 +135,7 @@ model User {
   ledgerEntries         LedgerEntry[]
   deposits              Deposit[]
   withdrawalRequests    WithdrawalRequest[]
+  integrations          UserIntegrationKey[]
   userCosmetics         UserCosmetic[]
   marketplaceListings   MarketplaceListing[] @relation("SellerListings")
   cosmeticPurchases     CosmeticTransaction[] @relation("BuyerTransactions")
@@ -935,6 +936,21 @@ model UserLlmKey {
   encryptedKey String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// Bring-your-own-key action integrations (email, social, trading, search).
+// Encrypted at rest; skill runners read decrypted values in-process only.
+model UserIntegrationKey {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  provider     String   // 'sendgrid' | 'resend' | 'x' | 'polymarket' | 'websearch'
+  encryptedKey String   // AES-256-GCM JSON blob of provider credentials
+  meta         Json?    // e.g. verified sender, x handle, wallet pubkey, search vendor
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, provider])
 }
 
 // Append-only real-money ledger. Every walletBalance change on a Web4Agent

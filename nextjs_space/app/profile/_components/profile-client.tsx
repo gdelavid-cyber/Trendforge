@@ -17,6 +17,8 @@ import {
   HeartHandshake,
   Share2,
   BrainCircuit,
+  Plug,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +93,13 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
   const [brainMaskedKey, setBrainMaskedKey] = useState('');
   const [savingBrain, setSavingBrain] = useState(false);
   const [loadingBrain, setLoadingBrain] = useState(true);
+
+  // Action integrations (email / social / trading / search) state
+  const [integrations, setIntegrations] = useState<Array<{ provider: string; label: string; maskedKey: string; meta: any }>>([]);
+  const [availableIntegrations, setAvailableIntegrations] = useState<Array<{ provider: string; fields: string[] }>>([]);
+  const [integProvider, setIntegProvider] = useState('sendgrid');
+  const [integFields, setIntegFields] = useState<Record<string, string>>({});
+  const [savingIntegration, setSavingIntegration] = useState(false);
 
   const toggleSkill = (skill: string) => {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]));
@@ -192,6 +201,68 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
   useEffect(() => {
     loadBrain();
   }, []);
+
+  const loadIntegrations = async () => {
+    try {
+      const res = await fetch('/api/settings/integrations');
+      const data = await res.json();
+      if (res.ok) {
+        setIntegrations(data.integrations ?? []);
+        setAvailableIntegrations(data.available ?? []);
+        const first = (data.available ?? [])[0];
+        if (first && !integrations.some((i: any) => i.provider === integProvider)) {
+          setIntegProvider((prev) => (data.available ?? []).some((a: any) => a.provider === prev) ? prev : first.provider);
+        }
+      }
+    } catch {
+      // Non-fatal
+    }
+  };
+
+  useEffect(() => {
+    loadIntegrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSaveIntegration = async () => {
+    setSavingIntegration(true);
+    try {
+      const res = await fetch('/api/settings/integrations', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: integProvider, creds: integFields }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`${data.integration.label} connected — bots can now use it.`);
+        setIntegFields({});
+        await loadIntegrations();
+      } else {
+        toast.error(data.error ?? 'Failed to connect integration');
+      }
+    } catch {
+      toast.error('Error connecting integration');
+    } finally {
+      setSavingIntegration(false);
+    }
+  };
+
+  const handleDeleteIntegration = async (provider: string) => {
+    setSavingIntegration(true);
+    try {
+      const res = await fetch(`/api/settings/integrations?provider=${provider}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Integration disconnected.');
+        await loadIntegrations();
+      } else {
+        toast.error('Failed to disconnect');
+      }
+    } catch {
+      toast.error('Error disconnecting');
+    } finally {
+      setSavingIntegration(false);
+    }
+  };
 
   const handleSaveBrain = async () => {
     if (!brainModel.trim()) {
@@ -443,6 +514,90 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
             </Button>
           )}
         </div>
+      </motion.div>
+
+      {/* Action Integrations */}
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8 border border-[#00F0FF]/20">
+        <h3 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-1">
+          <Plug className="w-4 h-4 text-[#00F0FF]" /> Action Integrations
+        </h3>
+        <p className="text-xs text-[#8892B0] font-sans max-w-xl mb-4">
+          Connect keys so your bots can <strong>actually do things</strong>: deliver email, post to X, run live web research, and trade. Keys are encrypted and never shown again.
+        </p>
+
+        {integrations.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {integrations.map((i) => (
+              <div key={i.provider} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-green-500/30 text-xs font-mono">
+                <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                <span className="text-white font-bold">{i.label}</span>
+                <span className="text-[#8892B0]">{i.maskedKey}</span>
+                <button
+                  onClick={() => handleDeleteIntegration(i.provider)}
+                  disabled={savingIntegration}
+                  className="text-red-400 hover:text-red-300 ml-1"
+                  title="Disconnect"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-sans">
+          <div>
+            <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Provider</label>
+            <select
+              value={integProvider}
+              onChange={(e) => {
+                setIntegProvider(e.target.value);
+                setIntegFields({});
+              }}
+              className="w-full bg-black/50 border border-white/10 rounded-md text-white text-xs h-9 px-2"
+            >
+              {(availableIntegrations.length
+                ? availableIntegrations
+                : [{ provider: integProvider, fields: [] }]
+              ).map((a) => (
+                <option key={a.provider} value={a.provider}>
+                  {a.provider.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
+          {(availableIntegrations.find((a) => a.provider === integProvider)?.fields ?? []).map((field) => (
+            <div key={field}>
+              <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">{field}</label>
+              {field === 'vendor' ? (
+                <select
+                  value={integFields[field] ?? 'serper'}
+                  onChange={(e) => setIntegFields((p) => ({ ...p, [field]: e.target.value }))}
+                  className="w-full bg-black/50 border border-white/10 rounded-md text-white text-xs h-9 px-2"
+                >
+                  <option value="serper">serper</option>
+                  <option value="tavily">tavily</option>
+                  <option value="brave">brave</option>
+                </select>
+              ) : (
+                <Input
+                  type="password"
+                  placeholder={field}
+                  value={integFields[field] ?? ''}
+                  onChange={(e) => setIntegFields((p) => ({ ...p, [field]: e.target.value }))}
+                  className="bg-black/50 border-white/10 text-white text-xs h-9"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <Button
+          onClick={handleSaveIntegration}
+          disabled={savingIntegration}
+          className="cyan-gradient text-black font-extrabold uppercase text-xs h-8 px-4 mt-4"
+        >
+          {savingBrain || savingIntegration ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : 'Connect Integration'}
+        </Button>
       </motion.div>
 
       {/* Preferences & Skills */}
