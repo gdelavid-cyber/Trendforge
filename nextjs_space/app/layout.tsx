@@ -6,6 +6,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { CyberBackground } from '@/components/cyber-background';
+import { Footer } from '@/components/footer';
 import { FloatingCompanionWidget } from '@/components/chat/FloatingCompanionWidget';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CyberBackground />
           <div className="relative z-10">
             {children}
+            <Footer />
           </div>
           <FloatingCompanionWidget />
           <Toaster position="top-right" theme="dark" richColors />
