@@ -58,7 +58,10 @@ enum RiskLevel {
 enum UserTaskStatus {
   NOT_STARTED
   IN_PROGRESS
+  STEP_EXECUTING
+  PENDING_APPROVAL
   COMPLETED
+  FAILED
 }
 
 enum VerificationStatus {
