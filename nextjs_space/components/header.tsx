@@ -64,7 +64,7 @@ const COMPANION_GROUP: NavGroup = {
   icon: Bot,
   items: [
     { href: '/avatar-studio', label: 'The Forge', icon: Sparkles },
-    // Approval Inbox joins here in S2 (/approvals)
+    { href: '/approvals', label: 'Approval Inbox', icon: ListChecks },
   ],
 };
 
