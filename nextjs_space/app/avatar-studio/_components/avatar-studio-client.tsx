@@ -50,6 +50,13 @@ const SLOT_CONFIG: Record<CombatSlot, { label: string; icon: any; color: string;
 };
 
 export function AvatarStudioClient({ user, initialCatalog }: { user: any; initialCatalog?: CatalogItem[] }) {
+  const VOICE_PRESETS = [
+    { id: 'deep', label: 'Deep', pitch: 0.6, rate: 0.95 },
+    { id: 'cheerful', label: 'Cheerful', pitch: 1.4, rate: 1.15 },
+    { id: 'robotic', label: 'Robotic', pitch: 0.8, rate: 1.0 },
+    { id: 'mysterious', label: 'Mysterious', pitch: 0.75, rate: 0.85 },
+    { id: 'professional', label: 'Professional', pitch: 1.0, rate: 1.05 },
+  ] as const;
   const [agents, setAgents] = useState<any[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [activeSlot, setActiveSlot] = useState<CombatSlot>('HEAD');
@@ -218,14 +225,15 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
   // Voice Test
   const handleTestVoice = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const preset = VOICE_PRESETS.find((v) => v.id === voiceId) ?? VOICE_PRESETS[0];
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(
         `Combat systems calibrated. Loadout modifiers active. Ready for tournament deployment.`
       );
-      utterance.rate = 1.05;
-      utterance.pitch = 0.95;
+      utterance.pitch = preset.pitch;
+      utterance.rate = preset.rate;
       window.speechSynthesis.speak(utterance);
-      toast.info('Synthesizing combat briefing audio...');
+      toast.info(`Synthesizing ${preset.label.toLowerCase()} briefing audio...`);
     }
   };
 
@@ -443,6 +451,30 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
                     }`}
                   >
                     {em}
+                  </button>
+                ))}
+              </div>
+
+              {/* Voice Preset Selector */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {VOICE_PRESETS.map((vp) => (
+                  <button
+                    key={vp.id}
+                    onClick={() => {
+                      setVoiceId(vp.id);
+                      fetch('/api/companion', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ config: { voiceId: vp.id } }),
+                      }).catch(() => {});
+                    }}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase transition-all ${
+                      voiceId === vp.id
+                        ? 'bg-gold text-black'
+                        : 'bg-white/5 text-[#8E9BB4] hover:text-white'
+                    }`}
+                  >
+                    {vp.label}
                   </button>
                 ))}
               </div>
