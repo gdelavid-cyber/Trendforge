@@ -54,7 +54,7 @@ export function TaskListClient({ tasks }: { tasks: any[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="tasks-list">
         {filtered.map((task: any, i: number) => (
           <motion.div key={task?.id ?? i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <TaskCard task={task} />

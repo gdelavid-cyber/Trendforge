@@ -98,7 +98,7 @@ export function ApprovalsClient() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3 mb-12">
+        <div className="space-y-3 mb-12" data-tour="approvals-list">
           {pending.map((a) => (
             <motion.div
               key={a.id}

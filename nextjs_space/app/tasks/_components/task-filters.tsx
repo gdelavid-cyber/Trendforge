@@ -69,7 +69,7 @@ export function TaskFilters({
   };
 
   return (
-    <div className="glass-card p-6 mb-8 space-y-6">
+    <div className="glass-card p-6 mb-8 space-y-6" data-tour="tasks-filters">
       {/* On-Demand AI Power Move Generator */}
       <div className="pb-6 border-b border-white/[0.06]">
         <h3 className="text-sm font-bold text-[#FFD700] mb-3 flex items-center gap-2 uppercase tracking-wide">

@@ -111,7 +111,7 @@ export function InfiniteTaskList({ filters, customTasks }: Props) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="tasks-list">
             <AnimatePresence mode="popLayout">
               {filteredTasks.map((task: any, i: number) => (
                 <motion.div

@@ -517,7 +517,7 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
       </motion.div>
 
       {/* Action Integrations */}
-      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8 border border-[#00F0FF]/20">
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8 border border-[#00F0FF]/20" data-tour="integrations-card">
         <h3 className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-1">
           <Plug className="w-4 h-4 text-[#00F0FF]" /> Action Integrations
         </h3>

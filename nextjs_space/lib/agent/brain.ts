@@ -11,6 +11,7 @@ import { launchAgentRun } from '@/lib/agents/orchestrator';
 import { makeLlm } from '@/lib/execution/llm';
 import { startExecution } from '@/lib/execution/engine';
 import { parseSteps } from '@/lib/tasks/steps';
+import { condensedGuideForPrompt } from '@/lib/guide/content';
 
 /**
  * Latest active run for the user, shaped into a prompt block so the companion
@@ -102,8 +103,10 @@ export async function processAgentConversation(params: {
   const skills = (agent?.skills as any[]) || ['reddit_scraper', 'prediction_arbitrage', 'micro_saas_builder', 'openclaw_deployer', 'ai_video_maker'];
 
   // 2. Build Dynamic System Prompt (+ live task context so the companion
-  // helps with the user's actual task)
+  // helps with the user's actual task, + condensed platform guide so
+  // navigation questions get grounded answers instead of guesses)
   const taskContext = await buildTaskContextBlock(userId);
+  const guideContext = `PLATFORM GUIDE (where to send the user, condensed):\n${condensedGuideForPrompt()}\nWhen the user asks where something lives or how a page works, point them at the right route and describe it from this guide only.`;
   const systemPrompt = buildAgentCompanionPrompt({
     name: agentName,
     archetype,
@@ -112,7 +115,7 @@ export async function processAgentConversation(params: {
     survivalScore,
     availableSkills: skills,
     userContext,
-  }) + (taskContext ? `\n\n${taskContext}` : '');
+  }) + (taskContext ? `\n\n${taskContext}` : '') + `\n\n${guideContext}`;
 
   // 3. Call LLM — provider chain: user BYOK → opencode (dev) → Gemini → heuristic
   let rawResponseText = '';

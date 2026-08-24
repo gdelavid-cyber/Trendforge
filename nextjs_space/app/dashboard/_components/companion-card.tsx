@@ -34,7 +34,7 @@ export function CompanionCard({ trendBalance }: { trendBalance?: number }) {
   if (!companion) return null;
 
   return (
-    <div className="glass-card p-5 mb-8 border border-white/[0.08]">
+    <div className="glass-card p-5 mb-8 border border-white/[0.08]" data-tour="dashboard-companion">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Identity */}
         <div className="lg:w-1/3">
@@ -45,7 +45,7 @@ export function CompanionCard({ trendBalance }: { trendBalance?: number }) {
             </span>
           </div>
           <div className="font-orbitron font-black text-2xl text-white tracking-wider">{companion.name}</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-xs font-mono">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-xs font-mono" data-tour="dashboard-balance">
             <span className="text-[#8E9BB4]">Level</span>
             <span className="text-white text-right">{companion.level}</span>
             <span className="text-[#8E9BB4]">Rarity</span>

@@ -279,7 +279,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
         )}
 
         {/* Action Panel: Companion modes + Launch & Step tracker */}
-        <div className="glass-card border border-[#00F0FF]/20 rounded-xl p-6">
+        <div className="glass-card border border-[#00F0FF]/20 rounded-xl p-6" data-tour="task-modes">
           <h3 className="font-display font-black text-sm text-white uppercase tracking-wider mb-4 flex items-center gap-2">
             <Bot className="w-4 h-4 text-[#00F0FF]" /> Run With Your Companion
           </h3>
@@ -429,7 +429,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
 
         {/* Actual Outputs — real artifacts the companion produced */}
         {artifacts.length > 0 && (
-          <div className="glass-card border border-green-500/20 rounded-xl p-6">
+          <div className="glass-card border border-green-500/20 rounded-xl p-6" data-tour="task-outputs">
             <h3 className="font-display font-black text-sm text-white uppercase tracking-wider mb-4 flex items-center gap-2">
               <FileText className="w-4 h-4 text-green-400" /> Actual Outputs
               <span className="text-[10px] font-mono font-normal text-muted-foreground normal-case tracking-normal">— real deliverables from this run, nothing simulated</span>

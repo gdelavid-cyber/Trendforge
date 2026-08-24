@@ -386,6 +386,7 @@ export function Web4AgentsClient({ user }: { user: any }) {
                     <Button
                       variant="outline"
                       onClick={() => openFundPanel(agent)}
+                      data-tour="agent-fund"
                       className="border-green-500/30 text-xs font-mono uppercase text-green-400 hover:bg-green-500/10 bg-black/40 h-8"
                     >
                       <Landmark className="w-3 h-3 mr-1 text-green-400" /> Fund
@@ -393,6 +394,7 @@ export function Web4AgentsClient({ user }: { user: any }) {
                     <Button
                       variant="outline"
                       onClick={() => setWithdrawAgent(agent)}
+                      data-tour="agent-withdraw"
                       disabled={agent.walletBalance <= 0 || isDead}
                       className="border-white/10 text-xs font-mono uppercase text-[#8E9BB4] hover:text-white bg-black/30 h-8 disabled:opacity-40"
                     >

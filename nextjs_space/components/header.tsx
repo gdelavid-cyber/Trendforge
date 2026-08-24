@@ -30,10 +30,13 @@ import {
   Tag,
   Wrench,
   ShieldCheck,
+  CircleHelp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { SpotlightTour } from '@/components/guide/spotlight-tour';
+import { guideForPath } from '@/lib/guide/content';
 
 interface NavItem {
   href: string;
@@ -109,10 +112,22 @@ export function Header(props?: any) {
     { kind: 'group', ...EARN_GROUP },
     { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
     { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
+    { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
     { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
   ];
 
   const navEntries = session?.user ? signedInNav : anonymousNav;
+
+  // Guide: current page's spotlight steps; Help replays them or opens /guide.
+  const pageGuide = guideForPath(pathname ?? '/');
+  const tourSteps = pageGuide?.tour ?? [];
+  const replayTour = () => {
+    if (tourSteps.length > 0) {
+      window.dispatchEvent(new CustomEvent('trendly:start-tour'));
+    } else {
+      window.location.href = '/guide';
+    }
+  };
 
   const isEntryActive = (entry: NavEntry): boolean => {
     if (entry.kind === 'flat') return pathname === entry.href;
@@ -233,6 +248,15 @@ export function Header(props?: any) {
 
           {/* User & Action Controls */}
           <div className="hidden md:flex items-center gap-2.5">
+            <Button
+              onClick={replayTour}
+              size="sm"
+              variant="outline"
+              aria-label="Help — replay the page tour or open the guide"
+              className="border-white/10 text-[#8E9BB4] hover:text-white bg-white/[0.03] text-xs font-mono uppercase h-8 px-3"
+            >
+              <CircleHelp className="w-3.5 h-3.5 mr-1 text-[#00F0FF]" /> Help
+            </Button>
             <Button
               onClick={() => setIsCompanionOpen(true)}
               size="sm"
@@ -370,6 +394,11 @@ export function Header(props?: any) {
               })}
 
               <div className="pt-3 border-t border-white/[0.06] flex flex-col gap-2">
+                <Link href="/guide" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start text-xs font-mono text-white">
+                    <BookOpen className="w-4 h-4 mr-2 text-[#00F0FF]" /> Platform Guide
+                  </Button>
+                </Link>
                 {session?.user ? (
                   <>
                     <Link href="/profile" onClick={() => setMobileOpen(false)}>
@@ -423,6 +452,9 @@ export function Header(props?: any) {
       onClose={() => setIsCompanionOpen(false)}
       user={session?.user}
     />
+
+    {/* Page spotlight tour — auto-shows once, replays via Help */}
+    <SpotlightTour key={pathname} steps={tourSteps} />
   </>
   );
 }
