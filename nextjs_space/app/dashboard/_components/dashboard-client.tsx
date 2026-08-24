@@ -110,7 +110,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
       <OnboardingTour user={user} />
 
       {/* Companion identity: stats + activity feed + export */}
-      <CompanionCard />
+      <CompanionCard trendBalance={user?.favorCredits} />
 
       {/* 3D AI Companion Spoken Daily Debrief Banner */}
       <motion.div

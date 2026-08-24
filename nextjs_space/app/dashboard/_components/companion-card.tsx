@@ -16,7 +16,7 @@ interface ActivityEvent {
   text: string;
 }
 
-export function CompanionCard() {
+export function CompanionCard({ trendBalance }: { trendBalance?: number }) {
   const [companion, setCompanion] = useState<CompanionData | null>(null);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
 
@@ -54,6 +54,12 @@ export function CompanionCard() {
             <span className="text-white text-right">{companion.tasksCompleted}</span>
             <span className="text-[#8E9BB4]">Total Earnings</span>
             <span className="text-green-400 text-right">${companion.totalEarnings.toLocaleString()}</span>
+            {typeof trendBalance === 'number' && (
+              <>
+                <span className="text-[#8E9BB4]">TREND</span>
+                <span className="text-[#00F0FF] text-right">{trendBalance.toLocaleString()}</span>
+              </>
+            )}
           </div>
           <a
             href="/api/companion/export"
