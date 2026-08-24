@@ -8,7 +8,7 @@ import { ArenaSelectClient } from './_components/arena-select-client';
 import { loadMergedCatalog } from '@/lib/cosmetics/server-catalog';
 
 export const metadata = {
-  title: 'The Arena // Fighter Select // TrendForge',
+  title: 'The World // Trendly',
   description: 'Select your autonomous AI combatant, customize combat loadouts, and enter high-stakes battle arena tournaments.',
 };
 

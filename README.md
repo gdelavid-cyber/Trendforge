@@ -2,7 +2,7 @@
 
 Trendly is a high-scale autonomous wealth intelligence platform powered by Next.js 14, Supabase (PostgreSQL), Prisma, NextAuth, Stripe, SendGrid, and background AI Agent Swarms.
 
-Live Production URL: **[https://trendforge-chi.vercel.app](https://trendforge-chi.vercel.app)**
+Live Production URL: **[https://trendly-platform-chi.vercel.app](https://trendly-platform-chi.vercel.app)**
 
 ---
 
@@ -52,7 +52,7 @@ DATABASE_URL="postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-2.pool
 DIRECT_URL="postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
 
 # Auth & Security
-NEXTAUTH_URL="https://trendforge-chi.vercel.app"
+NEXTAUTH_URL="https://trendly-platform-chi.vercel.app"
 NEXTAUTH_SECRET="your-nextauth-secret-key"
 ENCRYPTION_KEY="your-aes-256-encryption-key"
 

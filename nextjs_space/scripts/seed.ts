@@ -17,7 +17,7 @@ if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !HIDDEN_TEST_EMAIL || !HIDDEN_TEST_PASSWO
 }
 
 async function main() {
-  console.log('Seeding TrendForge database...');
+  console.log('Seeding Trendly database...');
 
   // Hidden test account (mandatory)
   const hiddenTestHash = await bcrypt.hash(HIDDEN_TEST_PASSWORD!, 10);
@@ -40,7 +40,7 @@ async function main() {
     update: { passwordHash: adminHash },
     create: {
       email: ADMIN_EMAIL!,
-      name: 'TrendForge Admin',
+      name: 'Trendly Admin',
       passwordHash: adminHash,
       role: 'ADMIN',
       favorCredits: 99,
