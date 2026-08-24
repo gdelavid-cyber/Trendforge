@@ -46,3 +46,16 @@ LLM_PROVIDER=opencode · OPENCODE_MODEL=opencode/x-preview-f-free
 tsc + suite green; live probe: adapter returns real completion locally;
 brain probe: ask companion "help me with my task" locally and observe
 task-context reply.
+
+## Deviations discovered during build
+- **stdin contract**: when spawned with piped stdin, `opencode run` reads the
+  message from STDIN and ignores argv messages; closed stdin causes instant
+  self-SIGTERM. Adapter feeds the flattened prompt via stdin + end().
+- **Windows binary resolution**: npm exposes .ps1/.cmd shims that execFile
+  cannot spawn; adapter resolves the real opencode.exe under %APPDATA%\npm
+  (override: OPENCODE_BIN), with PATH fallback for unix.
+- **Latency**: ~20-35s per call (process spawn + model). Fine for Co-pilot/
+  Autopilot step granularity in dev; a persistent `opencode serve` pool is
+  the future speedup.
+- Prod (Vercel) intentionally keeps Gemini/Abacus chain — local auth cannot
+  ship to serverless.
