@@ -237,7 +237,7 @@ export default async function LandingPage() {
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-white/[0.06] text-[10px] font-mono text-green-400 font-bold">
-                {bot.yieldText}
+                {bot.yieldText} (estimate)
               </div>
             </Link>
           ))}
@@ -385,7 +385,7 @@ export default async function LandingPage() {
                   <span className="text-[#FFD700] font-bold">$</span>{task.startupCost} Setup
                 </div>
                 <div className="text-green-400 font-bold">
-                  +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
+                  +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh} <span className="text-[#8E9BB4] font-normal">est.</span>
                 </div>
                 <div className="text-right">
                   <Link href={`/tasks/${task.id}`}>

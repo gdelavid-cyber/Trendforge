@@ -111,9 +111,8 @@ export async function executePredictionArbitrage(
   const tradeId = `ARB-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 8999 + 1000)}`;
 
   if (isSimulation) {
-    await log(`[PREDICTION_ARBITRAGE] Simulating dual-sided atomic swap execution...`);
-    await log(`[PREDICTION_ARBITRAGE] Simulated 1,000 unit order filled at $${best.sumPrice}. Guaranteed redemption: $1.00/unit.`);
-    await log(`[PREDICTION_ARBITRAGE] Trade simulation locked with Net Projected Profit: +$${best.estimatedProfit} (+${best.netSpreadPercent}% ROI).`);
+    await log(`[PREDICTION_ARBITRAGE] Paper simulation: 1,000 unit order modeled at $${best.sumPrice} — no funds committed.`);
+    await log(`[PREDICTION_ARBITRAGE] Projected net profit if both legs fill and the market settles: +$${best.estimatedProfit} (+${best.netSpreadPercent}% spread). Estimate, not a promise.`);
   } else {
     await log(`[PREDICTION_ARBITRAGE] Preparing live execution order via exchange bridge for $${budget}...`);
     await log(`[PREDICTION_ARBITRAGE] Executed batch limit orders [ID: ${tradeId}] on ${market}.`);
@@ -129,7 +128,7 @@ export async function executePredictionArbitrage(
     estimatedProfit: best.estimatedProfit,
     roiPercent: best.netSpreadPercent,
     tradeId,
-    details: `Detected binary mispricing on '${best.marketTitle}'. Purchasing paired outcomes at sum cost of $${best.sumPrice} unlocks a guaranteed net yield of +${best.netSpreadPercent}% upon market settlement.`,
+    details: `Detected binary mispricing on '${best.marketTitle}'. Paired outcomes cost $${best.sumPrice} against a $1.00 settlement value per pair — a projected +${best.netSpreadPercent}% spread if both legs fill and the market settles. Simulation only: no funds were committed.`,
     bestOpportunity: best,
     scannedCount: sampleOpportunities.length + rawMarkets.length,
   };

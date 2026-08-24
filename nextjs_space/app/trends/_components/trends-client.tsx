@@ -107,7 +107,7 @@ export function TrendsClient({ trends }: { trends: any[] }) {
                           </h4>
                           <div className="flex items-center gap-2 mt-2 text-[10px] font-mono text-[#8892B0]">
                             <span className="text-green-400 font-bold">
-                              +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
+                              +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh} est.
                             </span>
                             <span>·</span>
                             <span>${task.startupCost} setup</span>

@@ -151,7 +151,7 @@ export function TrendingFeed() {
                       </div>
                       <div className="flex items-center gap-1 text-green-400 font-bold">
                         <DollarSign className="w-3.5 h-3.5 fill-current text-green-400" />
-                        +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
+                        +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh} <span className="text-[#8892B0] font-normal">est.</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-blue-400" />

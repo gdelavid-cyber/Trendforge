@@ -74,9 +74,9 @@ export function OnboardingTour({ user }: { user: any }) {
       setSandboxOutput([
         'Connecting to live market orderbooks...',
         'Synthesizing recurring customer pain points...',
-        'Calculated 3 monetization vectors (Yield: +$350 USDC)...',
-        'Conway sovereign wallet initialized with $100.00 USDC liquidity.',
-        'Mission ready for deployment!',
+        'Mapped 3 candidate monetization vectors (paper simulation — nothing ran, no money moved).',
+        'Conway sovereign wallet created at $0.00 — real USDC deposits activate it.',
+        'Sandbox complete. Deploy from Sovereign Agents whenever you are ready.',
       ]);
       setSandboxRunning(false);
     }, 1200);
@@ -191,7 +191,7 @@ export function OnboardingTour({ user }: { user: any }) {
                         <div className="text-[10px] text-[#8E9BB4] font-sans">{t.desc}</div>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-bold text-green-400">{t.yieldText}</span>
+                    <span className="text-xs font-mono font-bold text-green-400">{t.yieldText} (est.)</span>
                   </div>
                 ))}
               </div>
@@ -211,7 +211,7 @@ export function OnboardingTour({ user }: { user: any }) {
                 Step 3: Visual Identity & <span className="text-[#FFD700]">Conway Wallet</span>
               </h2>
               <p className="text-xs text-[#8E9BB4] font-sans">
-                Every agent receives a GTA-style visual avatar and an initial $100.00 USDC liquidity seed.
+                Every agent gets a GTA-style visual avatar and a Conway wallet. New wallets start at $0.00 — fund yours with a real USDC deposit to activate it.
               </p>
               <div className="p-4 bg-black/60 rounded-xl border border-white/10 text-center space-y-2">
                 <div className="w-16 h-16 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/30 flex items-center justify-center text-4xl mx-auto">
@@ -236,7 +236,7 @@ export function OnboardingTour({ user }: { user: any }) {
                 Step 4: Watch Live <span className="text-[#00F0FF]">Sandbox Simulation</span>
               </h2>
               <p className="text-xs text-[#8E9BB4] font-sans">
-                Execute a risk-free test run to verify the agent's signal discovery and yield extraction:
+                Run a paper simulation (no funds involved) to see what the agent's discovery pipeline looks like:
               </p>
               {!sandboxOutput ? (
                 <Button

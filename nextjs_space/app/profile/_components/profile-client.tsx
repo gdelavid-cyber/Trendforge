@@ -100,6 +100,7 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
   const [integProvider, setIntegProvider] = useState('sendgrid');
   const [integFields, setIntegFields] = useState<Record<string, string>>({});
   const [savingIntegration, setSavingIntegration] = useState(false);
+  const [loadingIntegrations, setLoadingIntegrations] = useState(true);
 
   const toggleSkill = (skill: string) => {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]));
@@ -203,6 +204,7 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
   }, []);
 
   const loadIntegrations = async () => {
+    setLoadingIntegrations(true);
     try {
       const res = await fetch('/api/settings/integrations');
       const data = await res.json();
@@ -216,6 +218,8 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
       }
     } catch {
       // Non-fatal
+    } finally {
+      setLoadingIntegrations(false);
     }
   };
 
@@ -525,7 +529,19 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
           Connect keys so your bots can <strong>actually do things</strong>: deliver email, post to X, run live web research, and trade. Keys are encrypted and never shown again.
         </p>
 
-        {integrations.length > 0 && (
+        {loadingIntegrations ? (
+          <div className="flex items-center gap-2 mb-4 text-xs font-mono text-[#8892B0]">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#00F0FF]" /> Loading integrations…
+          </div>
+        ) : integrations.length === 0 ? (
+          <div className="mb-4 rounded-lg border border-white/10 bg-black/40 p-4 text-center">
+            <p className="text-xs font-mono text-[#8892B0]">
+              Nothing connected yet. Until you connect keys, related runner steps will
+              report <span className="text-yellow-300 font-bold">BLOCKED</span> with guidance —
+              they never fake results.
+            </p>
+          </div>
+        ) : (
           <div className="flex flex-wrap gap-2 mb-4">
             {integrations.map((i) => (
               <div key={i.provider} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-green-500/30 text-xs font-mono">

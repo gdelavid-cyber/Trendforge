@@ -12,7 +12,7 @@ export function FloatingCompanionWidget() {
   const [agentData, setAgentData] = useState<any>({
     name: 'Nexus Cyber Operative',
     archetype: 'CYBER_HUMANOID',
-    walletBalance: 100.0,
+    walletBalance: 0,
     survivalScore: 88,
   });
 
@@ -78,8 +78,8 @@ export function FloatingCompanionWidget() {
               </div>
 
               <div className="flex items-center justify-between text-[10px] text-[#8E9BB4]">
-                <span className="flex items-center gap-1 text-green-400 font-bold">
-                  <Wallet className="w-3 h-3" /> ${agentData.walletBalance?.toFixed(1) || '100.0'} USDC
+                <span className={`flex items-center gap-1 font-bold ${agentData.walletBalance > 0 ? 'text-green-400' : 'text-blue-300'}`}>
+                  <Wallet className="w-3 h-3" /> ${Number(agentData.walletBalance ?? 0).toFixed(1)} USDC
                 </span>
                 <span className="text-[#00F0FF]">Score: {agentData.survivalScore || 88}/100</span>
               </div>

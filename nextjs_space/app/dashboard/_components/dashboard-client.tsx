@@ -60,10 +60,10 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
   };
 
   const swarmShortcuts = [
-    { name: 'Reddit Scraper', href: '/agents', yieldText: '$150-$1.5k', icon: '🤖' },
-    { name: 'Polymarket Arb', href: '/agents', yieldText: '+4.5-18% ROI', icon: '📈' },
-    { name: 'Micro-SaaS Builder', href: '/agents', yieldText: '$2k-$10k MRR', icon: '💻' },
-    { name: 'AI Video Maker', href: '/agents', yieldText: '$300-$2.4k/mo', icon: '🎬' },
+    { name: 'Reddit Scraper', href: '/agents', yieldText: 'target: $150-$1.5k (estimate)', icon: '🤖' },
+    { name: 'Polymarket Arb', href: '/agents', yieldText: 'projected spread (estimate)', icon: '📈' },
+    { name: 'Micro-SaaS Builder', href: '/agents', yieldText: 'target: $2k-$10k MRR (estimate)', icon: '💻' },
+    { name: 'AI Video Maker', href: '/agents', yieldText: 'target: $300-$2.4k/mo (estimate)', icon: '🎬' },
   ];
 
   return (
@@ -255,7 +255,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
                     <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/[0.06] pt-3 md:pt-0">
                       <div className="text-right">
                         <div className="text-sm font-bold text-green-400 font-mono">
-                          +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh}
+                          +${task.estimatedEarningsLow}-${task.estimatedEarningsHigh} <span className="text-[10px] text-[#8E9BB4]">est.</span>
                         </div>
                         <div className="text-[10px] text-[#8E9BB4] font-mono">
                           ⏱️ {task.timeToFirstDollar ?? '1-7 days'}

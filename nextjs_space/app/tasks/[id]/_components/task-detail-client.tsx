@@ -236,7 +236,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
             <div className="text-xl font-bold text-white">${task?.startupCost ?? 0}</div>
           </div>
           <div className="glass-card border border-white/5 rounded-xl p-4 font-mono-stats">
-            <span className="text-xs text-muted-foreground uppercase font-mono tracking-widest block mb-1">Target Earnings</span>
+            <span className="text-xs text-muted-foreground uppercase font-mono tracking-widest block mb-1">Target Earnings (estimate)</span>
             <div className="text-xl font-bold text-green-400">+${task?.estimatedEarningsLow}-${task?.estimatedEarningsHigh}</div>
           </div>
           <div className="glass-card border border-white/5 rounded-xl p-4 font-mono-stats">

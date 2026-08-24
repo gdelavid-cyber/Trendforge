@@ -32,6 +32,8 @@ export function SpotlightTour({ steps }: { steps: TourStep[] }) {
   const [rect, setRect] = useState<Rect | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const persistedRef = useRef(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   // One-time auto start: only when signed in AND tourDone is still false.
   useEffect(() => {
@@ -42,6 +44,7 @@ export function SpotlightTour({ steps }: { steps: TourStep[] }) {
         if (!res.ok || cancelled) return;
         const body = await res.json();
         if (!cancelled && body?.success && body?.tourDone === false && steps.length > 0) {
+          lastFocusedRef.current = document.activeElement as HTMLElement | null;
           setActive(true);
         }
       } catch {
@@ -53,6 +56,16 @@ export function SpotlightTour({ steps }: { steps: TourStep[] }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A11y: move focus into the dialog while open; restore it when closed.
+  useEffect(() => {
+    if (!active) {
+      lastFocusedRef.current?.focus?.();
+      lastFocusedRef.current = null;
+      return;
+    }
+    dialogRef.current?.focus();
+  }, [active]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -66,6 +79,7 @@ export function SpotlightTour({ steps }: { steps: TourStep[] }) {
   useEffect(() => {
     const start = () => {
       if (steps.length > 0) {
+        lastFocusedRef.current = document.activeElement as HTMLElement | null;
         setIndex(0);
         setActive(true);
       }
@@ -150,8 +164,7 @@ export function SpotlightTour({ steps }: { steps: TourStep[] }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[100]" role="dialog" aria-modal="true" aria-label="Guided tour">
-      {/* Dim layer with cutout */}
-      {rect && (
+      {/* Dim layer with cutout */}      {rect && (
         <div
           className={`fixed rounded-xl border-2 border-[#00F0FF] shadow-[0_0_0_9999px_rgba(4,4,10,0.82),0_0_30px_rgba(0,240,255,0.35)] pointer-events-none ${
             reducedMotion ? '' : 'transition-all duration-200'
@@ -168,7 +181,9 @@ export function SpotlightTour({ steps }: { steps: TourStep[] }) {
 
       {/* Tooltip card */}
       <div
-        className={`fixed w-[328px] rounded-xl bg-[#0B0B18]/95 backdrop-blur-xl border border-[#00F0FF]/25 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.8)] ${
+        ref={dialogRef}
+        tabIndex={-1}
+        className={`fixed w-[328px] rounded-xl bg-[#0B0B18]/95 backdrop-blur-xl border border-[#00F0FF]/25 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.8)] outline-none ${
           reducedMotion ? '' : 'transition-all duration-200'
         }`}
         style={tooltipStyle}

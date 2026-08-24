@@ -99,7 +99,11 @@ export function ChatInterface({
   // Initial welcome greeting
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeText = initialMessage || `Greetings, Operative. I am ${agentName}, your sovereign 3D AI companion with $${(agent?.walletBalance ?? 100).toFixed(1)} USDC liquidity. How can we compound our wealth today?`;
+      const balance = agent?.walletBalance ?? 0;
+      const walletLine = balance > 0
+        ? `I am ${agentName}, your sovereign 3D AI companion with $${balance.toFixed(1)} USDC liquidity.`
+        : `I am ${agentName}, your sovereign 3D AI companion — currently dormant until my Conway wallet is funded.`;
+      const welcomeText = initialMessage || `${walletLine} How can we compound our wealth today?`;
       
       const welcomeMsg: MessageItem = {
         id: 'welcome',
