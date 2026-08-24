@@ -5,13 +5,19 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
-export async function completePowerMoveAction(taskId: string, earnings: number) {
+/**
+ * Marks a Power Move completed. Honesty boundary: this records that the WORK
+ * was done — nothing else. It deliberately accepts no earnings figure and
+ * touches no money field: income is recorded exclusively by the ledger when
+ * real money lands (deposits, trade proceeds, battle pots). Any payout for
+ * this task happens outside Trendly and is the user's to track at their bank.
+ */
+export async function completePowerMoveAction(taskId: string) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) return { error: 'Unauthorized' };
     const userId = (session.user as any)?.id;
 
-    // Get the task details to check total steps
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (!task) return { error: 'Power Move not found' };
 
@@ -24,7 +30,6 @@ export async function completePowerMoveAction(taskId: string, earnings: number) 
       }
     })();
 
-    // 1. Update UserTask to COMPLETED status
     await prisma.userTask.upsert({
       where: { userId_taskId: { userId, taskId } },
       create: {
@@ -32,25 +37,15 @@ export async function completePowerMoveAction(taskId: string, earnings: number) 
         taskId,
         status: 'COMPLETED',
         stepsCompleted: totalSteps,
-        earningsReported: earnings,
+        earningsReported: null,
         completedAt: new Date(),
         hasOptedInRisk: true,
       },
       update: {
         status: 'COMPLETED',
         stepsCompleted: totalSteps,
-        earningsReported: earnings,
+        earningsReported: null,
         completedAt: new Date(),
-      },
-    });
-
-    // 2. Increment user's totalEarnings in the database
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        totalEarnings: {
-          increment: earnings,
-        },
       },
     });
 

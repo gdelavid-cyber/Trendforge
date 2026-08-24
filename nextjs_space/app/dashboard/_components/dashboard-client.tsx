@@ -29,7 +29,7 @@ interface DashboardClientProps {
   user: {
     name: string | null;
     role: string;
-    totalEarnings: number;
+    realIncomeUsdc: number;
     completedCount: number;
     userTasks: any[];
     favorCredits: number;
@@ -42,19 +42,20 @@ interface DashboardClientProps {
 export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary }: DashboardClientProps) {
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const [companionInitialMessage, setCompanionInitialMessage] = useState<string | undefined>(undefined);
-  const earnings = user?.totalEarnings ?? 0;
+  const realIncomeUsdc = user?.realIncomeUsdc ?? 0;
   const completedCount = user?.completedCount ?? 0;
   const userTasksList = user?.userTasks ?? [];
 
-  const points = getWealthPoints(earnings);
-  const lvlInfo = getLevelInfo(earnings);
+  // XP is completion-based gamification — deliberately decoupled from money.
+  const points = getWealthPoints(completedCount);
+  const lvlInfo = getLevelInfo(completedCount);
   const streak = getStreak(userTasksList);
-  const badgesList = getBadges(earnings, completedCount);
+  const badgesList = getBadges(completedCount);
 
   const badgeConfig: { [key: string]: { name: string; desc: string; icon: any; color: string } } = {
     first_move: { name: 'Initiate', desc: 'Completed First Power Move', icon: Target, color: 'text-[#00F0FF] bg-[#00F0FF]/10 border-[#00F0FF]/20' },
-    hundred_club: { name: 'Centurion', desc: 'Crossed $100 in Earnings', icon: Award, color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
-    thousand_club: { name: 'Titan', desc: 'Crossed $1,000 in Earnings', icon: Trophy, color: 'text-[#FFD700] bg-[#FFD700]/10 border-[#FFD700]/20' },
+    hundred_club: { name: 'Centurion', desc: 'Completed 25 Power Moves', icon: Award, color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+    thousand_club: { name: 'Titan', desc: 'Completed 50 Power Moves', icon: Trophy, color: 'text-[#FFD700] bg-[#FFD700]/10 border-[#FFD700]/20' },
     ten_completed: { name: 'Operator', desc: 'Completed 10 Power Moves', icon: Zap, color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
     fifty_completed: { name: 'Mastermind', desc: 'Completed 50 Power Moves', icon: Star, color: 'text-[#FF007A] bg-[#FF007A]/10 border-[#FF007A]/20' },
   };
@@ -110,7 +111,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
       <OnboardingTour user={user} />
 
       {/* Companion identity: stats + activity feed + export */}
-      <CompanionCard trendBalance={user?.favorCredits} />
+      <CompanionCard trendBalance={user?.favorCredits} realIncomeUsdc={realIncomeUsdc} />
 
       {/* 3D AI Companion Spoken Daily Debrief Banner */}
       <motion.div
@@ -168,7 +169,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: DollarSign, label: 'Total Earnings', value: `$${earnings.toLocaleString()}`, color: 'text-green-400' },
+          { icon: DollarSign, label: 'Real Income (ledger)', value: `$${realIncomeUsdc.toFixed(2)}`, color: 'text-green-400' },
           { icon: Star, label: 'Rank Bandwidth', value: `Lvl ${lvlInfo.level} (${lvlInfo.name})`, color: 'text-[#00F0FF]' },
           { icon: Flame, label: 'Active Streak', value: `${streak} Days`, color: 'text-[#FFD700]' },
           { icon: Award, label: 'Completed Moves', value: `${completedCount} Done`, color: 'text-[#FF007A]' },
@@ -197,7 +198,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
         <div className="flex items-center justify-between mb-3 text-xs font-mono">
           <span className="text-[#00F0FF] uppercase tracking-wider font-bold">Terminal Bandwidth Progression</span>
           <span className="text-[#8E9BB4]">
-            ${earnings.toLocaleString()} / ${(lvlInfo.maxPoints / 100).toLocaleString()} ({Math.round(lvlInfo.progress)}%)
+            {points.toLocaleString()} / {lvlInfo.maxPoints.toLocaleString()} XP ({Math.round(lvlInfo.progress)}%)
           </span>
         </div>
         <div className="h-3 w-full bg-black/50 rounded-full overflow-hidden border border-white/[0.08] p-0.5">
@@ -207,7 +208,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           />
         </div>
         <p className="text-[10px] text-[#8E9BB4] mt-2 font-mono uppercase tracking-wider">
-          Next level threshold: ${(lvlInfo.maxPoints / 100).toLocaleString()} in total earnings. Complete Power Moves and run Swarm Agents to level up.
+          XP comes from completed Power Moves only — it is game progress, not money. Real income is tracked separately on the ledger.
         </p>
       </motion.div>
 

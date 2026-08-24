@@ -58,6 +58,7 @@ interface Props {
     skills: string[];
     riskTolerance: string;
     totalEarnings: number;
+    realIncomeUsdc: number;
     favorCredits: number;
     isVIP: boolean;
     isMentor: boolean;
@@ -353,13 +354,13 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
       {/* "My Impact" Telemetry Grid */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8">
         <h3 className="text-sm font-mono uppercase tracking-wider text-[#FFD700] mb-4 flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-[#FFD700]" /> My Impact & Verified Earnings
+          <DollarSign className="w-4 h-4 text-[#FFD700]" /> My Impact & Real Income
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-black/40 p-4 rounded-lg border border-white/5 text-xs font-mono">
-            <span className="text-[#8892B0] block text-[10px] uppercase">Total Earnings</span>
-            <span className="text-2xl font-bold text-green-400 mt-1 block">
-              ${(user?.totalEarnings ?? 0).toLocaleString()}
+            <span className="text-[#8892B0] block text-[10px] uppercase">Real Income (ledger)</span>
+            <span className="text-2xl font-bold text-green-400 mt-1 block" title="Only deposits, trade proceeds and battle pots — never self-reported figures">
+              ${(user?.realIncomeUsdc ?? 0).toFixed(2)}
             </span>
           </div>
           <div className="bg-black/40 p-4 rounded-lg border border-white/5 text-xs font-mono">

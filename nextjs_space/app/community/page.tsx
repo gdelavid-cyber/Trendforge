@@ -38,12 +38,10 @@ export default async function CommunityPage() {
     });
 
     leaderboard = await prisma.user.findMany({
-      orderBy: { totalEarnings: 'desc' },
       take: 100,
       select: {
         id: true,
         name: true,
-        totalEarnings: true,
         isVIP: true,
         isMentor: true,
         userTasks: {
@@ -53,6 +51,13 @@ export default async function CommunityPage() {
           },
         },
       },
+    });
+    // Rank by verified platform work (completed moves), never by money —
+    // income is private ledger data, not a public leaderboard metric.
+    leaderboard.sort((a: any, b: any) => {
+      const aDone = a.userTasks.filter((t: any) => t.status === 'COMPLETED').length;
+      const bDone = b.userTasks.filter((t: any) => t.status === 'COMPLETED').length;
+      return bDone - aDone;
     });
   } catch (e) {
     console.error('Community page data fetch failed:', e);
@@ -66,7 +71,7 @@ export default async function CommunityPage() {
         leaderboard={leaderboard.map((u: any) => ({
           id: u.id,
           name: u.name ?? 'Anonymous',
-          totalEarnings: u.totalEarnings,
+          completedCount: u.userTasks.filter((t: any) => t.status === 'COMPLETED').length,
           isVIP: u.isVIP,
           isMentor: u.isMentor,
           userTasks: u.userTasks,

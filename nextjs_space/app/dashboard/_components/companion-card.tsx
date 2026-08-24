@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Download, Sparkles } from 'lucide-react';
 
 interface CompanionData {
+  [key: string]: any;
   name: string;
   level: number;
   rarity: string;
@@ -16,7 +17,7 @@ interface ActivityEvent {
   text: string;
 }
 
-export function CompanionCard({ trendBalance }: { trendBalance?: number }) {
+export function CompanionCard({ trendBalance, realIncomeUsdc = 0 }: { trendBalance?: number; realIncomeUsdc?: number }) {
   const [companion, setCompanion] = useState<CompanionData | null>(null);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
 
@@ -52,8 +53,10 @@ export function CompanionCard({ trendBalance }: { trendBalance?: number }) {
             <span className="text-gold text-right uppercase">{companion.rarity}</span>
             <span className="text-[#8E9BB4]">Tasks Completed</span>
             <span className="text-white text-right">{companion.tasksCompleted}</span>
-            <span className="text-[#8E9BB4]">Total Earnings</span>
-            <span className="text-green-400 text-right">${companion.totalEarnings.toLocaleString()}</span>
+            <span className="text-[#8E9BB4]">Real Income</span>
+            <span className="text-green-400 text-right" title="Ledger-backed only: deposits, trade proceeds, battle pots">
+              ${realIncomeUsdc.toFixed(2)}
+            </span>
             {typeof trendBalance === 'number' && (
               <>
                 <span className="text-[#8E9BB4]">TREND</span>

@@ -425,8 +425,9 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
         <TabsContent value="leaderboard">
           <div className="glass-card p-6">
             <h3 className="text-sm font-mono uppercase tracking-wider text-[#FFD700] mb-4 flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-[#FFD700]" /> Top Verified Earners
+              <Trophy className="w-4 h-4 text-[#FFD700]" /> Top Operators
             </h3>
+            <p className="text-[10px] text-[#8892B0] font-mono mb-3">Ranked by verified completed moves — income is private, never a leaderboard metric.</p>
             <div className="divide-y divide-white/[0.04] overflow-x-auto font-mono text-xs">
               {(leaderboard || []).slice(0, 20).map((u: any, idx: number) => (
                 <div key={u.id || idx} className="py-3 flex items-center justify-between">
@@ -436,8 +437,8 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
                     </span>
                     <span className="text-white font-bold">{u.name || 'Anonymous Operative'}</span>
                   </div>
-                  <span className="text-green-400 font-bold text-sm">
-                    ${(u.totalEarnings || 0).toLocaleString()}
+                  <span className="text-[#00F0FF] font-bold text-sm">
+                    {(u.completedCount ?? 0).toLocaleString()} moves
                   </span>
                 </div>
               ))}

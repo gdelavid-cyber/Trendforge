@@ -72,13 +72,24 @@ async function appendStepResult(userTaskId: string, index: number, entry: Record
 /**
  * Logs a step outcome and persists any real-world artifact it produced.
  * Blocked outcomes are recorded honestly as 'blocked' — never 'done'.
+ * Timing is stamped so the run feed can prove when and how long work took;
+ * evidence (provider ids, links, sources) lives on the artifact meta.
  */
-async function recordOutcome(userTaskId: string, index: number, step: { title: string; action: string }, outcome: StepOutcome) {
+async function recordOutcome(
+  userTaskId: string,
+  index: number,
+  step: { title: string; action: string },
+  outcome: StepOutcome,
+  timing: StepTiming
+) {
   await appendStepResult(userTaskId, index, {
     title: step.title,
     action: step.action,
     status: outcome.blocked ? 'blocked' : 'done',
     output: outcome.output,
+    startedAt: timing.startedAt,
+    finishedAt: timing.finishedAt,
+    durationMs: timing.durationMs,
   });
   if (outcome.artifact) {
     await prisma.taskArtifact.create({
@@ -92,6 +103,31 @@ async function recordOutcome(userTaskId: string, index: number, step: { title: s
       },
     });
   }
+}
+
+interface StepTiming {
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+}
+
+/** Wraps a runner call with wall-clock stamps for the proof trail. */
+async function executeTimed(
+  runner: { run: (step: any, ctx: StepContext) => Promise<StepOutcome> },
+  step: any,
+  ctx: StepContext
+): Promise<{ outcome: StepOutcome; timing: StepTiming }> {
+  const started = new Date();
+  const outcome = await runner.run(step, ctx);
+  const finished = new Date();
+  return {
+    outcome,
+    timing: {
+      startedAt: started.toISOString(),
+      finishedAt: finished.toISOString(),
+      durationMs: finished.getTime() - started.getTime(),
+    },
+  };
 }
 
 /**
@@ -192,8 +228,8 @@ async function runSingleStep(
   }
 
   const ctx = await buildContext(userTaskId, userId, index, task?.title ?? 'task');
-  const outcome = await runnerFor(deps).run(step, ctx);
-  await recordOutcome(userTaskId, index, step, outcome);
+  const { outcome, timing } = await executeTimed(runnerFor(deps), step, ctx);
+  await recordOutcome(userTaskId, index, step, outcome, timing);
   return { ok: true, outcome };
 }
 
@@ -230,13 +266,17 @@ async function runAutopilot(
 
       const ctx = await buildContext(userTaskId, userId, i, task?.title ?? 'task');
       let outcome: StepOutcome;
+      let timing: StepTiming;
       try {
-        outcome = await runner.run(step, ctx);
+        const executed = await executeTimed(runner, step, ctx);
+        outcome = executed.outcome;
+        timing = executed.timing;
       } catch (err: any) {
-        await appendStepResult(userTaskId, i, { title: step.title, action: step.action, status: 'failed', output: err.message });
+        const now = new Date().toISOString();
+        await appendStepResult(userTaskId, i, { title: step.title, action: step.action, status: 'failed', output: err.message, startedAt: now, finishedAt: now, durationMs: 0 });
         continue; // adapt: skip failed step, keep moving
       }
-      await recordOutcome(userTaskId, i, step, outcome);
+      await recordOutcome(userTaskId, i, step, outcome, timing);
     }
 
     // Companion stats: completed runs level the companion up.
@@ -296,14 +336,18 @@ export async function approveGate(approvalId: string, userId: string, deps: Engi
   if (step) {
     try {
       const ctx = await buildContext(ut.id, userId, approval.stepIndex, taskRow?.title ?? 'task');
-      const outcome = await runnerFor(deps).run(step, ctx);
-      await recordOutcome(ut.id, approval.stepIndex, step, outcome);
+      const { outcome, timing } = await executeTimed(runnerFor(deps), step, ctx);
+      await recordOutcome(ut.id, approval.stepIndex, step, outcome, timing);
     } catch (err: any) {
+      const now = new Date().toISOString();
       await appendStepResult(ut.id, approval.stepIndex, {
         title: step.title,
         action: step.action,
         status: 'failed',
         output: err.message,
+        startedAt: now,
+        finishedAt: now,
+        durationMs: 0,
       });
     }
   } else {

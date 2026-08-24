@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
 import { ProfileClient } from './_components/profile-client';
+import { userRealIncomeUsdc } from '@/lib/web4/ledger';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,7 @@ export default async function ProfilePage() {
   let completedTasks = 0;
   let badges: any[] = [];
   let agentRunsCount = 0;
+  let realIncomeUsdc = 0;
 
   try {
     user = await prisma.user.findUnique({
@@ -27,6 +29,7 @@ export default async function ProfilePage() {
     completedTasks = await prisma.userTask.count({ where: { userId, status: 'COMPLETED' } });
     agentRunsCount = await prisma.agentRun.count({ where: { userId, status: 'completed' } });
     badges = user?.badges || [];
+    realIncomeUsdc = await userRealIncomeUsdc(userId);
   } catch (e) {
     console.error(e);
   }
@@ -45,6 +48,7 @@ export default async function ProfilePage() {
                 skills: user.skills,
                 riskTolerance: user.riskTolerance,
                 totalEarnings: user.totalEarnings,
+                realIncomeUsdc,
                 favorCredits: user.favorCredits,
                 isVIP: user.isVIP,
                 isMentor: user.isMentor,

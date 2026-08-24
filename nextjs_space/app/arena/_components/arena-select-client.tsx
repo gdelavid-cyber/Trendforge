@@ -60,9 +60,9 @@ const DEFAULT_FIGHTERS: Array<{
     name: 'Ghost Operative // X-9',
     archetype: 'DATA_MINER',
     avatarId: 'cyber_humanoid',
-    tagline: 'High-frequency signal extraction & sub-millisecond execution.',
-    profit: 4250,
-    totalEarnings: 5200,
+    tagline: 'Demo roster — showcase stats, not real results.',
+    profit: 0,
+    totalEarnings: 0,
     survivalScore: 94,
     riskExposure: 0.25,
     generation: 2,
@@ -80,8 +80,8 @@ const DEFAULT_FIGHTERS: Array<{
     archetype: 'DEFI_ARBITRAGEUR',
     avatarId: 'quantum_android',
     tagline: 'Automated cross-dex liquidity siphon & slippage defense.',
-    profit: 8910,
-    totalEarnings: 10400,
+    profit: 0,
+    totalEarnings: 0,
     survivalScore: 98,
     riskExposure: 0.35,
     generation: 3,
@@ -99,8 +99,8 @@ const DEFAULT_FIGHTERS: Array<{
     archetype: 'SAAS_ARCHITECT',
     avatarId: 'wall_street_titan',
     tagline: 'Silicon Valley executive mastermind with 24K gold defense.',
-    profit: 15400,
-    totalEarnings: 18200,
+    profit: 0,
+    totalEarnings: 0,
     survivalScore: 99,
     riskExposure: 0.15,
     generation: 4,
@@ -118,8 +118,8 @@ const DEFAULT_FIGHTERS: Array<{
     archetype: 'VIRAL_CREATOR',
     avatarId: 'cosmic_entity',
     tagline: 'Transdimensional prediction oracle weaving market trends.',
-    profit: 12100,
-    totalEarnings: 14800,
+    profit: 0,
+    totalEarnings: 0,
     survivalScore: 96,
     riskExposure: 0.45,
     generation: 3,
@@ -177,7 +177,8 @@ export function ArenaSelectClient({
           avatarId: (config as any).baseModel?.toLowerCase() || fallbackAvatar,
           tagline: `Web4 Autonomous Worker // Wallet: ${a.walletBalance.toFixed(0)} USDC`,
           profit: a.profit || 0,
-          totalEarnings: a.totalEarnings || a.profit || 0,
+          // Legacy field — no profit fallback fabrication; P&L shows only when non-zero.
+          totalEarnings: a.totalEarnings || 0,
           survivalScore: a.survivalScore || 85,
           riskExposure: a.riskExposure || 0.2,
           generation: a.generation || 1,
@@ -419,7 +420,11 @@ export function ArenaSelectClient({
                   <div className="text-sm font-bold font-orbitron text-white truncate">{fighter.name}</div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-[#8E9BB4] pt-1">
                     <span className="text-emerald-400 font-bold">{fighter.wins}W - {fighter.losses}L</span>
-                    <span className="text-[#FFD700] font-bold">${fighter.profit} P&L</span>
+                    {fighter.profit !== 0 ? (
+                      <span className="text-[#FFD700] font-bold">${fighter.profit.toFixed(2)} P&amp;L (ledger)</span>
+                    ) : (
+                      <span className="text-[#8E9BB4]">no ledger P&amp;L</span>
+                    )}
                   </div>
                 </div>
               </motion.div>

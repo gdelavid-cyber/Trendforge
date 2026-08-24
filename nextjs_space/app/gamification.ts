@@ -6,18 +6,23 @@ export interface LevelInfo {
   progress: number;
 }
 
-export function getWealthPoints(totalEarnings: number): number {
-  // Convert dollars to Wealth Points (WP)
-  return Math.floor((totalEarnings || 0) * 100);
+// Progression is pure gamification: XP comes from completed moves ONLY.
+// It is deliberately decoupled from money — dollar figures shown anywhere in
+// the platform are ledger-backed real income, never game points.
+
+export const XP_PER_COMPLETION = 100;
+
+export function getWealthPoints(completedCount: number): number {
+  return Math.floor(Math.max(completedCount || 0, 0)) * XP_PER_COMPLETION;
 }
 
-export function getLevelInfo(totalEarnings: number): LevelInfo {
-  const points = getWealthPoints(totalEarnings);
+export function getLevelInfo(completedCount: number): LevelInfo {
+  const points = getWealthPoints(completedCount);
 
   let level = 1;
   let name = 'Initiate';
   let minPoints = 0;
-  let maxPoints = 1000; // 100 dollars * 100
+  let maxPoints = 1000; // 10 completions
 
   if (points >= 1000 && points < 5000) {
     level = 2;
@@ -47,13 +52,12 @@ export function getLevelInfo(totalEarnings: number): LevelInfo {
   return { level, name, minPoints, maxPoints, progress };
 }
 
-export function getBadges(totalEarnings: number, completedCount: number): string[] {
-  const points = getWealthPoints(totalEarnings);
+export function getBadges(completedCount: number): string[] {
   const list: string[] = [];
 
   if (completedCount >= 1) list.push('first_move');
-  if (points >= 10000) list.push('hundred_club'); // $100 -> 10,000 WP
-  if (points >= 100000) list.push('thousand_club'); // $1,000 -> 100,000 WP
+  if (completedCount >= 25) list.push('hundred_club'); // renamed semantics: 25 completions
+  if (completedCount >= 50) list.push('thousand_club'); // 50 completions
   if (completedCount >= 10) list.push('ten_completed');
   if (completedCount >= 50) list.push('fifty_completed');
 

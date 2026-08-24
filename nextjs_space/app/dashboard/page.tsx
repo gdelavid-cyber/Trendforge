@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
 import { DashboardClient } from './_components/dashboard-client';
+import { userRealIncomeUsdc } from '@/lib/web4/ledger';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -16,6 +17,7 @@ export default async function DashboardPage() {
   let trendingMoves: any[] = [];
   let userTasks: any[] = [];
   let trendSummary = '';
+  let realIncomeUsdc = 0;
 
   try {
     user = await prisma.user.findUnique({
@@ -43,6 +45,8 @@ export default async function DashboardPage() {
 
     const digest = await prisma.weeklyDigest.findFirst({ orderBy: { weekOf: 'desc' } });
     trendSummary = digest?.trendSummary ?? '';
+    // The only legitimate income figure: ledger-backed real credits.
+    realIncomeUsdc = await userRealIncomeUsdc(userId);
   } catch (e) {
     console.error('Dashboard data query failed:', e);
   }
@@ -51,7 +55,7 @@ export default async function DashboardPage() {
 
   const headerStats = user
     ? {
-        totalEarnings: user.totalEarnings,
+        realIncomeUsdc,
         completedCount,
         userTasks,
       }
@@ -66,7 +70,7 @@ export default async function DashboardPage() {
             ? {
                 name: user.name,
                 role: user.role,
-                totalEarnings: user.totalEarnings,
+                realIncomeUsdc,
                 completedCount,
                 userTasks,
                 favorCredits: user.favorCredits,

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { completePowerMoveAction } from '@/app/actions';
 import { parseSteps } from '@/lib/tasks/steps';
+import { RunFeed } from './run-feed';
 
 interface Props {
   task: any;
@@ -39,8 +40,6 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
 
   const [claiming, setClaiming] = useState(false);
   const [claimed, setClaimed] = useState(initialUserTask?.status === 'COMPLETED');
-  const [reportedEarnings, setReportedEarnings] = useState('');
-  const [pointsAwarded, setPointsAwarded] = useState<number | null>(null);
 
   const risk = RISK_CONFIG[(task?.riskLevel ?? 'LOW') as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.LOW;
   const parsedSteps = (() => { try { return parseSteps(task?.steps); } catch { return []; } })();
@@ -93,20 +92,17 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
 
   const handleCompleteMove = async () => {
     setClaiming(true);
-    const earningsAmount = reportedEarnings ? parseFloat(reportedEarnings) : task.estimatedEarningsHigh;
     try {
-      const res = await completePowerMoveAction(task.id, earningsAmount);
+      const res = await completePowerMoveAction(task.id);
       if (res.success) {
-        const points = Math.floor(earningsAmount * 100);
         setClaimed(true);
-        setPointsAwarded(points);
-        toast.success(`Power Move Completed! Recorded +$${earningsAmount.toLocaleString()} in earnings!`);
+        toast.success('Power Move marked complete. Nice work.');
         setUserTask({ ...userTask, status: 'COMPLETED', stepsCompleted: totalSteps });
       } else {
-        toast.error(res.error ?? 'Failed to claim completion');
+        toast.error(res.error ?? 'Failed to mark complete');
       }
     } catch {
-      toast.error('Failed to report completion');
+      toast.error('Failed to update task');
     } finally {
       setClaiming(false);
     }
@@ -390,27 +386,21 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
             ))}
           </div>
 
-          {/* Gamified Claim Section */}
+          {/* Honest Completion Section */}
           {userTask && !claimed && stepsCompleted === totalSteps && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-6 border-t border-white/5 pt-6 space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-gold" /> Record Your Earnings & Level Up
+                  <Trophy className="w-4 h-4 text-gold" /> Mark This Move Complete
                 </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Input completed earnings to update your profile stats.</p>
-              </div>
-              <div className="flex gap-2 max-w-xs">
-                <span className="bg-[#11111E] border border-white/5 px-3 py-2 text-sm rounded-l-md font-mono text-muted-foreground">$</span>
-                <input
-                  type="number"
-                  placeholder={`Default: $${task.estimatedEarningsHigh}`}
-                  value={reportedEarnings}
-                  onChange={(e) => setReportedEarnings(e.target.value)}
-                  className="bg-[#11111E] border border-white/5 border-l-0 text-white rounded-r-md px-3 py-2 text-sm flex-1 focus:outline-none focus:border-[#00F0FF]/50"
-                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Records that you finished the work. Trendly does not track task income — if this
+                  move earns you money, that payment happens outside the platform and only real
+                  ledger activity (deposits, trade proceeds, battle pots) is ever shown as income.
+                </p>
               </div>
               <Button onClick={handleCompleteMove} disabled={claiming} className="cyan-gradient text-black font-extrabold uppercase holographic-btn w-full md:w-auto px-6 h-10 rounded">
-                {claiming ? 'Processing...' : 'Claim Completion & Level Up'}
+                {claiming ? 'Processing...' : 'Mark Complete'}
               </Button>
             </motion.div>
           )}
@@ -418,14 +408,19 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
           {claimed && (
             <div className="mt-6 border-t border-[#00F0FF]/20 pt-6 text-center bg-[#00F0FF]/5 border rounded-lg p-5">
               <CheckCircle className="w-8 h-8 text-[#00F0FF] mx-auto mb-2 animate-pulse" />
-              <h4 className="font-display font-black text-[#00F0FF] uppercase tracking-wider text-base">Power Move Fully Executed</h4>
+              <h4 className="font-display font-black text-[#00F0FF] uppercase tracking-wider text-base">Power Move Complete</h4>
               <p className="text-xs text-muted-foreground mt-1">
-                Congratulations operative. Earnings have been credited to your account.
-                {pointsAwarded && <span className="text-gold font-bold ml-1">+${(pointsAwarded / 100).toLocaleString()}</span>}
+                Work recorded. Any money you made on this happens outside Trendly — fund an agent
+                wallet to track real platform-side money on the ledger.
               </p>
             </div>
           )}
         </div>
+
+        {/* Live Work Log — real-time proof of what the companion actually did */}
+        {userTask?.id && (
+          <RunFeed userTaskId={userTask.id} active={companionActive} />
+        )}
 
         {/* Actual Outputs — real artifacts the companion produced */}
         {artifacts.length > 0 && (

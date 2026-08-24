@@ -86,6 +86,19 @@ export async function realEarningsUsdc(agentId: string): Promise<number> {
   return agg._sum.amountUsdc ?? 0;
 }
 
+/**
+ * Real income for a USER across all their agents — the only legitimate source
+ * for any "$ earned" surface. Self-reported task claims are not income and are
+ * never counted here.
+ */
+export async function userRealIncomeUsdc(userId: string): Promise<number> {
+  const agg = await prisma.ledgerEntry.aggregate({
+    where: { userId, type: { in: REAL_CREDIT_TYPES }, amountUsdc: { gt: 0 } },
+    _sum: { amountUsdc: true },
+  });
+  return agg._sum.amountUsdc ?? 0;
+}
+
 /** An agent is funded once it has at least one ledger entry (legacy backfill counts). */
 export async function isFunded(agentId: string): Promise<boolean> {
   const count = await prisma.ledgerEntry.count({ where: { agentId } });
