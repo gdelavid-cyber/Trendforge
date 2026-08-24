@@ -53,17 +53,9 @@ export default async function DashboardPage() {
 
   const completedCount = userTasks.filter((ut) => ut.status === 'COMPLETED').length;
 
-  const headerStats = user
-    ? {
-        realIncomeUsdc,
-        completedCount,
-        userTasks,
-      }
-    : null;
-
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
-      <Header userStats={headerStats} />
+      <Header />
       <DashboardClient
         user={
           user

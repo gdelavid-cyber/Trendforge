@@ -3,7 +3,9 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { runSurvivalCycle } from '@/lib/web4/survival-engine';
 
-const CRON_SECRET = process.env.PIPELINE_API_KEY;
+// Accepts the platform key or Vercel's CRON_SECRET (sent automatically as
+// Bearer auth when the schedule fires).
+const CRON_SECRET = process.env.PIPELINE_API_KEY ?? process.env.CRON_SECRET;
 
 function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
   if (!CRON_SECRET) {

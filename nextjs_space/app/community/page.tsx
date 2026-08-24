@@ -10,26 +10,11 @@ import { CommunityClient } from './_components/community-client';
 export default async function CommunityPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
-  const userId = (session.user as any)?.id;
 
   let favors: any[] = [];
   let leaderboard: any[] = [];
-  let headerStats: any = null;
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { userTasks: true },
-    });
-    if (user) {
-      const completedCount = user.userTasks.filter(ut => ut.status === 'COMPLETED').length;
-      headerStats = {
-        totalEarnings: user.totalEarnings,
-        completedCount,
-        userTasks: user.userTasks,
-      };
-    }
-
     favors = await prisma.favor.findMany({
       where: { status: 'OPEN' },
       include: { fromUser: { select: { name: true } }, task: { select: { title: true } } },
@@ -52,7 +37,7 @@ export default async function CommunityPage() {
         },
       },
     });
-    // Rank by verified platform work (completed moves), never by money —
+    // Rank by verified platform work (completed moves), never by money â€”
     // income is private ledger data, not a public leaderboard metric.
     leaderboard.sort((a: any, b: any) => {
       const aDone = a.userTasks.filter((t: any) => t.status === 'COMPLETED').length;
@@ -65,7 +50,7 @@ export default async function CommunityPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
-      <Header userStats={headerStats} />
+      <Header />
       <CommunityClient
         favors={favors.map((f: any) => ({ id: f.id, description: f.description, fromUser: f.fromUser?.name ?? 'Anonymous', task: f.task?.title ?? null, creditValue: f.creditValue }))}
         leaderboard={leaderboard.map((u: any) => ({
