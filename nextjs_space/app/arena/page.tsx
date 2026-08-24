@@ -21,17 +21,24 @@ export default async function ArenaPage() {
   if (userEmail) {
     const user = await prisma.user.findUnique({ where: { email: userEmail } });
     if (user) {
-      const [equipped, agent] = await Promise.all([
+      const [equipped, companion, agent] = await Promise.all([
         prisma.userCosmetic.findMany({ where: { userId: user.id, equipped: true } }),
+        prisma.companion.findFirst({ where: { userId: user.id }, orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }] }),
         prisma.web4Agent.findFirst({
           where: { userId: user.id },
           orderBy: { profit: 'desc' },
-          select: { name: true },
+          select: { name: true, avatarConfig: true },
         }),
       ]);
 
-      if (equipped.length > 0) {
-        // Map owned cosmetics onto world slots by their catalog slot.
+      // Priority: Companion identity → agent avatar config → equipped inventory.
+      const companionLoadout = (companion?.config as any)?.loadout;
+      const agentLoadout = (agent?.avatarConfig as any)?.loadout;
+      if (companionLoadout && typeof companionLoadout === 'object') {
+        loadout = companionLoadout;
+      } else if (agentLoadout && typeof agentLoadout === 'object') {
+        loadout = agentLoadout;
+      } else if (equipped.length > 0) {
         const { COSMETICS_CATALOG } = await import('@/lib/cosmetics/catalog');
         loadout = {};
         for (const uc of equipped) {
@@ -39,7 +46,7 @@ export default async function ArenaPage() {
           if (item?.slot && !loadout[item.slot]) loadout[item.slot] = item.id;
         }
       }
-      companionName = agent?.name;
+      companionName = companion?.name ?? agent?.name ?? undefined;
     }
   }
 

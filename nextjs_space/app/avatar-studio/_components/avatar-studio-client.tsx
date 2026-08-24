@@ -82,6 +82,21 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
     FINISHER: 'anim_matrix_dodge',
   });
 
+  // Hydrate persisted identity (Companion.config) on mount
+  useEffect(() => {
+    fetch('/api/companion', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b) => {
+        const loadout = b?.companion?.config?.loadout;
+        if (loadout && typeof loadout === 'object') {
+          setCurrentLoadout((prev) => ({ ...prev, ...loadout }));
+        }
+        const voice = b?.companion?.config?.voiceId;
+        if (voice) setVoiceId(voice);
+      })
+      .catch(() => {});
+  }, []);
+
   // Fetch user's registered agents on mount
   useEffect(() => {
     fetch('/api/web4/agents')
@@ -134,13 +149,16 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
     return COSMETICS_CATALOG.filter((item) => item.slot === activeSlot);
   }, [activeSlot]);
 
-  // Equip item to current loadout
+  // Equip item to current loadout (mirrored to the user's Companion identity)
   const handleEquipItem = (item: CatalogItem) => {
-    setCurrentLoadout((prev) => ({
-      ...prev,
-      [activeSlot]: item.id,
-    }));
+    const next = { ...currentLoadout, [activeSlot]: item.id };
+    setCurrentLoadout(next);
     toast.success(`Equipped ${item.name} to ${activeSlot} slot!`);
+    fetch('/api/companion', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: { loadout: next } }),
+    }).catch(() => {});
   };
 
   // Save loadout to database
@@ -173,6 +191,16 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
           avatarConfig: avatarConfigPayload,
         }),
       });
+
+      // Mirror to the Companion identity so The World + dashboard see it.
+      await fetch('/api/companion', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: { loadout: currentLoadout, baseModel: avatarConfigPayload.baseModel, voiceId },
+          personality: { traits: ['friendly', 'analytical', 'witty'], bio: `Voice: ${voiceId}` },
+        }),
+      }).catch(() => {});
 
       const data = await res.json();
       if (res.ok && data.success) {
