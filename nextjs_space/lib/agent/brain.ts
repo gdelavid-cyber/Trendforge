@@ -47,8 +47,8 @@ ACTIVE TASK CONTEXT (ground all advice in this):
 ${pending ? '- A gate is PENDING: the user must approve it in /approvals before work continues.\n' : ''}
 
 You may execute for the user by emitting exactly ONE marker on its own line:
-[RUN_NEXT_STEP ${ut.task.id}]  → runs the current step now (Co-pilot)
-[START_AUTOPILOT ${ut.task.id}]  → hands the whole task to you (respects platform gates)
+[RUN_NEXT_STEP: ${ut.task.id}]  → runs the current step now (Co-pilot)
+[START_AUTOPILOT: ${ut.task.id}]  → hands the whole task to you (respects platform gates)
 Use markers only when the user asks you to act; otherwise advise concretely.`.trim();
   } catch {
     return '';

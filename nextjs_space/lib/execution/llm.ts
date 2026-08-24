@@ -1,12 +1,17 @@
 import { execFile, spawn } from 'child_process';
 import path from 'path';
 import { callLLM } from '@/lib/pipeline';
+import { opencodeServeLlm } from './opencode-serve';
 
 // Pluggable brain for companions and the execution engine.
 //
-//   LLM_PROVIDER=opencode  → shells out to a local opencode CLI install
-//                            (e.g. ox-alpha free). Zero API keys, dev-only:
-//                            serverless prod cannot carry local auth.
+//   LLM_PROVIDER=opencode  → local opencode install (e.g. ox-alpha free).
+//                            Zero API keys, dev-only: serverless prod cannot
+//                            carry local auth.
+//       OPENCODE_SERVE_URL → talks to a persistent `opencode serve` HTTP
+//                            instance (fast, no process spawn per call).
+//       (unset)            → spawns `opencode run` per call (~20-35s, stdin
+//                            prompt contract, Windows .exe resolution below).
 //   (unset/anything else)  → callLLM: OpenAI / Abacus endpoints.
 
 export type LlmFn = (
@@ -26,7 +31,7 @@ export function flattenMessages(messages: { role: string; content: string }[]): 
     .join('\n\n');
 }
 
-function stripAnsi(s: string): string {
+export function stripAnsi(s: string): string {
   // eslint-disable-next-line no-control-regex
   return s.replace(/\x1b\[[0-9;]*m/g, '').trim();
 }
@@ -102,6 +107,8 @@ export function opencodeRunLlm(
 
 export function makeLlm(): LlmFn {
   if (process.env.LLM_PROVIDER === 'opencode') {
+    const serveUrl = process.env.OPENCODE_SERVE_URL;
+    if (serveUrl) return opencodeServeLlm(serveUrl);
     return opencodeRunLlm();
   }
   return callLLM as unknown as LlmFn;
