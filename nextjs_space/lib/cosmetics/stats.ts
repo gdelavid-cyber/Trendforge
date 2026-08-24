@@ -3,6 +3,7 @@ import type { Web4Agent } from '@prisma/client';
 
 export interface FighterLoadout {
   HEAD?: string;
+  EYEWEAR?: string;
   BODY?: string;
   AURA?: string;
   TRAIL?: string;
