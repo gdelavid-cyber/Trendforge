@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getWealthPoints, getLevelInfo, getStreak, getBadges } from '@/app/gamification';
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
+import { CompanionCard } from './companion-card';
 import { Gift } from 'lucide-react';
 import { useState } from 'react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
@@ -107,6 +108,9 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
 
       {/* 5-Step Interactive Onboarding Modal */}
       <OnboardingTour user={user} />
+
+      {/* Companion identity: stats + activity feed + export */}
+      <CompanionCard />
 
       {/* 3D AI Companion Spoken Daily Debrief Banner */}
       <motion.div
