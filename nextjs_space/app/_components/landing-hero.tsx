@@ -11,8 +11,8 @@ export function LandingHero({ trends }: { trends: any[] }) {
   return (
     <section className="relative overflow-hidden">
       {/* Background effect */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gold/5 via-transparent to-transparent" />
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[120px]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#00F0FF]/5 via-transparent to-transparent" />
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#00F0FF]/5 rounded-full blur-[120px]" />
 
       <div className="relative max-w-[1200px] mx-auto px-4 pt-20 pb-16">
         <motion.div
@@ -21,29 +21,31 @@ export function LandingHero({ trends }: { trends: any[] }) {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-4 py-1.5 mb-6">
-            <Flame className="w-4 h-4 text-gold" />
-            <span className="text-sm text-gold font-medium">New task drops daily</span>
+          <div className="inline-flex items-center gap-2 bg-[#00F0FF]/10 border border-[#00F0FF]/20 rounded-full px-4 py-1.5 mb-6">
+            <Flame className="w-4 h-4 text-[#00F0FF]" />
+            <span className="text-sm text-[#00F0FF] font-medium">Your AI companion never sleeps</span>
           </div>
 
           <h1 className="font-display font-bold text-4xl md:text-6xl tracking-tight mb-6">
-            <span className="gold-text">Forge Wealth</span> from the<br />
-            Week&apos;s Hottest Trends
+            Forge <span className="text-[#00F0FF]">Your AI Companion</span>.
+            <br />
+            Earn From What&apos;s Trending.
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Verified money-making tasks. From zero-cost side hustles to
-            high-reward ventures — all backed by real success stories.
+            Customize a companion that looks like yours alone — then put it to
+            work on trending money-tasks. One click. It does the rest. You own
+            everything.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Link href="/auth/signup">
-              <Button size="lg" className="gold-gradient text-black font-bold text-lg px-8 h-12">
-                Start Forging Free <ChevronRight className="w-5 h-5 ml-1" />
+              <Button size="lg" className="cyan-gradient text-black font-bold text-lg px-8 h-12">
+                Forge Your Companion <ChevronRight className="w-5 h-5 ml-1" />
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button variant="outline" size="lg" className="border-gold/30 text-gold hover:bg-gold/10 h-12">
+              <Button variant="outline" size="lg" className="border-[#00F0FF]/30 text-[#00F0FF] hover:bg-[#00F0FF]/10 h-12">
                 View Plans
               </Button>
             </Link>
