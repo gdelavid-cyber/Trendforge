@@ -139,6 +139,7 @@ export function AvatarRenderer({
   const equippedItems = useMemo(() => {
     const items: Record<CombatSlot, CatalogItem | null> = {
       HEAD: null,
+      EYEWEAR: null,
       BODY: null,
       AURA: null,
       TRAIL: null,
@@ -147,6 +148,7 @@ export function AvatarRenderer({
 
     const activeLoadout = loadout || {
       HEAD: config?.accessory,
+      EYEWEAR: undefined as string | undefined,
       BODY: config?.skin,
       AURA: config?.aura,
       TRAIL: config?.wings,
