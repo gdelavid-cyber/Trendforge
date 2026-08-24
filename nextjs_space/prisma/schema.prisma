@@ -111,6 +111,7 @@ model User {
   updatedAt             DateTime         @updatedAt
 
   userTasks             UserTask[]
+  approvals             Approval[]
   successStories        SuccessStory[]
   sentFavors            Favor[]          @relation("FavorFrom")
   receivedFavors        Favor[]          @relation("FavorTo")
@@ -212,6 +213,12 @@ model UserTask {
   launchedAt       DateTime?
   completedAt      DateTime?
   hasOptedInRisk   Boolean        @default(false)
+  mode             String?
+  currentStep      Int?
+  stepResults      Json?
+  companionId      String?
+
+  approvals        Approval[]
   createdAt        DateTime       @default(now())
 
   @@unique([userId, taskId])
@@ -859,6 +866,24 @@ model SwarmControl {
   id         String   @id @default("global")
   killSwitch Boolean  @default(false)
   updatedAt  DateTime @updatedAt
+}
+
+// A gated external action queued by the execution engine; the user approves
+// or rejects it from /approvals before anything leaves the platform.
+model Approval {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  userTaskId String
+  userTask   UserTask  @relation(fields: [userTaskId], references: [id])
+  stepIndex  Int
+  action     Json
+  status     String    @default("PENDING")
+  reviewedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
 }
 
 
