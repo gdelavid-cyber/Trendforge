@@ -17,6 +17,7 @@ export default async function ArenaPage() {
 
   let loadout: Record<string, string> | undefined;
   let companionName: string | undefined;
+  let companion: any = null;
 
   if (userEmail) {
     const user = await prisma.user.findUnique({ where: { email: userEmail } });
@@ -55,7 +56,10 @@ export default async function ArenaPage() {
       <div className="relative z-20">
         <Header />
       </div>
-      <WorldClient loadout={loadout as any} />
+      <WorldClient
+        loadout={loadout as any}
+        config={(companion?.config as any) ?? undefined}
+      />
     </div>
   );
 }

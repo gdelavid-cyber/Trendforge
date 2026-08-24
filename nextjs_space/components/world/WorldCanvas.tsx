@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
 import type { FighterLoadout } from '@/lib/cosmetics/stats';
 import { computeNextPosition, createMoveState, type MoveState } from './movement';
+import type { CompanionAppearanceConfig } from '@/lib/companion/appearance';
 import { useWorldControls } from './useWorldControls';
 import { CompanionAvatar } from './CompanionAvatar';
 
@@ -122,7 +123,7 @@ function Props() {
 // Player rig: controls + camera follow
 // ---------------------------------------------------------------------------
 
-function Player({ loadout }: { loadout?: FighterLoadout }) {
+function Player({ loadout, config }: { loadout?: FighterLoadout; config?: CompanionAppearanceConfig }) {
   const input = useWorldControls();
   const state = useRef<MoveState>(createMoveState());
   const group = useRef<THREE.Group>(null!);
@@ -141,7 +142,7 @@ function Player({ loadout }: { loadout?: FighterLoadout }) {
 
   return (
     <group ref={group}>
-      <CompanionAvatar loadout={loadout} movingRef={movingRef} />
+      <CompanionAvatar loadout={loadout} config={config} movingRef={movingRef} />
       <CameraFollow targetRef={group} movingRef={movingRef} />
     </group>
   );
@@ -170,9 +171,10 @@ function CameraFollow({
 
 export interface WorldCanvasProps {
   loadout?: FighterLoadout;
+  config?: CompanionAppearanceConfig;
 }
 
-export function WorldCanvas({ loadout }: WorldCanvasProps) {
+export function WorldCanvas({ loadout, config }: WorldCanvasProps) {
   const equippedChips = (['HEAD', 'BODY', 'AURA', 'TRAIL'] as const)
     .map((slot) => ({ slot, item: COSMETICS_CATALOG.find((c) => c.id === loadout?.[slot]) }))
     .filter((e) => e.item);
@@ -195,7 +197,7 @@ export function WorldCanvas({ loadout }: WorldCanvasProps) {
         <Ground />
         <Buildings />
         <Props />
-        <Player loadout={loadout} />
+        <Player loadout={loadout} config={config} />
       </Canvas>
 
       {/* HUD overlay */}

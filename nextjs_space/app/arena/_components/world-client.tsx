@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import type { FighterLoadout } from '@/lib/cosmetics/stats';
+import type { CompanionAppearanceConfig } from '@/lib/companion/appearance';
 
 const WorldCanvas = dynamic(() => import('@/components/world/WorldCanvas').then((m) => m.WorldCanvas), {
   ssr: false,
@@ -14,10 +15,16 @@ const WorldCanvas = dynamic(() => import('@/components/world/WorldCanvas').then(
   ),
 });
 
-export function WorldClient({ loadout }: { loadout?: FighterLoadout }) {
+export function WorldClient({
+  loadout,
+  config,
+}: {
+  loadout?: FighterLoadout;
+  config?: CompanionAppearanceConfig;
+}) {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#04040A]">
-      <WorldCanvas loadout={loadout} />
+      <WorldCanvas loadout={loadout} config={config} />
     </div>
   );
 }
