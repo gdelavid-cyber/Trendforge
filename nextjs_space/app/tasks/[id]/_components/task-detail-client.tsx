@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, Shield, Clock, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, Clock, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy, Bot, Zap, Wrench, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,6 +11,7 @@ import { TrendCategoryBadge } from '@/components/trend-badge';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { completePowerMoveAction } from '@/app/actions';
+import { parseSteps } from '@/lib/tasks/steps';
 
 interface Props {
   task: any;
@@ -33,7 +34,8 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
   const [pointsAwarded, setPointsAwarded] = useState<number | null>(null);
 
   const risk = RISK_CONFIG[(task?.riskLevel ?? 'LOW') as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.LOW;
-  const steps: string[] = (() => { try { return typeof task?.steps === 'string' ? JSON.parse(task.steps) : (task?.steps ?? []); } catch { return []; } })();
+  const parsedSteps = (() => { try { return parseSteps(task?.steps); } catch { return []; } })();
+  const steps: string[] = parsedSteps.map((s) => s.title);
   const toolLinks: { name: string; url: string }[] = (() => { try { return typeof task?.toolLinks === 'string' ? JSON.parse(task.toolLinks) : (task?.toolLinks ?? []); } catch { return []; } })();
   const isHighRisk = task?.riskLevel === 'HIGH';
   const canLaunch = !isHighRisk || optedIn;
@@ -129,6 +131,69 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
   const totalSteps = steps?.length ?? 0;
   const progress = totalSteps > 0 ? (stepsCompleted / totalSteps) * 100 : 0;
 
+  // ---- Companion execution (S2) ----
+  const [companionState, setCompanionState] = useState<{
+    status?: string; currentStep?: number; pendingApproval?: { id: string; action: { title?: string } } | null;
+  } | null>(null);
+  const [startingMode, setStartingMode] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const refreshStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/tasks/status?taskId=${task?.id}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const body = await res.json();
+      if (body?.userTask) {
+        setCompanionState({ status: body.userTask.status, currentStep: body.userTask.currentStep, pendingApproval: body.pendingApproval });
+        setUserTask((prev: any) => prev ?? body.userTask);
+      }
+    } catch {}
+  }, [task?.id]);
+
+  useEffect(() => {
+    if (!userTask) return;
+    refreshStatus();
+  }, [userTask?.id, refreshStatus]);
+
+  useEffect(() => {
+    const live = companionState?.status === 'STEP_EXECUTING' || companionState?.status === 'PENDING_APPROVAL';
+    if (live && !pollRef.current) {
+      pollRef.current = setInterval(refreshStatus, 4000);
+    } else if (!live && pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
+  }, [companionState?.status, refreshStatus]);
+
+  const startCompanion = async (mode: 'DIY' | 'CO_PILOT' | 'AUTOPILOT') => {
+    setStartingMode(mode);
+    try {
+      const res = await fetch('/api/tasks/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: task?.id, mode }),
+      });
+      const data = await res.json();
+      if (!res.ok && res.status !== 409) {
+        toast.error(data?.error ?? `Failed to start ${mode}`);
+        return;
+      }
+      if (res.status === 409 && mode !== 'AUTOPILOT') {
+        toast.info('Already running');
+      }
+      if (mode === 'AUTOPILOT') toast.success('Autopilot engaged — your companion is on it.');
+      if (mode === 'CO_PILOT') toast.success('Co-pilot executed the next step.');
+      await refreshStatus();
+    } catch {
+      toast.error('Failed to reach the engine');
+    } finally {
+      setStartingMode(null);
+    }
+  };
+
+  const companionActive = ['STEP_EXECUTING', 'PENDING_APPROVAL'].includes(companionState?.status ?? '');
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -204,18 +269,71 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories }: P
           </div>
         )}
 
-        {/* Action Panel: Launch & Step tracker */}
-        <div className="glass-card border border-white/5 rounded-xl p-6">
+        {/* Action Panel: Companion modes + Launch & Step tracker */}
+        <div className="glass-card border border-[#00F0FF]/20 rounded-xl p-6">
+          <h3 className="font-display font-black text-sm text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Bot className="w-4 h-4 text-[#00F0FF]" /> Run With Your Companion
+          </h3>
+
+          {companionActive && (
+            <div className="mb-5 rounded-xl border border-[#00F0FF]/30 bg-[#00F0FF]/[0.06] p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Loader2 className="w-4 h-4 text-[#00F0FF] animate-spin shrink-0" />
+                <span className="text-xs font-mono text-white truncate">
+                  {companionState?.status === 'PENDING_APPROVAL'
+                    ? 'Paused — waiting for your one-click approval.'
+                    : `Working… step ${(companionState?.currentStep ?? 0) + 1} of ${totalSteps}`}
+                </span>
+              </div>
+              {companionState?.pendingApproval && (
+                <Link href="/approvals">
+                  <Button size="sm" className="cyan-gradient text-black font-extrabold uppercase text-xs h-8 px-3 holographic-btn">
+                    Review & Approve
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+
           {!userTask ? (
             <div className="text-center space-y-4">
               <Rocket className="w-8 h-8 text-gold mx-auto animate-bounce" />
               <div>
                 <h3 className="font-display font-black text-lg text-white uppercase tracking-wider">Initialize Power Move</h3>
-                <p className="text-xs text-muted-foreground mt-1">Acquire step instructions and open execution logs.</p>
+                <p className="text-xs text-muted-foreground mt-1">Pick how hands-on you want to be.</p>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-3 max-w-2xl mx-auto pt-2">
+                <button
+                  disabled={!canLaunch || startingMode !== null}
+                  onClick={() => startCompanion('DIY')}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left hover:border-gold/40 transition-colors disabled:opacity-50"
+                >
+                  <Wrench className="w-4 h-4 text-gold mb-2" />
+                  <div className="text-xs font-mono font-bold uppercase text-white">DIY</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">You execute; companion advises.</div>
+                </button>
+                <button
+                  disabled={!canLaunch || startingMode !== null}
+                  onClick={() => startCompanion('CO_PILOT')}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left hover:border-[#00F0FF]/40 transition-colors disabled:opacity-50"
+                >
+                  {startingMode === 'CO_PILOT' ? <Loader2 className="w-4 h-4 text-[#00F0FF] mb-2 animate-spin" /> : <Zap className="w-4 h-4 text-[#00F0FF] mb-2" />}
+                  <div className="text-xs font-mono font-bold uppercase text-white">Co-pilot</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">Companion runs each step on demand.</div>
+                </button>
+                <button
+                  disabled={!canLaunch || startingMode !== null}
+                  onClick={() => startCompanion('AUTOPILOT')}
+                  className="relative rounded-xl border border-[#00F0FF]/30 bg-[#00F0FF]/[0.05] p-4 text-left hover:border-[#00F0FF] transition-colors disabled:opacity-50"
+                >
+                  {startingMode === 'AUTOPILOT' ? <Loader2 className="w-4 h-4 text-[#00F0FF] mb-2 animate-spin" /> : <Bot className="w-4 h-4 text-[#00F0FF] mb-2" />}
+                  <div className="text-xs font-mono font-bold uppercase text-[#00F0FF]">Autopilot</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">One click. It does the rest.</div>
+                </button>
               </div>
               <div className="flex justify-center gap-3">
                 <Button className="gold-gradient text-black font-extrabold holographic-btn rounded h-10" disabled={!canLaunch} onClick={handleLaunch}>
-                  <Rocket className="w-4 h-4 mr-2" /> Initiate Move
+                  <Rocket className="w-4 h-4 mr-2" /> Initiate Manual Move
                 </Button>
                 <Link href={`/launch/${task?.id}`}>
                   <Button variant="outline" className="border-white/10 text-white rounded h-10">Open Sandbox Console</Button>
