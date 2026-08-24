@@ -167,36 +167,38 @@ export default async function LandingPage() {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-6">
           <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
           <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
-            NEW MONEY-MAKING TASK DROPS DAILY
+            YOUR AI COMPANION NEVER SLEEPS
           </span>
         </div>
 
         <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto uppercase">
-          <span className="cyan-gold-gradient-text">Trendly Web4</span><br />
-          The Wealth Operating System
+          <span className="cyan-gold-gradient-text">Forge Your Companion</span><br />
+          The Companion Economy
         </h1>
 
         <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-8 font-sans leading-relaxed">
-          Create, customize, and deploy autonomous AI agents that operate as sovereign economic citizens — with crypto wallets, 3D visual avatars, and Darwinian survival instincts.
+          Customize an AI companion that looks like yours alone — then put it to
+          work on trending money-tasks. One click: it executes, you approve, you
+          get paid. What you forge, you own.
         </p>
 
         {/* Primary Action Buttons */}
         <div className="flex flex-wrap gap-3 justify-center items-center mb-14">
-          <Link href="/builder">
+          <Link href="/auth/signup">
             <Button
               size="lg"
               className="h-12 px-6 text-xs sm:text-sm font-extrabold uppercase font-mono tracking-wider cyan-gradient text-black holographic-btn shadow-[0_0_30px_rgba(0,240,255,0.4)]"
             >
-              <Layers className="w-4 h-4 mr-2 stroke-[3]" /> No-Code Agent Studio
+              <Sparkles className="w-4 h-4 mr-2 stroke-[3]" /> Forge Your Companion
             </Button>
           </Link>
-          <Link href="/avatar-studio">
+          <Link href="/tasks">
             <Button
               variant="outline"
               size="lg"
               className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-[#FFD700]/50 text-white bg-white/[0.03] backdrop-blur-md"
             >
-              <Palette className="w-4 h-4 mr-2 text-[#FFD700]" /> 3D Avatar Studio
+              <Coins className="w-4 h-4 mr-2 text-[#FFD700]" /> See Trending Tasks
             </Button>
           </Link>
           <Link href="/agents">
