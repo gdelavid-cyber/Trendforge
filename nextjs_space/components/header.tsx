@@ -18,37 +18,113 @@ import {
   Activity,
   Sparkles,
   ArrowRight,
+  ChevronDown,
+  Globe,
+  Coins,
+  ListChecks,
+  Radio,
+  BookOpen,
+  Users,
+  Store,
+  Gift,
+  Tag,
+  Wrench,
   ShieldCheck,
-  Swords,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface NavGroup {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: NavItem[];
+}
+
+type NavEntry = ({ kind: 'flat' } & NavItem) | ({ kind: 'group' } & NavGroup);
+
+const EARN_GROUP: NavGroup = {
+  label: 'Earn',
+  icon: Coins,
+  items: [
+    { href: '/tasks', label: 'Weekly Tasks', icon: ListChecks },
+    { href: '/trends', label: 'Trends Radar', icon: Radio },
+    { href: '/stories', label: 'Success Stories', icon: BookOpen },
+  ],
+};
+
+const COMPANION_GROUP: NavGroup = {
+  label: 'My Companion',
+  icon: Bot,
+  items: [
+    { href: '/avatar-studio', label: 'The Forge', icon: Sparkles },
+    // Approval Inbox joins here in S2 (/approvals)
+  ],
+};
+
+const BUILD_GROUP: NavGroup = {
+  label: 'Build',
+  icon: Layers,
+  items: [
+    { href: '/builder', label: 'Agent Studio', icon: Wrench },
+    { href: '/agents', label: 'My Agents', icon: Cpu },
+    { href: '/workflows', label: 'Workflows', icon: Zap },
+  ],
+};
+
+const MARKET_GROUP: NavGroup = {
+  label: 'Market',
+  icon: Store,
+  items: [
+    { href: '/marketplace', label: 'Marketplace', icon: Flame },
+    { href: '/referrals', label: 'Referrals', icon: Gift },
+    { href: '/pricing', label: 'Pricing', icon: Tag },
+  ],
+};
+
 export function Header(props?: any) {
   const { data: session } = useSession() || {};
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const navItems = session?.user
-    ? [
-        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/arena', label: 'The Arena', icon: Swords, isSpecial: true },
-        { href: '/avatar-studio', label: 'The Forge', icon: Sparkles },
-        { href: '/marketplace', label: 'Marketplace', icon: Flame },
-        { href: '/battles', label: 'Battles', icon: Zap },
-        { href: '/builder', label: 'Agent Studio', icon: Layers },
-        { href: '/community', label: 'Community', icon: User },
-      ]
-    : [
-        { href: '/arena', label: 'The Arena', icon: Swords, isSpecial: true },
-        { href: '/avatar-studio', label: 'The Forge', icon: Sparkles },
-        { href: '/marketplace', label: 'Marketplace', icon: Flame },
-        { href: '/battles', label: 'Battles', icon: Zap },
-        { href: '/builder', label: 'Agent Studio', icon: Layers },
-        { href: '/pricing', label: 'Pricing', icon: Cpu },
-      ];
+  const signedInNav: NavEntry[] = [
+    { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { kind: 'group', ...EARN_GROUP },
+    { kind: 'group', ...COMPANION_GROUP },
+    { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
+    { kind: 'group', ...BUILD_GROUP },
+    { kind: 'flat', href: '/community', label: 'Community', icon: Users },
+    { kind: 'group', ...MARKET_GROUP },
+  ];
+
+  const anonymousNav: NavEntry[] = [
+    { kind: 'group', ...EARN_GROUP },
+    { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
+    { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
+    { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
+  ];
+
+  const navEntries = session?.user ? signedInNav : anonymousNav;
+
+  const isEntryActive = (entry: NavEntry): boolean => {
+    if (entry.kind === 'flat') return pathname === entry.href;
+    return entry.items.some((i) => pathname === i.href || pathname.startsWith(i.href + '/'));
+  };
+
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+
+  const adminLinks = [
+    { href: '/admin/brain', label: 'Brain', icon: Cpu, color: 'text-purple-400' },
+    { href: '/admin/health', label: 'Health', icon: Activity, color: 'text-green-400' },
+  ];
 
   return (
     <>
@@ -66,40 +142,91 @@ export function Header(props?: any) {
                   TREND<span className="text-[#00F0FF]">LY</span>
                 </span>
                 <span className="text-[8px] font-mono text-[#8E9BB4] tracking-widest uppercase -mt-1 hidden sm:block">
-                  AUTONOMOUS // OS 2.4
+                  COMPANION ECONOMY
                 </span>
               </div>
             </Link>
-
-            {/* Live Telemetry Beacon (Desktop) */}
-            <div className="hidden lg:flex items-center gap-1.5 ml-4 px-2.5 py-1 rounded-full bg-black/40 border border-white/5 text-[10px] font-mono text-[#8E9BB4]">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-ping" />
-              <span className="text-green-400 font-bold">100% NOMINAL</span>
-              <span className="text-white/20">|</span>
-              <span>38ms</span>
-            </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden xl:flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
+          {/* Desktop Navigation */}
+          <nav className="hidden xl:flex items-center gap-1" onMouseLeave={() => setOpenGroup(null)}>
+            {navEntries.map((entry) => {
+              if (entry.kind === 'flat') {
+                const isActive = isEntryActive(entry);
+                return (
+                  <Link key={entry.href} href={entry.href}>
+                    <div
+                      className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 transition-all ${
+                        isActive
+                          ? 'text-[#00F0FF] bg-[#00F0FF]/10 border border-[#00F0FF]/30 shadow-[0_0_15px_rgba(0,240,255,0.15)] font-bold'
+                          : 'text-[#8E9BB4] hover:text-white hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <entry.icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#00F0FF]' : ''}`} />
+                      <span>{entry.label}</span>
+                    </div>
+                  </Link>
+                );
+              }
+
+              const active = isEntryActive(entry);
+              const isOpen = openGroup === entry.label;
               return (
-                <Link key={item.href} href={item.href}>
-                  <div
+                <div
+                  key={entry.label}
+                  className="relative"
+                  onMouseEnter={() => setOpenGroup(entry.label)}
+                >
+                  <button
+                    onClick={() => setOpenGroup(isOpen ? null : entry.label)}
                     className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 transition-all ${
-                      isActive
-                        ? 'text-[#00F0FF] bg-[#00F0FF]/10 border border-[#00F0FF]/30 shadow-[0_0_15px_rgba(0,240,255,0.15)] font-bold'
+                      active
+                        ? 'text-[#00F0FF] bg-[#00F0FF]/10 border border-[#00F0FF]/30 font-bold'
+                        : isOpen
+                        ? 'text-white bg-white/[0.06] border border-white/10'
                         : 'text-[#8E9BB4] hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
-                    <item.icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#00F0FF]' : item.isSpecial ? 'text-[#00F0FF]' : ''}`} />
-                    <span>{item.label}</span>
-                    {item.isSpecial && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF] animate-pulse" />
+                    <entry.icon className={`w-3.5 h-3.5 ${active ? 'text-[#00F0FF]' : ''}`} />
+                    <span>{entry.label}</span>
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-0 top-full mt-2 w-52 rounded-xl bg-[#06060E]/95 backdrop-blur-xl border border-white/[0.1] shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-1.5"
+                      >
+                        {entry.items.map((item) => {
+                          const itemActive =
+                            pathname === item.href || pathname.startsWith(item.href + '/');
+                          return (
+                            <Link key={item.href} href={item.href}>
+                              <div
+                                className={`px-3 py-2 rounded-lg text-xs font-mono flex items-center gap-2.5 transition-all ${
+                                  itemActive
+                                    ? 'text-[#00F0FF] bg-[#00F0FF]/10'
+                                    : 'text-[#8E9BB4] hover:text-white hover:bg-white/[0.05]'
+                                }`}
+                              >
+                                <item.icon
+                                  className={`w-3.5 h-3.5 ${itemActive ? 'text-[#00F0FF]' : 'text-[#8E9BB4]'}`}
+                                />
+                                <span>{item.label}</span>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
                     )}
-                  </div>
-                </Link>
+                  </AnimatePresence>
+                </div>
               );
             })}
           </nav>
@@ -112,7 +239,7 @@ export function Header(props?: any) {
               variant="outline"
               className="border-[#00F0FF]/30 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase h-8 px-3 hover:bg-[#00F0FF]/20 shadow-[0_0_12px_rgba(0,240,255,0.15)] font-bold"
             >
-              <Bot className="w-3.5 h-3.5 mr-1 text-[#00F0FF] animate-pulse" /> 🎙️ Talk
+              <Bot className="w-3.5 h-3.5 mr-1 text-[#00F0FF] animate-pulse" /> Talk
             </Button>
             {session?.user ? (
               <>
@@ -125,27 +252,43 @@ export function Header(props?: any) {
                     <User className="w-3.5 h-3.5 mr-1 text-[#00F0FF]" /> Profile
                   </Button>
                 </Link>
-                {(session.user as any)?.role === 'ADMIN' && (
-                  <>
-                    <Link href="/admin/brain">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs font-mono text-purple-400 hover:bg-purple-500/10 h-8 px-3 border border-purple-500/20"
-                      >
-                        <Cpu className="w-3.5 h-3.5 mr-1" /> Brain
-                      </Button>
-                    </Link>
-                    <Link href="/admin/health">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs font-mono text-green-400 hover:bg-green-500/10 h-8 px-3 border border-green-500/20"
-                      >
-                        <Activity className="w-3.5 h-3.5 mr-1" /> Health
-                      </Button>
-                    </Link>
-                  </>
+                {isAdmin && (
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setOpenGroup('__admin')}
+                    onMouseLeave={() => setOpenGroup(null)}
+                  >
+                    <button
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono flex items-center gap-1.5 border transition-all ${
+                        openGroup === '__admin'
+                          ? 'text-purple-300 bg-purple-500/10 border-purple-500/30'
+                          : 'text-purple-400 hover:bg-purple-500/10 border-purple-500/20'
+                      }`}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                    <AnimatePresence>
+                      {openGroup === '__admin' && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 top-full mt-2 w-44 rounded-xl bg-[#06060E]/95 backdrop-blur-xl border border-white/[0.1] shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-1.5"
+                        >
+                          {adminLinks.map((link) => (
+                            <Link key={link.href} href={link.href}>
+                              <div className="px-3 py-2 rounded-lg text-xs font-mono text-[#8E9BB4] hover:text-white hover:bg-white/[0.05] flex items-center gap-2.5">
+                                <link.icon className={`w-3.5 h-3.5 ${link.color}`} />
+                                <span>{link.label}</span>
+                              </div>
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
                 <Button
                   variant="ghost"
@@ -195,16 +338,36 @@ export function Header(props?: any) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="xl:hidden border-t border-white/[0.08] px-4 py-4 space-y-2 bg-[#06060E]/95 rounded-b-2xl"
+              className="xl:hidden border-t border-white/[0.08] px-4 py-4 space-y-1 bg-[#06060E]/95 rounded-b-2xl overflow-y-auto max-h-[70vh]"
             >
-              {navItems.map((item) => (
-                <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>
-                  <div className="py-2 px-3 rounded-lg text-sm font-mono text-[#8E9BB4] hover:text-white hover:bg-white/[0.05] flex items-center gap-2.5">
-                    <item.icon className="w-4 h-4 text-[#00F0FF]" />
-                    <span>{item.label}</span>
+              {navEntries.map((entry) => {
+                if (entry.kind === 'flat') {
+                  return (
+                    <Link key={entry.href} href={entry.href} onClick={() => setMobileOpen(false)}>
+                      <div className="py-2.5 px-3 rounded-lg text-sm font-mono text-[#8E9BB4] hover:text-white hover:bg-white/[0.05] flex items-center gap-2.5">
+                        <entry.icon className="w-4 h-4 text-[#00F0FF]" />
+                        <span>{entry.label}</span>
+                      </div>
+                    </Link>
+                  );
+                }
+                return (
+                  <div key={entry.label} className="pt-2">
+                    <div className="px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <entry.icon className="w-3.5 h-3.5 text-[#00F0FF]/70" />
+                      {entry.label}
+                    </div>
+                    {entry.items.map((item) => (
+                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>
+                        <div className="py-2 pl-8 pr-3 rounded-lg text-sm font-mono text-[#8E9BB4] hover:text-white hover:bg-white/[0.05] flex items-center gap-2.5">
+                          <item.icon className="w-3.5 h-3.5 text-[#00F0FF]/50" />
+                          <span>{item.label}</span>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                </Link>
-              ))}
+                );
+              })}
 
               <div className="pt-3 border-t border-white/[0.06] flex flex-col gap-2">
                 {session?.user ? (
@@ -214,6 +377,17 @@ export function Header(props?: any) {
                         <User className="w-4 h-4 mr-2 text-[#00F0FF]" /> Profile
                       </Button>
                     </Link>
+                    {isAdmin && (
+                      <>
+                        {adminLinks.map((link) => (
+                          <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+                            <Button variant="ghost" className="w-full justify-start text-xs font-mono text-white">
+                              <link.icon className={`w-4 h-4 mr-2 ${link.color}`} /> {link.label}
+                            </Button>
+                          </Link>
+                        ))}
+                      </>
+                    )}
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-xs font-mono text-red-400"
