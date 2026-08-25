@@ -38,3 +38,6 @@ next-env.d.ts
 # generated tree dumps / scratch files
 tree.txt
 project_tree.txt
+
+.vercel
+.env*

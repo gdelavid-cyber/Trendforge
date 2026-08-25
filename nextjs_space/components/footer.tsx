@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CONTEST_MODE } from '@/lib/flags';
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
@@ -29,7 +30,46 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   },
 ];
 
+// Contest surface: core loop in the main columns, everything else stays
+// reachable here (demote, never delete).
+const CONTEST_COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
+  {
+    title: 'Product',
+    links: [
+      { href: '/tasks', label: 'Weekly Tasks' },
+      { href: '/trends', label: 'Trends Radar' },
+      { href: '/pricing', label: 'Pricing' },
+    ],
+  },
+  {
+    title: 'Companion',
+    links: [{ href: '/avatar-studio', label: 'The Forge' }],
+  },
+  {
+    title: 'More',
+    links: [
+      { href: '/battles', label: 'Battles' },
+      { href: '/arena', label: 'The World' },
+      { href: '/marketplace', label: 'Marketplace' },
+      { href: '/community', label: 'Community' },
+      { href: '/stories', label: 'Success Stories' },
+      { href: '/referrals', label: 'Referrals' },
+      { href: '/workflows', label: 'Workflows' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { href: '/legal', label: 'Legal' },
+      { href: '/compliance', label: 'Compliance' },
+      { href: '/status', label: 'Status' },
+      { href: '/enterprise', label: 'Enterprise' },
+    ],
+  },
+];
+
 export function Footer() {
+  const columns = CONTEST_MODE ? CONTEST_COLUMNS : COLUMNS;
   return (
     <footer className="relative z-10 mt-16 border-t border-white/[0.06] bg-black/40">
       <div className="max-w-[1260px] mx-auto px-4 md:px-6 py-10">
@@ -43,7 +83,7 @@ export function Footer() {
               the rest. You own everything.
             </p>
           </div>
-          {COLUMNS.map((col) => (
+          {columns.map((col) => (
             <div key={col.title}>
               <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/40 mb-3">
                 {col.title}

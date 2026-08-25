@@ -37,6 +37,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { SpotlightTour } from '@/components/guide/spotlight-tour';
 import { guideForPath } from '@/lib/guide/content';
+import { CONTEST_MODE } from '@/lib/flags';
 
 interface NavItem {
   href: string;
@@ -59,6 +60,16 @@ const EARN_GROUP: NavGroup = {
     { href: '/tasks', label: 'Weekly Tasks', icon: ListChecks },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
     { href: '/stories', label: 'Success Stories', icon: BookOpen },
+  ],
+};
+
+// Contest surface: the core loop only — stories stay footer-reachable.
+const EARN_GROUP_CORE: NavGroup = {
+  label: 'Earn',
+  icon: Coins,
+  items: [
+    { href: '/tasks', label: 'Weekly Tasks', icon: ListChecks },
+    { href: '/trends', label: 'Trends Radar', icon: Radio },
   ],
 };
 
@@ -98,23 +109,35 @@ export function Header(props?: any) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const signedInNav: NavEntry[] = [
-    { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { kind: 'group', ...EARN_GROUP },
-    { kind: 'group', ...COMPANION_GROUP },
-    { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
-    { kind: 'group', ...BUILD_GROUP },
-    { kind: 'flat', href: '/community', label: 'Community', icon: Users },
-    { kind: 'group', ...MARKET_GROUP },
-  ];
+  const signedInNav: NavEntry[] = CONTEST_MODE
+    ? [
+        { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { kind: 'group', ...EARN_GROUP_CORE },
+        { kind: 'group', ...COMPANION_GROUP },
+        { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
+      ]
+    : [
+        { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { kind: 'group', ...EARN_GROUP },
+        { kind: 'group', ...COMPANION_GROUP },
+        { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
+        { kind: 'group', ...BUILD_GROUP },
+        { kind: 'flat', href: '/community', label: 'Community', icon: Users },
+        { kind: 'group', ...MARKET_GROUP },
+      ];
 
-  const anonymousNav: NavEntry[] = [
-    { kind: 'group', ...EARN_GROUP },
-    { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
-    { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
-    { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
-    { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
-  ];
+  const anonymousNav: NavEntry[] = CONTEST_MODE
+    ? [
+        { kind: 'group', ...EARN_GROUP_CORE },
+        { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
+      ]
+    : [
+        { kind: 'group', ...EARN_GROUP },
+        { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
+        { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
+        { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
+        { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
+      ];
 
   const navEntries = session?.user ? signedInNav : anonymousNav;
 
