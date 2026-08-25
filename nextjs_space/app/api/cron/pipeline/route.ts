@@ -11,18 +11,31 @@ import {
   calculateSimilarity,
 } from '@/lib/pipeline';
 
-const CRON_SECRET = process.env.PIPELINE_API_KEY;
+// Accepts either platform key or Vercel's CRON_SECRET, sent as Bearer,
+// x-api-key, or ?key= query param (legacy external schedulers).
+// Either variable may be set independently — accepting both avoids the
+// footgun where adding one silently breaks the other path.
+const CRON_SECRETS = [process.env.PIPELINE_API_KEY, process.env.CRON_SECRET]
+  .filter((v): v is string => Boolean(v));
+
+function providedKeys(request: Request): string[] {
+  const url = new URL(request.url);
+  const keys = [
+    request.headers.get('authorization')?.replace('Bearer ', ''),
+    request.headers.get('x-api-key'),
+    url.searchParams.get('key'),
+    url.searchParams.get('api_key'),
+  ];
+  return keys.filter((v): v is string => Boolean(v));
+}
 
 function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
-  if (!CRON_SECRET) {
+  if (CRON_SECRETS.length === 0) {
     return { authorized: false, error: 'CRON auth not configured', status: 500 };
   }
 
-  const authHeader = request.headers.get('authorization')?.replace('Bearer ', '');
-  const apiKeyHeader = request.headers.get('x-api-key');
-
-  const providedKey = authHeader || apiKeyHeader;
-  if (providedKey !== CRON_SECRET) {
+  const presented = providedKeys(request);
+  if (!presented.some((k) => CRON_SECRETS.includes(k))) {
     return { authorized: false, error: 'Unauthorized pipeline invocation', status: 401 };
   }
 

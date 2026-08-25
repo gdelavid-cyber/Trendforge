@@ -3,20 +3,26 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { runSurvivalCycle } from '@/lib/web4/survival-engine';
 
-// Accepts the platform key or Vercel's CRON_SECRET (sent automatically as
-// Bearer auth when the schedule fires).
-const CRON_SECRET = process.env.PIPELINE_API_KEY ?? process.env.CRON_SECRET;
+// Accepts either platform key (manual triggers send x-api-key) or Vercel's
+// CRON_SECRET (sent automatically as Bearer when the schedule fires).
+// Query-param keys are honored for legacy external schedulers (?key= / ?api_key=).
+const CRON_SECRETS = [process.env.PIPELINE_API_KEY, process.env.CRON_SECRET]
+  .filter((v): v is string => Boolean(v));
 
 function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
-  if (!CRON_SECRET) {
+  if (CRON_SECRETS.length === 0) {
     return { authorized: false, error: 'CRON auth not configured', status: 500 };
   }
 
-  const authHeader = request.headers.get('authorization')?.replace('Bearer ', '');
-  const apiKeyHeader = request.headers.get('x-api-key');
+  const url = new URL(request.url);
+  const presented = [
+    request.headers.get('authorization')?.replace('Bearer ', ''),
+    request.headers.get('x-api-key'),
+    url.searchParams.get('key'),
+    url.searchParams.get('api_key'),
+  ].filter((v): v is string => Boolean(v));
 
-  const providedKey = authHeader || apiKeyHeader;
-  if (providedKey !== CRON_SECRET) {
+  if (!presented.some((k) => CRON_SECRETS.includes(k))) {
     return { authorized: false, error: 'Unauthorized survival daemon trigger', status: 401 };
   }
 
