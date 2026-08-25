@@ -83,12 +83,23 @@ export default async function GuidePage() {
                         </ul>
                       </div>
 
-                      <Link
-                        href={page.path}
-                        className="mt-auto inline-flex items-center gap-1 text-xs font-mono uppercase text-[#00F0FF] hover:text-white transition-colors"
-                      >
-                        Open {page.title} →
-                      </Link>
+                      {page.path.includes('[') ? (
+                        // Pattern routes (/tasks/[id]) are templates, not
+                        // navigable URLs — Link rejects them at render.
+                        <a
+                          href={page.path.split('[')[0].replace(/\/$/, '') || '/'}
+                          className="mt-auto inline-flex items-center gap-1 text-xs font-mono uppercase text-[#00F0FF] hover:text-white transition-colors"
+                        >
+                          Open {page.title} →
+                        </a>
+                      ) : (
+                        <Link
+                          href={page.path}
+                          className="mt-auto inline-flex items-center gap-1 text-xs font-mono uppercase text-[#00F0FF] hover:text-white transition-colors"
+                        >
+                          Open {page.title} →
+                        </Link>
+                      )}
                     </article>
                   ))}
                 </div>
