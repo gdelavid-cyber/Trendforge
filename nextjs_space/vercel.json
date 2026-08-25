@@ -1,12 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/deposits",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/cron/survival",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
+{"crons": []}
