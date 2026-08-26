@@ -135,7 +135,7 @@ export const COSMETICS_CATALOG: CatalogItem[] = [
     slot: 'BODY',
     rarity: 'EPIC',
     price: 9.99,
-    image: '/cosmetics/neon-katana.png', // Reference starter asset mapped
+    image: '/cosmetics/skin_crypto_samurai.png',
     artPending: false,
     desc: 'Traditional cyber-infused samurai plate with glowing alloy weave.',
     unlockMethod: 'STORE',

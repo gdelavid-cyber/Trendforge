@@ -269,22 +269,22 @@ export default async function LandingPage() {
 
         {/* Hero */}
         <section className="relative max-w-[1280px] mx-auto px-4 pt-16 pb-14 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#00F0FF]/15 via-white/[0.04] to-[#FFD700]/15 border border-[#00F0FF]/30 shadow-[0_0_20px_rgba(0,240,255,0.12)] mb-6">
-            <ShieldCheck className="w-4 h-4 text-[#00F0FF] animate-pulse" />
-            <span className="text-xs font-mono font-bold tracking-wider text-[#00F0FF]">
-              REAL WORK · REAL RECEIPTS
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-6">
+            <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
+            <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
+              YOUR AI COMPANION NEVER SLEEPS
             </span>
           </div>
 
-          <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto">
-            Hire the AI that <span className="cyan-gold-gradient-text">does the work.</span>
+          <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto uppercase">
+            <span className="cyan-gold-gradient-text">Forge Your Companion</span><br />
+            The Companion Economy
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-8 font-sans leading-relaxed">
-            You're still doing work software should be doing. Forge a Trendly
-            companion, point it at a real task, and watch every step land in
-            front of you — research, drafts, files, outreach — with receipts
-            for everything.
+            Customize an AI companion that looks like yours alone — then put it
+            to work on trending money-tasks. One click: it executes, you
+            approve, you get paid. What you forge, you own.
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center items-center mb-12">
@@ -293,7 +293,7 @@ export default async function LandingPage() {
                 size="lg"
                 className="h-12 px-6 text-xs sm:text-sm font-extrabold uppercase font-mono tracking-wider cyan-gradient text-black holographic-btn shadow-[0_0_30px_rgba(0,240,255,0.4)]"
               >
-                <Sparkles className="w-4 h-4 mr-2 stroke-[3]" /> Launch Free
+                <Sparkles className="w-4 h-4 mr-2 stroke-[3]" /> Forge Your Companion
               </Button>
             </Link>
             <Link href="/tasks">
@@ -302,7 +302,7 @@ export default async function LandingPage() {
                 size="lg"
                 className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-[#FFD700]/50 text-white bg-white/[0.03] backdrop-blur-md"
               >
-                <Bot className="w-4 h-4 mr-2 text-[#FFD700]" /> See Live Tasks
+                <Coins className="w-4 h-4 mr-2 text-[#FFD700]" /> See Trending Tasks
               </Button>
             </Link>
           </div>
