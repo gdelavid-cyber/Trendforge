@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Sparkles, Mic, Zap, MessageSquare, X, Shield, Wallet } from 'lucide-react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { MiniStage3D } from '@/components/avatar/stage3d/MiniStage3D';
 import { playCompanionSummonSfx } from '@/lib/audio/sfx';
 
 export function FloatingCompanionWidget() {
@@ -113,11 +114,11 @@ export function FloatingCompanionWidget() {
           className="relative group p-1 rounded-full bg-gradient-to-r from-[#00F0FF] via-[#A855F7] to-[#FFD700] shadow-[0_0_25px_rgba(0,240,255,0.4)] cursor-pointer select-none"
         >
           <div className="w-14 h-14 rounded-full bg-[#08080E] p-0.5 flex items-center justify-center overflow-hidden relative">
-            {/* Animated Avatar Portrait */}
-            <img
-              src={`/avatars/${(agentData.archetype || 'cyber_humanoid').toLowerCase()}_animated.webp`}
-              alt={agentData.name}
-              className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+            {/* Live 3D companion */}
+            <MiniStage3D
+              avatarId={(agentData.archetype || 'cyber_humanoid').toLowerCase()}
+              emotion="confident"
+              className="w-full h-full"
             />
 
             {/* Glowing Live Badge */}

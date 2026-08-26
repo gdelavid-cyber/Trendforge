@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Bot, User, Volume2, CheckCircle, ExternalLink, Zap } from 'lucide-react';
 import { AvatarEmotion } from '@/hooks/useAvatar';
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 import Link from 'next/link';
 
 export interface MessageBubbleProps {
@@ -12,7 +13,7 @@ export interface MessageBubbleProps {
   cleanText?: string;
   emotion?: AvatarEmotion;
   timestamp?: string;
-  avatarUrl?: string;
+  archetype?: string;
   agentName?: string;
   toolExecution?: {
     tool: string;
@@ -30,7 +31,7 @@ export function MessageBubble({
   cleanText,
   emotion,
   timestamp,
-  avatarUrl,
+  archetype,
   agentName = 'Agent',
   toolExecution,
   onPlayAudio,
@@ -72,8 +73,8 @@ export function MessageBubble({
       >
         {isUser ? (
           <User className="w-4 h-4" />
-        ) : avatarUrl ? (
-          <img src={avatarUrl} alt={agentName} className="w-full h-full object-cover" />
+        ) : archetype ? (
+          <CompanionPortrait archetype={archetype} className="w-full h-full" seed={agentName.length} />
         ) : (
           <Bot className="w-4 h-4 text-[#00F0FF]" />
         )}

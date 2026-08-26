@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 
 interface AgentItem {
   type: string;
@@ -50,18 +51,7 @@ interface AgentItem {
   };
 }
 
-export const getAgentAvatar = (type: string) => {
-  switch (type) {
-    case 'prediction_arbitrage': return '/avatars/quantum_android_animated.webp';
-    case 'ai_video_maker': return '/avatars/cosmic_entity_animated.webp';
-    case 'micro_saas_builder': return '/avatars/wall_street_titan_animated.webp';
-    case 'openclaw_deployer': return '/avatars/cyber_humanoid_animated.webp';
-    case 'reddit_scraper':
-    default: return '/avatars/cyber_humanoid_animated.webp';
-  }
-};
-
-const getAgentArchetype = (type: string) => {
+export const getAgentArchetype = (type: string) => {
   switch (type) {
     case 'prediction_arbitrage': return 'QUANTUM_ANDROID';
     case 'ai_video_maker': return 'COSMIC_ENTITY';
@@ -350,7 +340,7 @@ export function AgentsClient({ user }: { user: any }) {
                   {/* Name & Desc with Animated Avatar */}
                   <div className="flex items-center gap-3.5 mb-3">
                     <div className="w-13 h-13 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(0,240,255,0.15)] flex-shrink-0 bg-black/60 p-0.5">
-                      <img src={getAgentAvatar(agent.type)} alt={agent.name} className="w-full h-full object-cover rounded-xl" />
+                      <CompanionPortrait archetype={getAgentArchetype(agent.type)} className="w-full h-full" seed={agent.type.length} />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white group-hover:text-[#00F0FF] transition-colors leading-snug">
@@ -496,7 +486,7 @@ export function AgentsClient({ user }: { user: any }) {
 
               <div className="flex items-center gap-3.5 mb-3">
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(0,240,255,0.2)] flex-shrink-0 bg-black/60 p-0.5">
-                  <img src={getAgentAvatar(selectedAgent.type)} alt={selectedAgent.name} className="w-full h-full object-cover rounded-xl" />
+                  <CompanionPortrait archetype={getAgentArchetype(selectedAgent.type)} className="w-full h-full" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white uppercase tracking-wider">

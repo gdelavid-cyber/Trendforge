@@ -20,16 +20,28 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Stage3D } from '@/components/avatar/stage3d/Stage3D';
-import { AvatarRenderer, canRender3D } from '@/components/avatar/AvatarRenderer';
+import { canRender3D } from '@/components/avatar/AvatarRenderer';
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 import { FighterLoadout } from '@/lib/cosmetics/stats';
 import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
+import type { AvatarEmotion } from '@/hooks/useAvatar';
+import { GuideTour } from '@/components/guide/GuideTour';
 
 type RenderMode = 'auto' | 'force3d' | 'force2d';
+
+const QA_AVATAR_IDS = ['cyber_humanoid', 'quantum_android', 'wall_street_titan', 'cosmic_entity'] as const;
+type QaAvatarId = (typeof QA_AVATAR_IDS)[number];
+
+const QA_EMOTIONS: AvatarEmotion[] = ['neutral', 'confident', 'happy', 'surprised', 'thinking', 'battle'];
 
 export function Stage3DQaClient() {
   const [renderMode, setRenderMode] = useState<RenderMode>('auto');
   const [testGlbUrl, setTestGlbUrl] = useState<string>('');
   const [glbLoadError, setGlbLoadError] = useState<string | null>(null);
+  const [qaAvatarId, setQaAvatarId] = useState<QaAvatarId>('cyber_humanoid');
+  const [qaEmotion, setQaEmotion] = useState<AvatarEmotion>('confident');
+  const [qaSpeaking, setQaSpeaking] = useState<boolean>(false);
+  const [qaWorking, setQaWorking] = useState<boolean>(false);
 
   const [currentLoadout, setCurrentLoadout] = useState<FighterLoadout>({
     HEAD: 'head_diamond_crown',
@@ -126,6 +138,68 @@ export function Stage3DQaClient() {
             <span>GLB Load Error: {glbLoadError} — Falling back to 3D Mannequin safely.</span>
           </div>
         )}
+
+        {/* Companion Model Controls: avatar / emotion / speech */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-3 border-t border-white/5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#FFD700]" />
+            <span className="font-bold text-white uppercase">Companion Rig:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-black/60 border border-white/10">
+              {QA_AVATAR_IDS.map((id) => (
+                <button
+                  key={id}
+                  onClick={() => setQaAvatarId(id)}
+                  className={`px-2 py-1 rounded-md font-bold uppercase transition-all ${
+                    qaAvatarId === id
+                      ? 'bg-[#00F0FF] text-black shadow-[0_0_10px_rgba(0,240,255,0.35)]'
+                      : 'text-[#8E9BB4] hover:text-white'
+                  }`}
+                >
+                  {id.replace(/_/g, ' ')}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-black/60 border border-white/10">
+              {QA_EMOTIONS.map((emo) => (
+                <button
+                  key={emo}
+                  onClick={() => setQaEmotion(emo)}
+                  className={`px-2 py-1 rounded-md font-bold uppercase transition-all ${
+                    qaEmotion === emo
+                      ? 'bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.35)]'
+                      : 'text-[#8E9BB4] hover:text-white'
+                  }`}
+                >
+                  {emo}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setQaSpeaking((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold uppercase transition-all border ${
+                qaSpeaking
+                  ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
+                  : 'bg-black/60 border-white/10 text-[#8E9BB4] hover:text-white'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>{qaSpeaking ? 'Speaking' : 'Silent'}</span>
+            </button>
+            <button
+              onClick={() => setQaWorking((v) => !v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold uppercase transition-all border ${
+                qaWorking
+                  ? 'bg-amber-500/20 border-amber-400/50 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)]'
+                  : 'bg-black/60 border-white/10 text-[#8E9BB4] hover:text-white'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5" />
+              <span>{qaWorking ? 'Working' : 'Idle'}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* =========================================================================
@@ -153,6 +227,11 @@ export function Stage3DQaClient() {
               <Stage3D
                 loadout={currentLoadout}
                 overrideGlbUrl={testGlbUrl || undefined}
+                avatarId={qaAvatarId}
+                emotion={qaEmotion}
+                isSpeaking={qaSpeaking}
+                isWorking={qaWorking}
+                workLabel="Scanning Polymarket orderbook"
                 fallback={
                   <div className="flex flex-col items-center justify-center gap-2 text-center p-6 text-[#8E9BB4] font-mono text-xs">
                     <AlertTriangle className="w-6 h-6 text-amber-400" />
@@ -174,44 +253,51 @@ export function Stage3DQaClient() {
 
           <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-[#8E9BB4]">
             <span>Orbit Controls: Drag to inspect</span>
-            <span>Camera FOV: 35 | Demand Frameloop</span>
+            <span>Camera FOV: 35 | Continuous Frameloop</span>
           </div>
         </div>
 
         {/* =======================================================================
-            VIEWPORT 2: LAYERED 2D AVATAR RENDERER (CONTROL)
+            VIEWPORT 2: VECTOR IDENTITY PORTRAIT (2D SYSTEM)
         ======================================================================= */}
         <div className="glass-card p-6 rounded-3xl border border-white/10 bg-[#0B0B14]/90 flex flex-col justify-between relative min-h-[520px]">
           <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 font-mono">
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-purple-400" />
-              <h2 className="text-sm font-bold text-white uppercase">Layered 2D AvatarRenderer (Control)</h2>
+              <h2 className="text-sm font-bold text-white uppercase">Vector Identity Portrait (2D System)</h2>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-400">
               <Eye className="w-3 h-3" />
-              <span>CONTROL</span>
+              <span>SVG</span>
             </div>
           </div>
 
-          {/* 2D Viewport Center */}
+          {/* Portrait Viewport Center */}
           <div className="relative flex-1 w-full h-[400px] flex items-center justify-center bg-black/40 rounded-2xl border border-white/5 overflow-hidden">
-            <AvatarRenderer
-              avatarId="cyber_humanoid"
-              loadout={currentLoadout}
-              size="stage"
-              mood="battle"
-              animated={true}
-              interactive={true}
-              showParallax={true}
+            <CompanionPortrait
+              archetype={qaAvatarId}
+              className="h-full max-h-[380px] aspect-square"
             />
           </div>
 
           <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-[#8E9BB4]">
-            <span>Parallax: Pointer hover</span>
-            <span>Layer Stack: 5 Layers (Aura &rarr; Base &rarr; Overlays)</span>
+            <span>Blinks, bobs, sways — zero WebGL cost</span>
+            <span>Same cast as the 3D rig</span>
           </div>
         </div>
       </div>
+
+      <GuideTour
+        id="stage3d-qa"
+        steps={[
+          { title: 'Live 3D Stage', body: 'The real-time WebGL rig. Drag anywhere on the viewport to orbit the camera — it also slow-orbits on its own when you leave it alone.' },
+          { title: 'Companion Rig Controls', body: 'Switch between the four characters (KAIROS, UNIT-Ω, MIDAS, VEIL). Each has its own hair, outfit and silhouette. Emotions repaint the face and re-pose the body — try Battle vs Thinking.' },
+          { title: 'Eyes Follow You', body: 'The 3D eyeballs track your cursor with micro-saccades, like a real person scanning a room. Move your mouse across the stage and watch the pupils.' },
+          { title: 'Speech & Work Modes', body: 'SPEAKING makes the mouth flap and adds hand gestures. WORKING deploys a holographic task panel — typing hands, code equalizer bars, data motes and a progress halo showing the task running.' },
+          { title: 'GLB Injection', body: 'Paste any .glb URL to swap in a custom model — useful for testing externally authored assets against the same stage.' },
+          { title: 'Vector Portrait', body: 'The right viewport shows the same character as an animated SVG identity card — this is what runs in lists and chat bubbles where live 3D would be too heavy.' },
+        ]}
+      />
     </div>
   );
 }

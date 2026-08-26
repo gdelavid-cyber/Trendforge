@@ -29,6 +29,7 @@ import { prisma } from '@/lib/db';
 import { Header } from '@/components/header';
 import { TrendCategoryBadge } from '@/components/trend-badge';
 import { CONTEST_MODE } from '@/lib/flags';
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 
 export default async function LandingPage() {
   let featuredMoves: any[] = [];
@@ -72,11 +73,11 @@ export default async function LandingPage() {
   }
 
   const swarmAgents = [
-    { name: 'Reddit Problem Scraper', type: 'reddit_scraper', yieldText: '$150 - $1,500/client', desc: 'Mines organic customer pain points & synthesizes monetization roadmaps.', avatar: '/avatars/cyber_humanoid_animated.webp' },
-    { name: 'Prediction Arbitrage', type: 'prediction_arbitrage', yieldText: '+4.5% - +18.2% ROI', desc: 'Scans Polymarket orderbooks for delta-neutral probability spreads.', avatar: '/avatars/quantum_android_animated.webp' },
-    { name: 'OpenClaw VPS Deployer', type: 'openclaw_deployer', yieldText: '$500 - $3,000/mo', desc: 'Provisions dedicated headless scraping nodes with rotating proxy pools.', avatar: '/avatars/cyber_humanoid_animated.webp' },
-    { name: 'AI Viral Video Maker', type: 'ai_video_maker', yieldText: '$300 - $2,400/mo', desc: 'Constructs high-retention 9:16 short-form video scripts & audio assets.', avatar: '/avatars/cosmic_entity_animated.webp' },
-    { name: 'Micro-SaaS Scaffolder', type: 'micro_saas_builder', yieldText: '$2k - $10k+ MRR', desc: 'Builds full-stack Next.js web applications with Stripe billing in 20s.', avatar: '/avatars/wall_street_titan_animated.webp' },
+    { name: 'Reddit Problem Scraper', type: 'reddit_scraper', yieldText: '$150 - $1,500/client', desc: 'Mines organic customer pain points & synthesizes monetization roadmaps.', avatar: 'cyber_humanoid' },
+    { name: 'Prediction Arbitrage', type: 'prediction_arbitrage', yieldText: '+4.5% - +18.2% ROI', desc: 'Scans Polymarket orderbooks for delta-neutral probability spreads.', avatar: 'quantum_android' },
+    { name: 'OpenClaw VPS Deployer', type: 'openclaw_deployer', yieldText: '$500 - $3,000/mo', desc: 'Provisions dedicated headless scraping nodes with rotating proxy pools.', avatar: 'cyber_humanoid' },
+    { name: 'AI Viral Video Maker', type: 'ai_video_maker', yieldText: '$300 - $2,400/mo', desc: 'Constructs high-retention 9:16 short-form video scripts & audio assets.', avatar: 'cosmic_entity' },
+    { name: 'Micro-SaaS Scaffolder', type: 'micro_saas_builder', yieldText: '$2k - $10k+ MRR', desc: 'Builds full-stack Next.js web applications with Stripe billing in 20s.', avatar: 'wall_street_titan' },
   ];
 
   const web4Pillars = [
@@ -455,7 +456,7 @@ export default async function LandingPage() {
             <Link key={i} href="/agents" className="glass-card p-4 flex flex-col justify-between group hover:border-[#00F0FF]/40 transition-all">
               <div>
                 <div className="w-12 h-12 rounded-xl overflow-hidden mb-3 border border-white/10 shadow-[0_0_15px_rgba(0,240,255,0.15)] group-hover:scale-105 transition-transform bg-black/50">
-                  <img src={bot.avatar} alt={bot.name} className="w-full h-full object-cover" />
+                  <CompanionPortrait archetype={bot.avatar} className="w-full h-full" seed={i} />
                 </div>
                 <div className="text-xs font-bold text-white group-hover:text-[#00F0FF] transition-colors font-mono line-clamp-1">
                   {bot.name}

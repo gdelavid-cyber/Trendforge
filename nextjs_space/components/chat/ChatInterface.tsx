@@ -346,7 +346,7 @@ export function ChatInterface({
                   cleanText={msg.cleanText}
                   emotion={msg.emotion}
                   timestamp={msg.timestamp}
-                  avatarUrl={`/avatars/${archetype.toLowerCase()}_animated.webp`}
+                  archetype={archetype.toLowerCase()}
                   agentName={agentName}
                   toolExecution={msg.toolExecution}
                   isSpeakingThis={isSpeaking && msg.role === 'assistant'}

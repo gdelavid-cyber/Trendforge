@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 
 export function Web4AgentsClient({ user }: { user: any }) {
   const [agents, setAgents] = useState<any[]>([]);
@@ -183,14 +184,14 @@ export function Web4AgentsClient({ user }: { user: any }) {
     }
   };
 
-  const getAvatarImageSrc = (cfg: any) => {
-    if (!cfg || !cfg.baseModel) return '/avatars/cyber_humanoid_animated.webp';
+  const getAvatarArch = (cfg: any) => {
+    if (!cfg || !cfg.baseModel) return 'cyber_humanoid';
     switch (cfg.baseModel) {
-      case 'QUANTUM_ANDROID': return '/avatars/quantum_android_animated.webp';
-      case 'WALL_STREET_TITAN': return '/avatars/wall_street_titan_animated.webp';
-      case 'COSMIC_ENTITY': return '/avatars/cosmic_entity_animated.webp';
+      case 'QUANTUM_ANDROID': return 'quantum_android';
+      case 'WALL_STREET_TITAN': return 'wall_street_titan';
+      case 'COSMIC_ENTITY': return 'cosmic_entity';
       case 'CYBER_HUMANOID':
-      default: return '/avatars/cyber_humanoid_animated.webp';
+      default: return 'cyber_humanoid';
     }
   };
 
@@ -285,10 +286,10 @@ export function Web4AgentsClient({ user }: { user: any }) {
                   {/* Visual Avatar & Name Header */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-14 h-14 rounded-2xl bg-black/60 border border-white/10 flex items-center justify-center overflow-hidden shadow-[0_0_20px_rgba(0,240,255,0.15)] flex-shrink-0">
-                      <img
-                        src={getAvatarImageSrc(agent.avatarConfig)}
-                        alt={agent.name}
-                        className="w-full h-full object-cover"
+                      <CompanionPortrait
+                        archetype={getAvatarArch(agent.avatarConfig)}
+                        className="w-full h-full"
+                        seed={agent.name.length}
                       />
                     </div>
                     <div>

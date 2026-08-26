@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { FighterLoadout } from '@/lib/cosmetics/stats';
+import type { AvatarEmotion } from '@/hooks/useAvatar';
 
 const DynamicStage3DCanvas = dynamic(
   () => import('./Stage3DCanvas').then((mod) => mod.Stage3DCanvas),
@@ -48,9 +49,15 @@ export interface Stage3DProps {
   fallback: React.ReactNode;
   overrideGlbUrl?: string;
   className?: string;
+  avatarId?: string;
+  emotion?: AvatarEmotion;
+  isSpeaking?: boolean;
+  isWorking?: boolean;
+  workLabel?: string;
+  workProgress?: number;
 }
 
-export function Stage3D({ loadout, fallback, overrideGlbUrl, className = '' }: Stage3DProps) {
+export function Stage3D({ loadout, fallback, overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress }: Stage3DProps) {
   const [hasWebGL, setHasWebGL] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -75,6 +82,12 @@ export function Stage3D({ loadout, fallback, overrideGlbUrl, className = '' }: S
           loadout={loadout}
           overrideGlbUrl={overrideGlbUrl}
           className={className}
+          avatarId={avatarId}
+          emotion={emotion}
+          isSpeaking={isSpeaking}
+          isWorking={isWorking}
+          workLabel={workLabel}
+          workProgress={workProgress}
         />
       </div>
     </Stage3DErrorBoundary>

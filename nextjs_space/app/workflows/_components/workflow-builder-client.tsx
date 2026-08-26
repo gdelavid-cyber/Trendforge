@@ -8,17 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
-
-const getStepAvatar = (agentType: string) => {
-  switch (agentType) {
-    case 'prediction_arbitrage': return '/avatars/quantum_android_animated.webp';
-    case 'ai_video_maker': return '/avatars/cosmic_entity_animated.webp';
-    case 'micro_saas_builder': return '/avatars/wall_street_titan_animated.webp';
-    case 'openclaw_deployer': return '/avatars/cyber_humanoid_animated.webp';
-    case 'reddit_scraper':
-    default: return '/avatars/cyber_humanoid_animated.webp';
-  }
-};
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 
 const getStepArchetype = (agentType: string) => {
   switch (agentType) {
@@ -139,7 +129,7 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
                     className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-black/80 shadow-[0_0_10px_rgba(0,240,255,0.15)] cursor-pointer hover:border-[#00F0FF] hover:scale-105 transition-all"
                     title="Click to Talk / Consult Worker"
                   >
-                    <img src={getStepAvatar(step.agentType)} alt={step.name} className="w-full h-full object-cover" />
+                    <CompanionPortrait archetype={getStepArchetype(step.agentType)} className="w-full h-full" seed={step.name.length} />
                   </div>
                   <div>
                     <span className="text-[10px] font-mono text-[#00F0FF] uppercase block">Step #{idx + 1}</span>

@@ -32,6 +32,7 @@ import { EmotionController } from '@/components/avatar/EmotionController';
 import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/lib/cosmetics/catalog';
 import { calculateFighterStats, FighterLoadout, getLoadoutModifiers } from '@/lib/cosmetics/stats';
 import { AvatarEmotion } from '@/hooks/useAvatar';
+import { GuideTour } from '@/components/guide/GuideTour';
 
 const BASE_MODELS = [
   { id: 'cyber_humanoid', name: 'Cyber Humanoid', archetype: 'DATA_MINER', color: '#00F0FF', desc: 'High-frequency executioner chassis' },
@@ -553,6 +554,17 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
           </div>
         </div>
       </div>
+
+      <GuideTour
+        id="avatar-studio"
+        steps={[
+          { title: 'Welcome to The Forge', body: 'This is where your companion gets its face, gear and combat identity. Everything you change here updates the live 3D stage instantly.' },
+          { title: 'Loadout Slots (Left Panel)', body: 'Pick a slot — Head, Eyewear, Body, Aura, Trail — then equip an item from the inventory. Crowns sit between the hair, visors cover the eyes, wings and auras attach behind.' },
+          { title: 'Live Stage (Center)', body: 'Your companion is fully alive: drag to orbit, and it watches your cursor with its own eyes. Use the Stance switcher below to preview emotions — Battle raises the guard, Thinking strikes a pose.' },
+          { title: 'Base Chassis (Right Panel)', body: 'The base model decides who your companion IS — KAIROS the cyber operative, UNIT-Ω the quantum android, MIDAS the titan, or VEIL the cosmic entity. Each has unique hair and outfit.' },
+          { title: 'Lock It In', body: 'SAVE LOADOUT persists everything to your agent. The stats panel shows how your gear shifts Power, Speed, Defense and Synergy before battle deployment.' },
+        ]}
+      />
     </div>
   );
 }
