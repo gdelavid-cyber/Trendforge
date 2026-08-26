@@ -28,7 +28,7 @@ export interface AvatarRendererProps {
   mood?: AvatarEmotion;
   /** legacy prop — accepted for call-site compatibility, visual pose is emotion-driven now */
   pose?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'stage' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'stage' | 'column' | 'full';
   animated?: boolean;
   interactive?: boolean;
   /** legacy viseme payload — accepted, mouth animation is frame-based now */
@@ -103,6 +103,8 @@ const SIZE_MAP = {
   lg: 'w-72 h-72 max-w-[288px]',
   xl: 'w-96 h-96 max-w-[384px]',
   stage: 'w-full max-w-[460px] h-[460px]',
+  /** fills the parent column edge-to-edge — no max-width cap */
+  column: 'w-full h-[560px]',
   full: 'w-full h-full min-h-[320px]',
 };
 
@@ -146,8 +148,10 @@ export function AvatarRenderer({
     </div>
   );
 
+  const sizeClass = SIZE_MAP[size] ?? SIZE_MAP.stage;
+
   return (
-    <div className={`relative ${onClick ? 'cursor-pointer' : ''}`}>
+    <div className={`relative ${sizeClass} ${className} ${onClick ? 'cursor-pointer' : ''}`}>
       <Stage3D
         loadout={activeLoadout}
         avatarId={activeAvatarKey}
@@ -157,7 +161,7 @@ export function AvatarRenderer({
         workLabel={workLabel}
         workProgress={workProgress}
         fallback={fallback}
-        className={`${SIZE_MAP[size]} ${className}`}
+        className="w-full h-full"
       />
 
       {/* status badges */}

@@ -120,7 +120,6 @@ export function Header(props?: any) {
         { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { kind: 'group', ...EARN_GROUP },
         { kind: 'group', ...COMPANION_GROUP },
-        { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
         { kind: 'group', ...BUILD_GROUP },
         { kind: 'flat', href: '/community', label: 'Community', icon: Users },
         { kind: 'group', ...MARKET_GROUP },
@@ -133,7 +132,6 @@ export function Header(props?: any) {
       ]
     : [
         { kind: 'group', ...EARN_GROUP },
-        { kind: 'flat', href: '/arena', label: 'The World', icon: Globe },
         { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
         { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
         { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },

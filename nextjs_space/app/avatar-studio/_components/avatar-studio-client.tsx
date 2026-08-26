@@ -256,9 +256,9 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
         </div>
 
         <div className="flex items-center gap-3 font-mono">
-          <Link href="/arena">
+          <Link href="/battles">
             <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 text-xs h-10 font-bold uppercase">
-              &larr; Return to Arena
+              &larr; Enter the Battle Arena
             </Button>
           </Link>
           <Button
@@ -425,12 +425,12 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
             PANEL 2 (CENTER, 4 COLS): LIVE STAGE PREVIEW & STANCE CONTROLS
         ======================================================================= */}
         <div className="lg:col-span-4 flex flex-col items-center justify-center space-y-4">
-          <div className="w-full glass-card p-6 rounded-3xl border border-white/10 bg-[#0B0B14]/90 flex flex-col items-center justify-center relative min-h-[460px]">
-            {/* Live Fighter Renderer with Equipped Loadout */}
+          <div className="w-full glass-card p-4 rounded-3xl border border-white/10 bg-[#0B0B14]/90 flex flex-col items-center justify-center relative">
+            {/* Live Fighter Renderer with Equipped Loadout — fills the whole center column */}
             <AvatarRenderer
               avatarId={selectedBaseModel}
               loadout={currentLoadout}
-              size="stage"
+              size="column"
               mood={mood}
               animated={true}
               interactive={true}

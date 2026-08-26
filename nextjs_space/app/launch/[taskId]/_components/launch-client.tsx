@@ -130,7 +130,7 @@ export function LaunchClient({ task, userTask }: Props) {
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-5">
-                <div className="md:col-span-3 h-[300px] bg-black/50">
+                <div className="md:col-span-3 h-[460px] bg-black/50">
                   <AvatarRenderer
                     avatarId={categoryToArchetype(task?.category)}
                     size="full"

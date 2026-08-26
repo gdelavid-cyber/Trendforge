@@ -15,7 +15,6 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
     title: 'Companion',
     links: [
       { href: '/avatar-studio', label: 'The Forge' },
-      { href: '/arena', label: 'The World' },
       { href: '/marketplace', label: 'Marketplace' },
     ],
   },
@@ -49,7 +48,6 @@ const CONTEST_COLUMNS: { title: string; links: { href: string; label: string }[]
     title: 'More',
     links: [
       { href: '/battles', label: 'Battles' },
-      { href: '/arena', label: 'The World' },
       { href: '/marketplace', label: 'Marketplace' },
       { href: '/community', label: 'Community' },
       { href: '/stories', label: 'Success Stories' },

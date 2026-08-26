@@ -829,32 +829,74 @@ function Outfit({ arch, energy = 2.5 }: { arch: ArchKey; energy?: number }) {
   if (arch === 'wall_street_titan') {
     return (
       <group>
-        {/* suit jacket */}
-        <M geo={<cylinderGeometry args={[0.19, 0.23, 0.42, 20]} />} color={p.outfit} position={[0, 0.5, 0]} />
-        {/* shirt V + tie */}
-        <mesh position={[0, 0.58, 0.185]} rotation={[0.1, 0, 0]}>
-          <boxGeometry args={[0.1, 0.24, 0.02]} />
-          <meshToonMaterial color="#f4f4f8" gradientMap={TOON_RAMP} />
-        </mesh>
-        <mesh position={[0, 0.52, 0.2]} rotation={[0.08, 0, 0]}>
-          <boxGeometry args={[0.045, 0.26, 0.015]} />
-          <meshStandardMaterial color="#d92038" roughness={0.5} />
-        </mesh>
-        {/* lapels */}
+        {/* jacket shell */}
+        <M geo={<cylinderGeometry args={[0.2, 0.235, 0.42, 20]} />} color="#15171f" position={[0, 0.5, 0]} />
+        {/* peaked lapels */}
         {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * 0.09, 0.6, 0.19]} rotation={[0.1, s * 0.25, s * 0.3]}>
-            <boxGeometry args={[0.07, 0.2, 0.015]} />
-            <meshToonMaterial color={p.outfitDark} gradientMap={TOON_RAMP} />
+          <mesh key={`lap${s}`} position={[s * 0.105, 0.62, 0.19]} rotation={[0.05, s * 0.15, s * -0.85]}>
+            <boxGeometry args={[0.075, 0.24, 0.02]} />
+            <meshToonMaterial color="#0e1017" gradientMap={TOON_RAMP} />
           </mesh>
         ))}
+        {/* shirt V + collar wings */}
+        <mesh position={[0, 0.6, 0.185]} rotation={[0.08, 0, 0]}>
+          <boxGeometry args={[0.095, 0.22, 0.02]} />
+          <meshToonMaterial color="#f6f6fa" gradientMap={TOON_RAMP} />
+        </mesh>
+        {[-1, 1].map((s) => (
+          <mesh key={`col${s}`} position={[s * 0.04, 0.7, 0.2]} rotation={[0.1, s * 0.35, s * 0.5]}>
+            <boxGeometry args={[0.05, 0.06, 0.014]} />
+            <meshToonMaterial color="#f6f6fa" gradientMap={TOON_RAMP} />
+          </mesh>
+        ))}
+        {/* tie: knot + blade + dimple sheen */}
+        <mesh position={[0, 0.66, 0.205]}>
+          <boxGeometry args={[0.038, 0.038, 0.018]} />
+          <meshStandardMaterial color="#b81d31" roughness={0.55} />
+        </mesh>
+        <mesh position={[0, 0.53, 0.202]} rotation={[0.06, 0, 0]}>
+          <coneGeometry args={[0.03, 0.19, 4]} />
+          <meshStandardMaterial color="#d92038" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.56, 0.212]} rotation={[0, 0, Math.PI / 4]}>
+          <boxGeometry args={[0.006, 0.1, 0.004]} />
+          <meshStandardMaterial color="#ff5a6e" roughness={0.3} />
+        </mesh>
+        {/* waistcoat with pinstripes */}
+        <mesh position={[0, 0.4, 0.155]}>
+          <cylinderGeometry args={[0.165, 0.185, 0.2, 18, 1, true, Math.PI * 0.15, Math.PI * 0.7]} />
+          <meshToonMaterial color="#1b1e29" gradientMap={TOON_RAMP} side={THREE.DoubleSide} />
+        </mesh>
+        {[-0.05, 0, 0.05].map((x) => (
+          <mesh key={x} position={[x, 0.4, 0.172]}>
+            <boxGeometry args={[0.004, 0.17, 0.002]} />
+            <meshStandardMaterial color={p.accent} transparent opacity={0.28} toneMapped={false} />
+          </mesh>
+        ))}
+        {/* buttons */}
+        {[0.44, 0.37].map((y) => (
+          <mesh key={y} position={[0, y, 0.176]}>
+            <sphereGeometry args={[0.008, 8, 8]} />
+            <meshStandardMaterial color="#c9a227" metalness={1} roughness={0.25} />
+          </mesh>
+        ))}
+        {/* pocket square */}
+        <mesh position={[0.12, 0.56, 0.178]} rotation={[0, 0, 0.08]}>
+          <boxGeometry args={[0.045, 0.03, 0.008]} />
+          <meshStandardMaterial color="#FFD700" metalness={0.9} roughness={0.3} />
+        </mesh>
         {/* coat tails */}
         <CoatTail energy={energy} />
-        {/* gold watch cuff accent */}
+        {/* watch + French cuffs */}
         {[-1, 1].map((s) => (
-          <mesh key={`w${s}`} position={[s * 0.26, 0.42, 0.02]}>
+          <group key={`w${s}`} position={[s * 0.26, 0.42, 0.02]}>
             <torusGeometry args={[0.052, 0.012, 8, 20]} />
-            <meshStandardMaterial color={p.accent} metalness={1} roughness={0.2} />
-          </mesh>
+            <meshStandardMaterial color="#0f1118" metalness={0.8} roughness={0.3} />
+            <mesh scale={[1, 1, 0.5]}>
+              <torusGeometry args={[0.052, 0.004, 6, 20]} />
+              <meshStandardMaterial color={p.accent} metalness={1} roughness={0.2} />
+            </mesh>
+          </group>
         ))}
       </group>
     );
@@ -863,17 +905,34 @@ function Outfit({ arch, energy = 2.5 }: { arch: ArchKey; energy?: number }) {
   if (arch === 'quantum_android') {
     return (
       <group>
+        {/* bodysuit base */}
         <M geo={<cylinderGeometry args={[0.175, 0.2, 0.4, 20]} />} color={p.outfit} position={[0, 0.5, 0]} />
+        {/* corporate blazer panels */}
+        {[-1, 1].map((s) => (
+          <mesh key={`bz${s}`} position={[s * 0.115, 0.52, 0.13]} rotation={[0, s * -0.12, 0]}>
+            <boxGeometry args={[0.11, 0.34, 0.045]} />
+            <meshToonMaterial color="#dfe3f2" gradientMap={TOON_RAMP} />
+          </mesh>
+        ))}
+        {/* single button closure */}
+        <mesh position={[0.01, 0.45, 0.175]}>
+          <sphereGeometry args={[0.012, 10, 10]} />
+          <meshStandardMaterial color={p.accent} metalness={0.7} roughness={0.3} />
+        </mesh>
         {/* glowing seam lines */}
         {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * 0.13, 0.5, 0.14]} rotation={[0, 0, s * 0.35]}>
-            <boxGeometry args={[0.012, 0.3, 0.01]} />
+          <mesh key={s} position={[s * 0.16, 0.48, 0.145]} rotation={[0, 0, s * 0.3]}>
+            <boxGeometry args={[0.01, 0.26, 0.01]} />
             <meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={1.5} toneMapped={false} />
           </mesh>
         ))}
-        {/* core gem */}
-        <mesh position={[0, 0.62, 0.165]}>
-          <octahedronGeometry args={[0.045]} />
+        {/* brooch-set core gem */}
+        <mesh position={[0, 0.64, 0.168]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.032, 0.007, 8, 20]} />
+          <meshPhysicalMaterial color="#d4af37" metalness={1} roughness={0.18} />
+        </mesh>
+        <mesh position={[0, 0.64, 0.168]}>
+          <octahedronGeometry args={[0.042]} />
           <meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={2} toneMapped={false} />
         </mesh>
         {/* segmented joints */}
@@ -889,6 +948,11 @@ function Outfit({ arch, energy = 2.5 }: { arch: ArchKey; energy?: number }) {
     return (
       <group>
         <M geo={<cylinderGeometry args={[0.16, 0.14, 0.34, 18]} />} color={p.outfit} position={[0, 0.52, 0]} outline={false} />
+        {/* high formal neckline */}
+        <mesh position={[0, 0.7, 0]}>
+          <cylinderGeometry args={[0.075, 0.09, 0.06, 14, 1, true]} />
+          <meshToonMaterial color={p.outfitDark} gradientMap={TOON_RAMP} side={THREE.DoubleSide} />
+        </mesh>
         {/* wisp tail instead of legs */}
         <WispTail energy={energy} />
         {/* collar mantle */}
@@ -896,24 +960,60 @@ function Outfit({ arch, energy = 2.5 }: { arch: ArchKey; energy?: number }) {
           <torusGeometry args={[0.17, 0.035, 10, 28]} />
           <meshToonMaterial color={p.hairShade} gradientMap={TOON_RAMP} />
         </mesh>
+        {/* ceremonial chain across the chest */}
+        {[0, 1, 2, 3, 4].map((i) => {
+          const a = Math.PI * (0.25 + (i / 4) * 0.5);
+          return (
+            <mesh key={i} position={[Math.cos(a) * 0.15, 0.56 + Math.sin(a) * 0.05, 0.135 + i * 0.004]}>
+              <sphereGeometry args={[0.009, 8, 8]} />
+              <meshStandardMaterial color="#FFD166" metalness={1} roughness={0.22} />
+            </mesh>
+          );
+        })}
       </group>
     );
   }
 
-  // cyber_humanoid — techwear
+  // cyber_humanoid — tailored tech blazer
   return (
     <group>
+      {/* base layer */}
       <M geo={<cylinderGeometry args={[0.18, 0.215, 0.4, 20]} />} color={p.outfit} position={[0, 0.5, 0]} />
+      {/* blazer front panels, overlapped shut */}
+      {[-1, 1].map((s) => (
+        <mesh key={`bp${s}`} position={[s * 0.095, 0.5, 0.148]} rotation={[0, s * -0.08, 0]}>
+          <boxGeometry args={[0.13, 0.36, 0.04]} />
+          <meshToonMaterial color={arch === 'cyber_humanoid' ? '#181d2a' : p.outfit} gradientMap={TOON_RAMP} />
+        </mesh>
+      ))}
+      {/* center zip with pull */}
+      <mesh position={[0, 0.5, 0.172]}>
+        <boxGeometry args={[0.008, 0.34, 0.008]} />
+        <meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={0.9} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0.36, 0.176]}>
+        <boxGeometry args={[0.016, 0.03, 0.01]} />
+        <meshStandardMaterial color="#c9ced9" metalness={0.9} roughness={0.25} />
+      </mesh>
+      {/* slim lapel piping */}
+      {[-1, 1].map((s) => (
+        <mesh key={`pp${s}`} position={[s * 0.115, 0.63, 0.16]} rotation={[0.05, s * 0.2, s * -0.75]}>
+          <boxGeometry args={[0.05, 0.2, 0.012]} />
+          <meshToonMaterial color="#12161f" gradientMap={TOON_RAMP} />
+        </mesh>
+      ))}
+      {[-1, 1].map((s) => (
+        <mesh key={`pl${s}`} position={[s * 0.142, 0.63, 0.168]} rotation={[0.05, s * 0.2, s * -0.75]}>
+          <boxGeometry args={[0.006, 0.2, 0.004]} />
+          <meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={1.1} toneMapped={false} />
+        </mesh>
+      ))}
       {/* high collar */}
       <mesh position={[0, 0.71, 0]}>
         <cylinderGeometry args={[0.11, 0.13, 0.09, 18, 1, true]} />
         <meshToonMaterial color={p.outfitDark} gradientMap={TOON_RAMP} side={THREE.DoubleSide} />
       </mesh>
       {/* chest rig lines */}
-      <mesh position={[0, 0.56, 0.175]}>
-        <boxGeometry args={[0.26, 0.02, 0.015]} />
-        <meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={1.3} toneMapped={false} />
-      </mesh>
       <mesh position={[0, 0.44, 0.168]}>
         <boxGeometry args={[0.2, 0.014, 0.012]} />
         <meshStandardMaterial color={p.accent} emissive={p.accent} emissiveIntensity={1} toneMapped={false} />
