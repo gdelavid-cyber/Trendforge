@@ -7,6 +7,7 @@ import { OrbitControls, Environment, ContactShadows, useGLTF, Sparkles } from '@
 import * as THREE from 'three';
 import { FighterLoadout } from '@/lib/cosmetics/stats';
 import { AnimeCompanion } from './AnimeCompanion';
+import { useInViewport } from './useInViewport';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 
 export interface Stage3DCanvasProps {
@@ -115,10 +116,12 @@ function StageRings() {
 }
 
 export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, loadout }: Stage3DCanvasProps) {
+  const { ref: vpRef, inView } = useInViewport<HTMLDivElement>();
   return (
-    <div className={`relative w-full h-full min-h-[320px] ${className}`}>
+    <div ref={vpRef} className={`relative w-full h-full min-h-[320px] ${className}`}>
       <Canvas
         shadows
+        frameloop={inView ? 'always' : 'never'}
         dpr={[1, 1.75]}
         camera={{ fov: 35, position: [0.35, 1.15, 3.3] }}
         gl={{ antialias: true, alpha: true }}

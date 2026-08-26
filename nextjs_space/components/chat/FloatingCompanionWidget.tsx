@@ -7,9 +7,18 @@ import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MiniStage3D } from '@/components/avatar/stage3d/MiniStage3D';
 import { playCompanionSummonSfx } from '@/lib/audio/sfx';
 
+interface ActiveRun {
+  working: boolean;
+  label?: string;
+  progress?: number;
+  archetype?: string;
+  taskTitle?: string | null;
+}
+
 export function FloatingCompanionWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [activeRun, setActiveRun] = useState<ActiveRun>({ working: false });
   const [agentData, setAgentData] = useState<any>({
     name: 'Nexus Cyber Operative',
     archetype: 'CYBER_HUMANOID',
@@ -17,7 +26,7 @@ export function FloatingCompanionWidget() {
     survivalScore: 88,
   });
 
-  // Fetch active agent info
+  // Fetch active agent info + poll live run status for the orb rig
   useEffect(() => {
     fetch('/api/web4/agents')
       .then((res) => res.json())
@@ -27,6 +36,16 @@ export function FloatingCompanionWidget() {
         }
       })
       .catch(() => {});
+
+    const pollRun = () =>
+      fetch('/api/companion/status')
+        .then((res) => res.json())
+        .then((data: ActiveRun) => setActiveRun(data))
+        .catch(() => {});
+
+    pollRun();
+    const iv = setInterval(pollRun, 20000);
+    return () => clearInterval(iv);
   }, []);
 
   // Keyboard shortcut: Cmd+K or Ctrl+Space
@@ -85,6 +104,13 @@ export function FloatingCompanionWidget() {
                 <span className="text-[#00F0FF]">Score: {agentData.survivalScore || 88}/100</span>
               </div>
 
+              {activeRun.working && (
+                <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-400/30 text-amber-300 text-[10px] font-mono">
+                  <Zap className="w-3 h-3 flex-shrink-0 animate-pulse" />
+                  <span className="truncate">{activeRun.taskTitle || 'Task running'} · {Math.round((activeRun.progress ?? 0) * 100)}%</span>
+                </div>
+              )}
+
               <div className="space-y-1.5 pt-1">
                 <button
                   onClick={handleOpenCompanion}
@@ -114,16 +140,25 @@ export function FloatingCompanionWidget() {
           className="relative group p-1 rounded-full bg-gradient-to-r from-[#00F0FF] via-[#A855F7] to-[#FFD700] shadow-[0_0_25px_rgba(0,240,255,0.4)] cursor-pointer select-none"
         >
           <div className="w-14 h-14 rounded-full bg-[#08080E] p-0.5 flex items-center justify-center overflow-hidden relative">
-            {/* Live 3D companion */}
+            {/* Live 3D companion — mirrors the user's real run state */}
             <MiniStage3D
-              avatarId={(agentData.archetype || 'cyber_humanoid').toLowerCase()}
-              emotion="confident"
+              avatarId={(activeRun.working ? activeRun.archetype : (agentData.archetype || 'cyber_humanoid')).toLowerCase()}
+              emotion={activeRun.working ? 'battle' : 'confident'}
+              isWorking={activeRun.working}
+              workLabel={(activeRun.taskTitle || activeRun.label || '').slice(0, 42)}
+              workProgress={activeRun.progress ?? undefined}
               className="w-full h-full"
             />
 
-            {/* Glowing Live Badge */}
-            <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-green-400 border-2 border-black flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+            {/* Live / Running Badge */}
+            <span
+              className={`absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-black flex items-center justify-center ${
+                activeRun.working ? 'bg-amber-400' : 'bg-green-400'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full bg-white animate-ping ${activeRun.working ? 'bg-amber-200' : ''}`}
+              />
             </span>
           </div>
 

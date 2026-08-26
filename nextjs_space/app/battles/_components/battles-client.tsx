@@ -20,7 +20,38 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { BATTLE_TIERS } from '@/lib/battles/rewards';
+import { MiniStage3D } from '@/components/avatar/stage3d/MiniStage3D';
+import { normalizeArchetype } from '@/components/avatar/CompanionPortrait';
+import type { AvatarEmotion } from '@/hooks/useAvatar';
 import Link from 'next/link';
+
+function FaceOffStage({
+  agent,
+  role,
+  side,
+  emotion,
+  scoreLabel,
+}: {
+  agent: any;
+  role: string;
+  side: 'left' | 'right';
+  emotion: AvatarEmotion;
+  scoreLabel: string;
+}) {
+  const archetype = normalizeArchetype(agent?.avatarConfig?.baseModel || agent?.archetype);
+  return (
+    <div className={`relative rounded-xl overflow-hidden border ${emotion === 'battle' ? 'border-[#FF007A]/40' : 'border-white/10'} bg-black/50`}>
+      <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded bg-black/80 border border-white/10 text-[9px] font-mono font-bold uppercase text-[#8E9BB4]">
+        {role}
+      </div>
+      <MiniStage3D avatarId={archetype} emotion={emotion} side={side} className="w-full h-[210px]" />
+      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-orbitron font-bold text-white truncate">{agent?.name ?? '—'}</span>
+        <span className="text-[10px] font-mono text-[#00F0FF] whitespace-nowrap">{scoreLabel}</span>
+      </div>
+    </div>
+  );
+}
 
 export function BattlesClient({ user }: { user: any }) {
   const [agents, setAgents] = useState<any[]>([]);
@@ -197,6 +228,49 @@ export function BattlesClient({ user }: { user: any }) {
             </select>
           </div>
         </div>
+
+        {/* Face-Off Stage — the two selected agents, live rigs turned inward */}
+        {(() => {
+          const challenger = agents.find((a) => a.id === challengerId);
+          const defender = agents.find((a) => a.id === defenderId);
+          if (!challenger || !defender) return null;
+          let emotionC: AvatarEmotion = 'confident';
+          let emotionD: AvatarEmotion = 'confident';
+          if (fighting) {
+            emotionC = emotionD = 'battle';
+          } else if (lastBattleResult?.winner?.name) {
+            const cWon = lastBattleResult.winner.name === challenger.name;
+            emotionC = cWon ? 'happy' : 'surprised';
+            emotionD = cWon ? 'surprised' : 'happy';
+          }
+          return (
+            <div className="mb-6">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                <FaceOffStage
+                  agent={challenger}
+                  role="Challenger"
+                  side="left"
+                  emotion={emotionC}
+                  scoreLabel={`$${Number(challenger.walletBalance ?? 0).toFixed(0)} · ${challenger.survivalScore ?? 0}/100`}
+                />
+                <div className="flex flex-col items-center gap-1 px-1">
+                  <span className={`font-orbitron font-black text-2xl ${fighting ? 'text-[#FF007A] animate-pulse' : 'cyan-gold-gradient-text'}`}>VS</span>
+                  <Swords className={`w-4 h-4 ${fighting ? 'text-[#FF007A]' : 'text-[#8E9BB4]'}`} />
+                </div>
+                <FaceOffStage
+                  agent={defender}
+                  role="Defender"
+                  side="right"
+                  emotion={emotionD}
+                  scoreLabel={`$${Number(defender.walletBalance ?? 0).toFixed(0)} · ${defender.survivalScore ?? 0}/100`}
+                />
+              </div>
+              <p className="text-center text-[10px] font-mono text-[#8E9BB4] mt-2 uppercase tracking-wider">
+                {fighting ? '// Live simulation — rigs locked in combat stance //' : 'Live hologram preview — select fighters above'}
+              </p>
+            </div>
+          );
+        })()}
 
         <Button
           onClick={handleStartBattle}

@@ -1169,6 +1169,8 @@ export interface AnimeCompanionProps {
   workLabel?: string;
   /** 0..1 — omit to auto-loop */
   workProgress?: number;
+  /** baseline yaw so face-off views can turn characters toward each other */
+  faceAngle?: number;
 }
 
 interface MotionProfile {
@@ -1196,7 +1198,7 @@ function motionProfile(e: AvatarEmotion): MotionProfile {
   }
 }
 
-export function AnimeCompanion({ avatarId, loadout, emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress }: AnimeCompanionProps) {
+export function AnimeCompanion({ avatarId, loadout, emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, faceAngle = 0 }: AnimeCompanionProps) {
   const arch: ArchKey = (Object.keys(CHARACTERS) as ArchKey[]).includes(avatarId.toLowerCase() as ArchKey)
     ? (avatarId.toLowerCase() as ArchKey)
     : 'cyber_humanoid';
@@ -1262,7 +1264,7 @@ export function AnimeCompanion({ avatarId, loadout, emotion = 'confident', isSpe
       const hover = floats ? 0.18 + Math.sin(t * 1.2) * 0.04 : 0;
       root.current.position.y = -0.42 + hover + hopY + Math.sin(t * profile.bobSpeed) * profile.bobAmp;
       root.current.position.x = Math.sin(t * 0.5) * 0.012;
-      root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, state.pointer.x * 0.3, 3, delta);
+      root.current.rotation.y = THREE.MathUtils.damp(root.current.rotation.y, faceAngle + state.pointer.x * 0.3, 3, delta);
       root.current.rotation.z = THREE.MathUtils.damp(root.current.rotation.z, Math.sin(t * 0.65) * 0.022, 2, delta);
 
       // yaw velocity feeds hair inertia
