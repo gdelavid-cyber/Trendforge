@@ -23,6 +23,7 @@ import { CompanionCard } from './companion-card';
 import { Gift } from 'lucide-react';
 import { useState } from 'react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface DashboardClientProps {
@@ -41,6 +42,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary }: DashboardClientProps) {
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
+  const [isDebriefOpen, setIsDebriefOpen] = useState(false);
   const [companionInitialMessage, setCompanionInitialMessage] = useState<string | undefined>(undefined);
   const realIncomeUsdc = user?.realIncomeUsdc ?? 0;
   const completedCount = user?.completedCount ?? 0;
@@ -143,10 +145,7 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
         </div>
 
         <Button
-          onClick={() => {
-            setCompanionInitialMessage("Operative, I am ready to deliver your daily intelligence briefing. Ask me what I can do, or put me on a task and I'll walk you through it step by step.");
-            setIsCompanionOpen(true);
-          }}
+          onClick={() => setIsDebriefOpen(true)}
           className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-5 holographic-btn font-mono whitespace-nowrap shadow-[0_0_20px_rgba(0,240,255,0.4)]"
         >
           <Bot className="w-4 h-4 mr-2 fill-current" /> 🎙️ Play Spoken Market Debrief
@@ -324,6 +323,12 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
         isOpen={isCompanionOpen}
         onClose={() => setIsCompanionOpen(false)}
         user={user}
+      />
+
+      {/* 3D Holographic Spoken Market Debrief Broadcast Modal */}
+      <MarketDebriefModal
+        isOpen={isDebriefOpen}
+        onClose={() => setIsDebriefOpen(false)}
       />
     </div>
   );

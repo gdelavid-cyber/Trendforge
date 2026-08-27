@@ -17,10 +17,13 @@ import {
   Sparkles,
   Info,
   CheckCircle2,
+  Bot,
+  Radio,
 } from 'lucide-react';
 import { TrendCategoryBadge } from '@/components/trend-badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -52,6 +55,7 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
   const [trends, setTrends] = useState<TrendItem[]>(initialTrends);
   const [activeTab, setActiveTab] = useState<'ALL' | 'MONETIZABLE' | 'NEWS'>('ALL');
   const [runningScraper, setRunningScraper] = useState(false);
+  const [isDebriefOpen, setIsDebriefOpen] = useState(false);
 
   const monetizableCount = trends.filter((t) => t.isMonetizable).length;
   const newsCount = trends.filter((t) => !t.isMonetizable).length;
@@ -103,23 +107,33 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
           </p>
         </div>
 
-        <Button
-          onClick={handleRunAutonomousClassifier}
-          disabled={runningScraper}
-          className="cyan-gradient text-black font-extrabold uppercase text-xs h-11 px-5 holographic-btn font-mono shrink-0 shadow-[0_0_20px_rgba(0,240,255,0.3)]"
-        >
-          {runningScraper ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Scraping & Classifying...
-            </>
-          ) : (
-            <>
-              <Zap className="w-4 h-4 mr-2" />
-              Run Autonomous Scraper & Classifier
-            </>
-          )}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            onClick={() => setIsDebriefOpen(true)}
+            variant="outline"
+            className="border-[#FFD700]/40 text-[#FFD700] hover:bg-[#FFD700]/10 bg-[#FFD700]/5 font-mono uppercase text-xs h-11 px-4 font-bold shadow-[0_0_15px_rgba(255,215,0,0.15)]"
+          >
+            <Bot className="w-4 h-4 mr-2 text-[#FFD700]" /> 🎙️ Spoken Debrief
+          </Button>
+
+          <Button
+            onClick={handleRunAutonomousClassifier}
+            disabled={runningScraper}
+            className="cyan-gradient text-black font-extrabold uppercase text-xs h-11 px-5 holographic-btn font-mono shrink-0 shadow-[0_0_20px_rgba(0,240,255,0.3)]"
+          >
+            {runningScraper ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Scraping & Classifying...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4 mr-2" />
+                Run Autonomous Scraper & Classifier
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Section Guide & Info */}
@@ -353,7 +367,11 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
             Click "Run Autonomous Scraper & Classifier" above to scrape live internet trends and populate the radar.
           </p>
         </div>
-      )}
+      {/* 3D Holographic Spoken Market Debrief Broadcast Modal */}
+      <MarketDebriefModal
+        isOpen={isDebriefOpen}
+        onClose={() => setIsDebriefOpen(false)}
+      />
     </div>
   );
 }
