@@ -242,7 +242,7 @@ export function MarketDebriefModal({ isOpen, onClose }: MarketDebriefModalProps)
                     >
                       {VOICE_PRESETS.map((v) => (
                         <option key={v.id} value={v.id} className="bg-black text-white">
-                          {v.name} ({v.title})
+                          {v.name} ({v.codename})
                         </option>
                       ))}
                     </select>
