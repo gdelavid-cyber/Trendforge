@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layers, ArrowRight, Play, Plus, Bot, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { Layers, ArrowRight, Play, Plus, Bot, CheckCircle2, Loader2, Trash2, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -86,17 +87,27 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
   return (
     <div className="max-w-[1100px] mx-auto px-4 py-12 font-sans">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-3">
-          <Layers className="w-3.5 h-3.5" />
-          <span>ADVANCED WORKFLOWS // MULTI-AGENT PIPELINES</span>
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-3">
+            <Layers className="w-3.5 h-3.5" />
+            <span>ADVANCED WORKFLOWS // MULTI-AGENT PIPELINES</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
+            Agent <span className="cyan-gold-gradient-text">Workflow Builder</span>
+          </h1>
+          <p className="text-sm text-[#8892B0] max-w-2xl mt-2 font-sans">
+            Chain multiple autonomous Swarm Agents sequentially: feed extracted pain points directly into software scaffolding and video marketing assets.
+          </p>
         </div>
-        <h1 className="text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
-          Agent <span className="cyan-gold-gradient-text">Workflow Builder</span>
-        </h1>
-        <p className="text-sm text-[#8892B0] max-w-2xl mt-2 font-sans">
-          Chain multiple autonomous Swarm Agents sequentially: feed extracted pain points directly into software scaffolding and video marketing assets.
-        </p>
+
+        <div className="flex items-center gap-3">
+          <Link href="/manifesto">
+            <Button variant="outline" size="sm" className="border-[#FFD700]/30 text-[#FFD700] hover:bg-[#FFD700]/10 bg-[#FFD700]/5 font-mono text-xs font-bold uppercase h-9">
+              <BookOpen className="w-4 h-4 mr-1.5" /> Web4 White Paper
+            </Button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Section Guide & Info */}

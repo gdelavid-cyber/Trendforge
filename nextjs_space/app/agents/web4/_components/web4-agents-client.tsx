@@ -231,8 +231,8 @@ export function Web4AgentsClient({ user }: { user: any }) {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Link href="/manifesto">
-            <Button variant="outline" size="sm" className="border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20">
-              <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Web4 Manifesto
+            <Button variant="outline" size="sm" className="border-[#FFD700]/40 text-xs font-mono uppercase text-[#FFD700] bg-[#FFD700]/10 hover:bg-[#FFD700]/20 font-bold shadow-[0_0_12px_rgba(255,215,0,0.15)]">
+              <BookOpen className="w-3.5 h-3.5 mr-1.5 text-[#FFD700]" /> Web4 White Paper
             </Button>
           </Link>
           <Link href="/avatar-studio">

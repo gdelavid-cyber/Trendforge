@@ -3,8 +3,9 @@ import { CONTEST_MODE } from '@/lib/flags';
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
-    title: 'Product',
+    title: 'Product & Docs',
     links: [
+      { href: '/manifesto', label: 'Web4 Manifesto (White Paper)' },
       { href: '/tasks', label: 'Weekly Tasks' },
       { href: '/trends', label: 'Trends Radar' },
       { href: '/stories', label: 'Success Stories' },
@@ -21,6 +22,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: 'Company',
     links: [
+      { href: '/manifesto', label: 'White Paper' },
       { href: '/legal', label: 'Legal' },
       { href: '/compliance', label: 'Compliance' },
       { href: '/status', label: 'Status' },
@@ -33,8 +35,9 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
 // reachable here (demote, never delete).
 const CONTEST_COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
-    title: 'Product',
+    title: 'Product & Docs',
     links: [
+      { href: '/manifesto', label: 'Web4 Manifesto (White Paper)' },
       { href: '/tasks', label: 'Weekly Tasks' },
       { href: '/trends', label: 'Trends Radar' },
       { href: '/pricing', label: 'Pricing' },

@@ -116,6 +116,7 @@ export function Header(props?: any) {
         { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { kind: 'group', ...EARN_GROUP_CORE },
         { kind: 'group', ...COMPANION_GROUP },
+        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
         { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
       ]
     : [
@@ -123,6 +124,7 @@ export function Header(props?: any) {
         { kind: 'group', ...EARN_GROUP },
         { kind: 'group', ...COMPANION_GROUP },
         { kind: 'group', ...BUILD_GROUP },
+        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
         { kind: 'flat', href: '/community', label: 'Community', icon: Users },
         { kind: 'group', ...MARKET_GROUP },
       ];
@@ -130,10 +132,12 @@ export function Header(props?: any) {
   const anonymousNav: NavEntry[] = CONTEST_MODE
     ? [
         { kind: 'group', ...EARN_GROUP_CORE },
+        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
         { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
       ]
     : [
         { kind: 'group', ...EARN_GROUP },
+        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
         { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
         { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
         { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
@@ -271,6 +275,15 @@ export function Header(props?: any) {
 
           {/* User & Action Controls */}
           <div className="hidden md:flex items-center gap-2.5">
+            <Link href="/manifesto">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-[#FFD700]/30 text-[#FFD700] hover:bg-[#FFD700]/10 bg-[#FFD700]/5 text-xs font-mono uppercase h-8 px-2.5 font-bold shadow-[0_0_10px_rgba(255,215,0,0.1)]"
+              >
+                <BookOpen className="w-3.5 h-3.5 mr-1 text-[#FFD700]" /> White Paper
+              </Button>
+            </Link>
             <Button
               onClick={replayTour}
               size="sm"

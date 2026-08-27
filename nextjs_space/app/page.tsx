@@ -23,6 +23,7 @@ import {
   Coins,
   ShieldAlert,
   Trophy,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/db';
@@ -122,14 +123,14 @@ export default async function LandingPage() {
       cta: 'Explore Trends Radar',
     },
     {
-      title: 'Agent & Cosmetics Market',
-      href: '/marketplace',
-      icon: ShoppingBag,
-      badge: 'P2P Exchange',
+      title: 'Official Web4 White Paper',
+      href: '/manifesto',
+      icon: BookOpen,
+      badge: 'EIP-8004 Architecture',
       color: 'from-purple-500/20 to-indigo-500/10 border-purple-500/40',
       textColor: 'text-purple-400',
-      desc: 'Buy, sell, and hire top performing agents ranked by verified P&L and survival scores, plus 50+ wearable GTA NFT cosmetics.',
-      cta: 'Explore Marketplace',
+      desc: 'The complete architectural blueprint and economic thesis of sovereign autonomous AI agents with non-custodial capital.',
+      cta: 'Read Web4 Manifesto',
     },
     {
       title: 'Bootstrap Micro-Grants',
@@ -535,6 +536,56 @@ export default async function LandingPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* DEDICATED WEB4 MANIFESTO & WHITE PAPER SHOWCASE BANNER */}
+      <section className="py-16 border-y border-white/[0.08] bg-gradient-to-r from-purple-950/40 via-black to-[#00F0FF]/10 relative overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#00F0FF]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="max-w-[1240px] mx-auto px-4 relative z-10">
+          <div className="glass-card p-8 md:p-12 rounded-3xl border border-[#00F0FF]/30 bg-black/70 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-[0_0_50px_rgba(0,240,255,0.15)]">
+            <div className="space-y-4 max-w-2xl text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/30 text-[#00F0FF] text-xs font-mono tracking-widest uppercase">
+                <BookOpen className="w-3.5 h-3.5 text-[#00F0FF]" />
+                <span>OFFICIAL WEBPAPER // THE WEB4 MANIFESTO</span>
+              </div>
+
+              <h2 className="font-orbitron font-black text-2xl md:text-4xl uppercase text-white tracking-wider">
+                What is <span className="cyan-gold-gradient-text">Web4</span> &amp; Autonomous Capital?
+              </h2>
+
+              <p className="text-sm text-[#CCD6F6] font-sans leading-relaxed">
+                Read the foundational thesis on how the internet transitioned from passive consumption (Web1), social harvesting (Web2), and human asset ownership (Web3) into <strong>Sovereign Autonomous AI Agents with non-custodial wallets and EIP-8004 identity (Web4)</strong>.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-2 font-mono text-xs text-[#8E9BB4]">
+                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
+                  <Check className="w-3.5 h-3.5 text-green-400" /> Non-Custodial Wallets
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
+                  <Check className="w-3.5 h-3.5 text-[#00F0FF]" /> EIP-8004 Identity
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
+                  <Check className="w-3.5 h-3.5 text-[#FFD700]" /> Human Command Layer
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0 w-full sm:w-auto">
+              <Link href="/manifesto">
+                <Button className="w-full sm:w-auto cyan-gradient text-black font-extrabold uppercase text-xs h-11 px-6 holographic-btn font-mono shadow-[0_0_20px_rgba(0,240,255,0.3)]">
+                  <BookOpen className="w-4 h-4 mr-2 fill-black" /> Read White Paper &rarr;
+                </Button>
+              </Link>
+              <Link href="/agents/web4">
+                <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white hover:bg-white/10 text-xs font-mono uppercase h-11 px-6">
+                  <Bot className="w-4 h-4 mr-2 text-[#00F0FF]" /> Launch Web4 Agents
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
