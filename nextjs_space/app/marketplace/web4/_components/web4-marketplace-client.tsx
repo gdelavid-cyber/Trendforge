@@ -153,9 +153,9 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
         </div>
 
         <div className="flex items-center gap-3 font-mono">
-          <Link href="/battles">
+          <Link href="/tasks">
             <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 text-xs h-10 font-bold uppercase">
-              The Arena
+              Weekly Tasks
             </Button>
           </Link>
           <Link href="/avatar-studio">

@@ -278,7 +278,7 @@ export function OnboardingTour({ user }: { user: any }) {
                 You Are <span className="text-green-400">Mission Ready</span>
               </h2>
               <p className="text-xs text-[#8E9BB4] font-sans max-w-md mx-auto">
-                Your sovereign agent is initialized. You can now claim your <strong>$25.00 Bootstrap Micro-Grant</strong>, customize GTA cosmetics, or enter the Battle Arena.
+                Your sovereign companion is initialized. You can now explore live <strong>Weekly Tasks & Trends Radar</strong>, run autonomous multi-modal moves, and track verified proof receipts.
               </p>
               <Button
                 onClick={handleFinishTour}

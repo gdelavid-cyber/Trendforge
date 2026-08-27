@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, Shield, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy, Bot, Zap, Wrench, Loader2, FileText, Mail, Share2, Search } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy, Bot, Zap, Wrench, Loader2, FileText, Mail, Share2, Search, Mic, Video, Briefcase, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { completePowerMoveAction } from '@/app/actions';
 import { parseSteps } from '@/lib/tasks/steps';
 import { RunFeed } from './run-feed';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface Props {
   task: any;
@@ -27,10 +28,212 @@ const ARTIFACT_META: Record<string, { label: string; icon: typeof FileText }> = 
   POST: { label: 'Post', icon: Share2 },
   TRADE: { label: 'Trade', icon: TrendingUp },
   RESEARCH: { label: 'Research', icon: Search },
+  VOICE: { label: 'Voice Note', icon: Mic },
+  VIDEO: { label: 'Video Package', icon: Video },
+  SALES: { label: 'Sales Campaign', icon: Briefcase },
+  BRAINSTORM: { label: 'Squad Strategy', icon: Sparkles },
 };
+
+function extractStepSiteInfo(step: any, task: any) {
+  const text = `${step?.title ?? ''} ${step?.description ?? ''} ${task?.title ?? ''}`.toLowerCase();
+
+  const toolLinks: { name: string; url: string }[] = (() => {
+    try {
+      return typeof task?.toolLinks === 'string' ? JSON.parse(task.toolLinks) : (task?.toolLinks ?? []);
+    } catch {
+      return [];
+    }
+  })();
+
+  if (toolLinks.length > 0) {
+    const matched = toolLinks.find((tl) => text.includes(tl.name.toLowerCase()) || text.includes(tl.url.toLowerCase()));
+    if (matched) {
+      return {
+        siteName: matched.name,
+        siteUrl: matched.url.startsWith('http') ? matched.url : `https://${matched.url}`,
+        instruction: `Go to ${matched.name} and execute the setup or configuration required for this step.`,
+      };
+    }
+  }
+
+  if (text.includes('vapi')) {
+    return {
+      siteName: 'Vapi AI',
+      siteUrl: 'https://vapi.ai',
+      instruction: 'Go to Vapi AI (https://vapi.ai) to create an account, provision a virtual phone number, and configure your assistant prompt.',
+    };
+  }
+  if (text.includes('retell')) {
+    return {
+      siteName: 'Retell AI',
+      siteUrl: 'https://retellai.com',
+      instruction: 'Go to Retell AI (https://retellai.com) to deploy a low-latency conversational voice agent.',
+    };
+  }
+  if (text.includes('polymarket')) {
+    return {
+      siteName: 'Polymarket',
+      siteUrl: 'https://polymarket.com',
+      instruction: 'Go to Polymarket (https://polymarket.com) to inspect active prediction markets, verify orderbook liquidity, and stage your trade ticket.',
+    };
+  }
+  if (text.includes('reddit')) {
+    return {
+      siteName: 'Reddit',
+      siteUrl: 'https://reddit.com',
+      instruction: 'Go to Reddit (https://reddit.com) and search target subreddits to mine organic complaints, tool requests, and customer pain points.',
+    };
+  }
+  if (text.includes('twitter') || text.includes(' x ') || text.includes('x.com')) {
+    return {
+      siteName: 'X / Twitter',
+      siteUrl: 'https://x.com',
+      instruction: 'Go to X / Twitter (https://x.com) to engage with prospect threads, publish the launch post, and initiate direct messages.',
+    };
+  }
+  if (text.includes('github')) {
+    return {
+      siteName: 'GitHub',
+      siteUrl: 'https://github.com',
+      instruction: 'Go to GitHub (https://github.com) to clone the starter template repository and configure environment secrets.',
+    };
+  }
+  if (text.includes('stripe')) {
+    return {
+      siteName: 'Stripe Dashboard',
+      siteUrl: 'https://dashboard.stripe.com',
+      instruction: 'Go to Stripe Dashboard (https://dashboard.stripe.com) to create your payment link or recurring subscription product.',
+    };
+  }
+  if (text.includes('tiktok')) {
+    return {
+      siteName: 'TikTok Studio',
+      siteUrl: 'https://www.tiktok.com/creator-center',
+      instruction: 'Go to TikTok Creator Center to upload your 9:16 short-form video with the generated script, sound, and hashtags.',
+    };
+  }
+  if (text.includes('youtube') || text.includes('shorts')) {
+    return {
+      siteName: 'YouTube Studio',
+      siteUrl: 'https://studio.youtube.com',
+      instruction: 'Go to YouTube Studio (https://studio.youtube.com) to publish the video asset as a YouTube Short with title & description.',
+    };
+  }
+  if (text.includes('resend') || text.includes('sendgrid')) {
+    return {
+      siteName: 'Resend / Email Provider',
+      siteUrl: 'https://resend.com',
+      instruction: 'Go to your email provider (https://resend.com) to verify your sending domain and monitor delivery rates.',
+    };
+  }
+  if (text.includes('elevenlabs')) {
+    return {
+      siteName: 'ElevenLabs',
+      siteUrl: 'https://elevenlabs.io',
+      instruction: 'Go to ElevenLabs (https://elevenlabs.io) to generate customized voice cloning or hyper-realistic audio voiceovers.',
+    };
+  }
+  if (text.includes('capcut')) {
+    return {
+      siteName: 'CapCut Web',
+      siteUrl: 'https://www.capcut.com',
+      instruction: 'Go to CapCut (https://www.capcut.com) to paste the generated script, apply auto-captions, and render the final 9:16 clip.',
+    };
+  }
+
+  return null;
+}
+
+function getStepExecutionDirections(step: any, task: any, index: number) {
+  const action = (step?.action ?? 'execute').toLowerCase();
+  const title = step?.title ?? `Step ${index + 1}`;
+  const siteInfo = extractStepSiteInfo(step, task);
+
+  if (/scrape|research|analyze|find|gather/i.test(action) || /scrape|research|identify|search/i.test(title)) {
+    return {
+      actionBadge: 'RESEARCH & DATA EXTRACTION',
+      color: 'border-purple-500/30 text-purple-300 bg-purple-500/10',
+      objective: `Mine high-intent target data, verified sources, and client pain points for "${task?.title || 'this task'}".`,
+      directions: [
+        `Identify specific online communities, subreddits, or databases relevant to this niche.`,
+        `Search for recurring complaints, friction points, or tool requests.`,
+        `Extract contact signals (company names, URLs, decision maker profiles) into a structured list.`,
+        `Verify demand before building or reaching out.`,
+      ],
+      aiCapability: 'The AI Companion will automatically search live sources, extract target data, and produce a structured research artifact.',
+      siteInfo,
+      recommendedTools: ['Google Search', 'Reddit / Twitter Scraper', 'Apollo / Clay / LinkedIn'],
+    };
+  }
+
+  if (/voice|audio|record|call|speech/i.test(action) || /voice|audio|podcast|call/i.test(title)) {
+    return {
+      actionBadge: 'VOICE SYNTHESIS & AUDIO OUTREACH',
+      color: 'border-[#00F0FF]/30 text-[#00F0FF] bg-[#00F0FF]/10',
+      objective: `Synthesize a high-converting spoken voice note or audio demo for client outreach.`,
+      directions: [
+        `Draft a concise 30-45 second spoken script focusing on rapid value and proof.`,
+        `Synthesize the audio note with natural pacing, clear pauses, and an urgent CTA.`,
+        `Export the audio waveform or deliver it directly via voicemail / audio DM.`,
+      ],
+      aiCapability: 'The AI Companion will write the voice script, synthesize the audio with natural pacing, and embed a playable voice note.',
+      siteInfo,
+      recommendedTools: ['Web Speech TTS', 'ElevenLabs', 'Vapi AI / Retell AI'],
+    };
+  }
+
+  if (/video|tiktok|youtube|shorts|reels|storyboard/i.test(action) || /video|tiktok|youtube|shorts/i.test(title)) {
+    return {
+      actionBadge: '9:16 SHORT-FORM VIDEO & VIRAL CONTENT',
+      color: 'border-pink-500/30 text-pink-300 bg-pink-500/10',
+      objective: `Construct a high-retention 9:16 video script, visual storyboard, and hashtag package.`,
+      directions: [
+        `Craft a 3-second pattern-interrupt hook (visual + bold text overlay).`,
+        `Detail scene-by-scene visual descriptions, voiceover lines, and on-screen overlays.`,
+        `Add curiosity-driven post caption and viral niche hashtags.`,
+        `Publish to TikTok, YouTube Shorts, and Instagram Reels for organic reach.`,
+      ],
+      aiCapability: 'The AI Companion will generate the complete viral storyboard, scene breakdown, text overlays, and copyable script.',
+      siteInfo,
+      recommendedTools: ['CapCut', 'Remotion', 'Canva / OpusClip'],
+    };
+  }
+
+  if (/sales|outreach|pitch|close|offer|email|dm/i.test(action) || /sales|outreach|pitch|email|message/i.test(title)) {
+    return {
+      actionBadge: 'SALES & CLIENT ACQUISITION',
+      color: 'border-green-500/30 text-green-300 bg-green-500/10',
+      objective: `Deploy multi-touch outreach sequences and close paying clients.`,
+      directions: [
+        `Segment qualified buyer personas into high-ticket decision makers.`,
+        `Deploy a personalized initial touchpoint (Email or Twitter/LinkedIn DM) referencing real proof.`,
+        `Follow up 48 hours later with a sample result or short video walkthrough.`,
+        `Present the clear setup + monthly retainer offer and handle common objections.`,
+      ],
+      aiCapability: 'The AI Companion will craft tailored cold emails, DM sequences, pricing packages, and objection rebuttal scripts.',
+      siteInfo,
+      recommendedTools: ['SendGrid / Resend', 'Twitter / LinkedIn DMs', 'Stripe Invoicing'],
+    };
+  }
+
+  return {
+    actionBadge: 'TACTICAL EXECUTION & BUILD',
+    color: 'border-[#FFD700]/30 text-[#FFD700] bg-[#FFD700]/10',
+    objective: `Execute this step to produce a concrete deliverable and proof artifact.`,
+    directions: [
+      `Review previous step results and assets.`,
+      `Implement the core workflow or scaffold the deliverable.`,
+      `Save and verify the deliverable artifact before moving to the next phase.`,
+    ],
+    aiCapability: 'The AI Companion will run the pipeline step, generate code or deliverables, and stamp proof-of-work receipts.',
+    siteInfo,
+    recommendedTools: ['Next.js / TypeScript', 'Open APIs', 'Vercel / Cloudflare'],
+  };
+}
 
 export function TaskDetailClient({ task, userTask: initialUserTask, stories, artifacts = [] }: Props) {
   const [userTask, setUserTask] = useState(initialUserTask);
+  const [expandedStep, setExpandedStep] = useState<number | null>(0);
   const [optedIn, setOptedIn] = useState(initialUserTask?.hasOptedInRisk ?? false);
   const [voting, setVoting] = useState(false);
   const [voteState, setVoteState] = useState<{ up: number; down: number }>({
@@ -171,13 +374,13 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [companionState?.status, refreshStatus]);
 
-  const startCompanion = async (mode: 'DIY' | 'CO_PILOT' | 'AUTOPILOT') => {
+  const startCompanion = async (mode: 'DIY' | 'CO_PILOT' | 'AUTOPILOT', stepIndex?: number) => {
     setStartingMode(mode);
     try {
       const res = await fetch('/api/tasks/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: task?.id, mode }),
+        body: JSON.stringify({ taskId: task?.id, mode, stepIndex }),
       });
       const data = await res.json();
       if (!res.ok && res.status !== 409) {
@@ -188,7 +391,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
         toast.info('Already running');
       }
       if (mode === 'AUTOPILOT') toast.success('Autopilot engaged — your companion is on it.');
-      if (mode === 'CO_PILOT') toast.success('Co-pilot executed the next step.');
+      if (mode === 'CO_PILOT') toast.success(`Co-pilot executed step ${(stepIndex ?? 0) + 1}.`);
       await refreshStatus();
     } catch {
       toast.error('Failed to reach the engine');
@@ -273,6 +476,9 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
             </div>
           </div>
         )}
+
+        {/* Section Guide & Tactical Help */}
+        <SectionHelpBanner />
 
         {/* Action Panel: Companion modes + Launch & Step tracker */}
         <div className="glass-card border border-[#00F0FF]/20 rounded-xl p-6" data-tour="task-modes">
@@ -361,29 +567,194 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
           )}
         </div>
 
-        {/* 5-Step Plan */}
+        {/* Step-by-Step Action Plan with Interactive Directions */}
         <div className="glass-card border border-white/5 rounded-xl p-6">
-          <h3 className="font-display font-black text-lg text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-gold" /> Step-by-Step Action Plan
-          </h3>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 className="font-display font-black text-lg text-white uppercase tracking-wider flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-gold" /> Step-by-Step Action Plan
+            </h3>
+            <span className="text-[11px] font-mono text-[#8E9BB4]">
+              💡 Click any step to expand execution directions & AI automation
+            </span>
+          </div>
+
           <div className="space-y-3">
-            {(steps ?? []).map((step: string, i: number) => (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                i < stepsCompleted ? 'bg-green-500/5 border-green-500/10' : 'bg-[#11111E]/30 border-white/5'
-              }`}>
-                <button
-                  onClick={() => userTask && handleStepComplete(i)}
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                    i < stepsCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-white/10 hover:border-gold text-muted-foreground'
+            {(parsedSteps.length > 0 ? parsedSteps : (steps ?? []).map((s: string, idx: number) => ({ title: s, action: 'execute', description: '', index: idx }))).map((stepItem: any, i: number) => {
+              const stepTitle = stepItem.title || (typeof stepItem === 'string' ? stepItem : `Step ${i + 1}`);
+              const isDone = i < stepsCompleted;
+              const isExpanded = expandedStep === i;
+              const directions = getStepExecutionDirections(stepItem, task, i);
+
+              return (
+                <div
+                  key={i}
+                  className={`rounded-xl border transition-all overflow-hidden ${
+                    isDone
+                      ? 'bg-green-500/[0.04] border-green-500/20'
+                      : isExpanded
+                      ? 'bg-black/60 border-[#00F0FF]/40 shadow-[0_0_20px_rgba(0,240,255,0.08)]'
+                      : 'bg-[#11111E]/40 border-white/5 hover:border-white/20'
                   }`}
-                  disabled={!userTask || i !== stepsCompleted} // Only allow complete sequentially
                 >
-                  {i < stepsCompleted && <CheckCircle className="w-3.5 h-3.5 text-white" />}
-                  {i >= stepsCompleted && <span className="text-[10px] font-bold font-mono">{i + 1}</span>}
-                </button>
-                <span className={`text-sm ${i < stepsCompleted ? 'text-green-400 line-through' : 'text-[#F3F3F5]'}`}>{step}</span>
-              </div>
-            ))}
+                  {/* Step Header Row (Clickable) */}
+                  <div
+                    onClick={() => setExpandedStep(isExpanded ? null : i)}
+                    className="flex items-center justify-between gap-3 p-4 cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (userTask) handleStepComplete(i);
+                        }}
+                        className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isDone
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-white/20 hover:border-gold text-muted-foreground'
+                        }`}
+                        disabled={!userTask || i !== stepsCompleted}
+                        title={isDone ? 'Step Completed' : 'Click to complete manually'}
+                      >
+                        {isDone ? <CheckCircle className="w-4 h-4 text-white" /> : <span className="text-xs font-bold font-mono">{i + 1}</span>}
+                      </button>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <span className={`text-sm font-bold truncate ${isDone ? 'text-green-400 line-through' : 'text-[#F3F3F5]'}`}>
+                            {stepTitle}
+                          </span>
+                          <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border ${directions.color}`}>
+                            {directions.actionBadge}
+                          </span>
+                        </div>
+                        {stepItem.description && (
+                          <p className="text-xs text-[#8E9BB4] line-clamp-1 font-sans">
+                            {stepItem.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isDone && (
+                        <span className="text-[10px] font-mono text-green-400 uppercase font-bold hidden sm:inline-block">
+                          Completed
+                        </span>
+                      )}
+                      <span className="text-[#8E9BB4]">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Expanded Step Directions & Execution Blueprint */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 pt-2 border-t border-white/5 space-y-3.5 bg-black/40 text-left">
+                      {/* Step Objective */}
+                      <div>
+                        <span className="text-[10px] font-mono font-bold text-[#FFD700] uppercase block mb-1">
+                          🎯 Step Objective:
+                        </span>
+                        <p className="text-xs text-[#E0E7FF] font-sans leading-relaxed">
+                          {directions.objective}
+                        </p>
+                      </div>
+
+                      {/* Website / Platform Action Card (if step requires visiting external site) */}
+                      {directions.siteInfo && (
+                        <div className="p-3 rounded-lg bg-gradient-to-r from-[#00F0FF]/10 via-black/50 to-purple-500/10 border border-[#00F0FF]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 text-xs font-bold font-mono text-[#00F0FF] mb-1">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>Direct Platform Link: {directions.siteInfo.siteName}</span>
+                            </div>
+                            <p className="text-[11px] text-[#CCD6F6] font-sans">
+                              {directions.siteInfo.instruction}
+                            </p>
+                          </div>
+                          <a
+                            href={directions.siteInfo.siteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00F0FF]/20 hover:bg-[#00F0FF]/30 border border-[#00F0FF]/40 text-[#00F0FF] hover:text-white text-xs font-mono font-bold transition-all shrink-0"
+                          >
+                            Open {directions.siteInfo.siteName} <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+
+                      {/* AI Companion Assistance Card */}
+                      <div className="p-3 rounded-lg bg-gradient-to-r from-[#FFD700]/10 via-black/50 to-green-500/10 border border-[#FFD700]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 text-xs font-bold font-mono text-[#FFD700] mb-1">
+                            <Bot className="w-3.5 h-3.5 text-[#FFD700]" />
+                            <span>Let AI Assistant Assist & Execute</span>
+                          </div>
+                          <p className="text-[11px] text-[#CCD6F6] font-sans">
+                            {directions.aiCapability}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => startCompanion('CO_PILOT', i)}
+                          disabled={startingMode !== null}
+                          className="cyan-gradient text-black font-extrabold uppercase text-[11px] h-8 px-3.5 font-mono shadow-[0_0_15px_rgba(0,240,255,0.25)] shrink-0"
+                        >
+                          {startingMode === 'CO_PILOT' ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                          ) : (
+                            <Zap className="w-3.5 h-3.5 mr-1" />
+                          )}
+                          Have AI Execute Step {i + 1}
+                        </Button>
+                      </div>
+
+                      {/* Step-by-Step Directions */}
+                      <div>
+                        <span className="text-[10px] font-mono font-bold text-[#00F0FF] uppercase block mb-1.5">
+                          📋 Step-by-Step Directions:
+                        </span>
+                        <ul className="space-y-1.5">
+                          {directions.directions.map((dir: string, dIdx: number) => (
+                            <li key={dIdx} className="text-xs text-[#CCD6F6] font-sans flex items-start gap-2">
+                              <span className="w-4 h-4 rounded-full bg-white/5 text-[#00F0FF] font-mono text-[9px] flex items-center justify-center shrink-0 mt-0.5">
+                                {dIdx + 1}
+                              </span>
+                              <span>{dir}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Recommended Tools & Manual Mark Complete */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-mono text-[#8E9BB4] uppercase">Tools & Stack:</span>
+                          {directions.recommendedTools.map((tool: string, tIdx: number) => (
+                            <span key={tIdx} className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-white border border-white/10">
+                              {tool}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Manual Checkoff Button */}
+                        {userTask && !isDone && i === stepsCompleted && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStepComplete(i)}
+                            className="border-white/10 hover:border-green-400 text-white h-8 text-[11px] font-mono uppercase"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5 mr-1 text-green-400" />
+                            Mark Done
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Honest Completion Section */}
@@ -417,10 +788,8 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
           )}
         </div>
 
-        {/* Live Work Log — real-time proof of what the companion actually did */}
-        {userTask?.id && (
-          <RunFeed userTaskId={userTask.id} active={companionActive} />
-        )}
+        {/* Live Work Log & Squad War Room */}
+        <RunFeed userTaskId={userTask?.id ?? null} taskId={task?.id} active={companionActive} />
 
         {/* Actual Outputs — real artifacts the companion produced */}
         {artifacts.length > 0 && (

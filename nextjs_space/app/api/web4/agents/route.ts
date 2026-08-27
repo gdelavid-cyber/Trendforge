@@ -58,32 +58,48 @@ export async function POST(request: Request) {
       creationTimestamp: Date.now(),
     });
 
+    const existingCount = await prisma.web4Agent.count({ where: { userId: user.id } });
+    const isGenesis = existingCount === 0;
+    const tokenSerial = Math.floor(1000 + Math.random() * 9000);
+    const nftTokenId = isGenesis ? '#0001-GENESIS' : `#${tokenSerial}-NFT`;
+
     const newAgent = await prisma.web4Agent.create({
       data: {
         userId: user.id,
         name: agentName,
-        description: description || 'Autonomous Web4 Economic Agent',
+        description: description || 'Autonomous Web4 AI NFT Economic Agent',
         archetype: archetype || 'DATA_MINER',
         walletAddress: wallet.address,
-        walletBalance: 0.0, // Dormant until funded — see LedgerEntry / deposit flow
+        walletBalance: 0.0, // Dormant until funded
         status: 'DORMANT',
         skills: Array.isArray(skills) && skills.length > 0 ? skills : [
           { skillId: 'scrape_reddit_painpoints', params: { subreddit: 'SaaS' } },
           { skillId: 'nextjs_microsaas_builder', params: { niche: 'SaaS' } },
         ],
         avatarConfig: avatarConfig || {
-          baseModel: 'CYBER_HUMANOID',
+          baseModel: archetype === 'DEFI_ARBITRAGEUR' ? 'QUANTUM_ANDROID' : archetype === 'SAAS_ARCHITECT' ? 'WALL_STREET_TITAN' : archetype === 'VIRAL_CREATOR' ? 'COSMIC_ENTITY' : 'CYBER_HUMANOID',
           skin: 'NEON_CYAN',
           accessory: 'HOLOGRAPHIC_VISOR',
           aura: 'PLASMA_FIRE',
           animation: 'HOVER_IDLE',
+          nftTokenId,
+          isGenesis,
         },
         eip8004Hash: identity.identityHash,
-        survivalScore: 85,
+        survivalScore: 90,
       },
     });
 
-    return NextResponse.json({ success: true, agent: newAgent });
+    return NextResponse.json({
+      success: true,
+      agent: newAgent,
+      nft: {
+        tokenId: nftTokenId,
+        isGenesis,
+        standard: 'EIP-8004 Autonomous NFT',
+        mintTx: `tx_mint_${tokenSerial}_${Date.now().toString(36)}`,
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to create Web4 agent' }, { status: 500 });
   }

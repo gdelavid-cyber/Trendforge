@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface CommunityPostItem {
   id: string;
@@ -259,6 +260,9 @@ export function CommunityClient({ favors: initialFavors, leaderboard }: Props) {
           </Button>
         </div>
       </motion.div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       {/* Daily Quests Banner */}
       <div className="glass-card p-6 mb-8 border border-white/10 relative overflow-hidden">

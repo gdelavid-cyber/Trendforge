@@ -88,7 +88,9 @@ const BUILD_GROUP: NavGroup = {
   items: [
     { href: '/builder', label: 'Agent Studio', icon: Wrench },
     { href: '/agents', label: 'My Agents', icon: Cpu },
+    { href: '/agents/web4', label: 'Web4 Sovereign', icon: ShieldCheck },
     { href: '/workflows', label: 'Workflows', icon: Zap },
+    { href: '/manifesto', label: 'Web4 Manifesto', icon: BookOpen },
   ],
 };
 

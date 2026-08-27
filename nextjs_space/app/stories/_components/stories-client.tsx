@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle, DollarSign, Star, Flame } from 'lucide-react';
 import { TrendCategoryBadge } from '@/components/trend-badge';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface Props {
   stories: { id: string; earningsAmount: number; description: string; userName: string; taskTitle: string; taskCategory: string; createdAt: string | null }[];
@@ -11,14 +12,17 @@ interface Props {
 export function StoriesClient({ stories }: Props) {
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 text-green-400 mb-3">
-          <CheckCircle className="w-5 h-5" />
-          <span className="font-medium">Verified Success Stories</span>
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center gap-2 text-green-400 mb-3 font-mono text-xs uppercase">
+          <CheckCircle className="w-4 h-4" />
+          <span className="font-bold">Verified Proof-of-Work Stories</span>
         </div>
-        <h1 className="font-display font-bold text-3xl tracking-tight">Real People, Real Earnings</h1>
-        <p className="text-muted-foreground mt-2">Every story is verified with earnings screenshots</p>
+        <h1 className="font-display font-black text-3xl md:text-4xl tracking-tight text-white uppercase">Real People, Real Earnings</h1>
+        <p className="text-muted-foreground text-sm mt-2">Every story is backed by real execution deliverables and proof-of-work receipts</p>
       </div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(stories ?? []).map((story: any, i: number) => (

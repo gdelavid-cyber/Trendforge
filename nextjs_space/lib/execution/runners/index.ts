@@ -6,14 +6,20 @@ import { runEmailStep, hasEmailProvider } from './email';
 import { draftTweetText, postTweet } from './social';
 import { runFileStep } from './file';
 import { runTradeStep } from './trade';
+import { runVoiceStep } from './voice';
+import { runVideoStep } from './video';
+import { runSalesStep } from './sales';
 
 // Skill runner registry: maps step actions to real work. Internal actions run
 // through the LLM (grounded by earlier steps); external actions run real
 // integrations from the user's vault — and NEVER fake success: a missing key
 // resolves to a blocked outcome with guidance instead of invented output.
 
-export const INTERNAL_ACTIONS = new Set(['draft', 'generate', 'analyze']);
+export const INTERNAL_ACTIONS = new Set(['draft', 'generate', 'analyze', 'write', 'build']);
 export const RESEARCH_ACTIONS = new Set(['research', 'scrape']);
+export const VOICE_ACTIONS = new Set(['voice', 'record', 'audio', 'podcast', 'speech']);
+export const VIDEO_ACTIONS = new Set(['video', 'tiktok', 'youtube', 'reels', 'storyboard', 'film']);
+export const SALES_ACTIONS = new Set(['sales', 'outreach', 'pitch', 'close', 'offer', 'prospect', 'market']);
 export const EXTERNAL_ACTIONS = new Set(['send', 'post', 'deploy', 'trade', 'export']);
 
 function blockedNeedingKey(provider: string, label: string): StepOutcome {
@@ -44,7 +50,14 @@ async function llmFallback(step: ParsedStep, ctx: StepContext, llm: LlmFn): Prom
 export function createSkillRunner(llm: LlmFn) {
   return {
     canHandle(action: string): boolean {
-      return INTERNAL_ACTIONS.has(action) || RESEARCH_ACTIONS.has(action) || EXTERNAL_ACTIONS.has(action);
+      return (
+        INTERNAL_ACTIONS.has(action) ||
+        RESEARCH_ACTIONS.has(action) ||
+        VOICE_ACTIONS.has(action) ||
+        VIDEO_ACTIONS.has(action) ||
+        SALES_ACTIONS.has(action) ||
+        EXTERNAL_ACTIONS.has(action)
+      );
     },
     async run(step: ParsedStep, ctx: StepContext): Promise<StepOutcome> {
       const boundLlm: LlmFn = ctx.llm ?? llm;
@@ -64,6 +77,99 @@ export function createSkillRunner(llm: LlmFn) {
           };
         } catch (err: any) {
           return { output: `Research failed: ${err.message} (no data was invented)`, blocked: true, costUsd: 0 };
+        }
+      }
+
+      // --- Spoken Voice Message & Audio Note ---
+      if (VOICE_ACTIONS.has(step.action)) {
+        try {
+          const result = await runVoiceStep({
+            step,
+            taskTitle: ctx.taskTitle,
+            previousResults: ctx.previousResults,
+            llm: boundLlm,
+            companionName: ctx.companionName,
+          });
+          return {
+            output: result.output,
+            costUsd: 0.005,
+            artifact: {
+              kind: 'VOICE',
+              name: `Voice Note: ${step.title.slice(0, 60)}`,
+              url: null,
+              meta: {
+                transcript: result.transcript,
+                voiceProfile: result.voiceProfile,
+                audioScript: result.audioScript,
+                durationSec: result.voiceProfile.targetDurationSec,
+              },
+            },
+          };
+        } catch (err: any) {
+          return { output: `Voice synthesis failed: ${err.message}`, blocked: true, costUsd: 0 };
+        }
+      }
+
+      // --- Short-Form Video, TikTok & Shorts Storyboard ---
+      if (VIDEO_ACTIONS.has(step.action)) {
+        try {
+          const result = await runVideoStep({
+            step,
+            taskTitle: ctx.taskTitle,
+            previousResults: ctx.previousResults,
+            llm: boundLlm,
+          });
+          return {
+            output: result.output,
+            costUsd: 0.005,
+            artifact: {
+              kind: 'VIDEO',
+              name: `Short-Form Video: ${result.title.slice(0, 60)}`,
+              url: null,
+              meta: {
+                title: result.title,
+                format: result.format,
+                hook: result.hook,
+                scenes: result.scenes,
+                caption: result.caption,
+                hashtags: result.hashtags,
+                viewsPotential: result.estimatedViewsPotential,
+              },
+            },
+          };
+        } catch (err: any) {
+          return { output: `Video production package failed: ${err.message}`, blocked: true, costUsd: 0 };
+        }
+      }
+
+      // --- Sales, Outreach & Monetization Pitch ---
+      if (SALES_ACTIONS.has(step.action)) {
+        try {
+          const result = await runSalesStep({
+            step,
+            taskTitle: ctx.taskTitle,
+            previousResults: ctx.previousResults,
+            llm: boundLlm,
+            companionName: ctx.companionName,
+          });
+          return {
+            output: result.output,
+            costUsd: 0.005,
+            artifact: {
+              kind: 'SALES',
+              name: `Sales Campaign: ${step.title.slice(0, 60)}`,
+              url: null,
+              meta: {
+                targetPersona: result.targetPersona,
+                valueProposition: result.valueProposition,
+                pricingOffer: result.pricingOffer,
+                outreachSequence: result.outreachSequence,
+                objectionHandling: result.objectionHandling,
+              },
+            },
+          };
+        } catch (err: any) {
+          return { output: `Sales outreach package failed: ${err.message}`, blocked: true, costUsd: 0 };
         }
       }
 

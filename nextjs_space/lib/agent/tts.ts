@@ -1,7 +1,4 @@
-/**
- * Trendly Web4 - Text-To-Speech (TTS) Engine
- * Integrates ElevenLabs API, Google TTS, and browser Web Speech audio fallback.
- */
+import { getVoicePresetById } from './voice-presets';
 
 export interface TTSResponse {
   audioBase64?: string;
@@ -16,7 +13,9 @@ export async function generateSpeechAudio(params: {
   voiceId?: string;
   archetype?: string;
 }): Promise<TTSResponse> {
-  const { text, voiceId = '21m00Tcm4TlvDq8ikWAM' } = params;
+  const { text, voiceId } = params;
+  const preset = getVoicePresetById(voiceId);
+  const resolvedElevenLabsId = preset.elevenLabsVoiceId;
   
   // Clean special tags from spoken text
   const speechText = text
@@ -32,7 +31,7 @@ export async function generateSpeechAudio(params: {
 
   if (elevenLabsApiKey && elevenLabsApiKey !== 'your-tts-api-key') {
     try {
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${resolvedElevenLabsId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,7 +57,7 @@ export async function generateSpeechAudio(params: {
         return {
           audioBase64: `data:audio/mpeg;base64,${base64}`,
           durationEstimate,
-          voiceId,
+          voiceId: preset.id,
           provider: 'elevenlabs',
         };
       } else {
@@ -72,7 +71,7 @@ export async function generateSpeechAudio(params: {
   // Graceful browser-supported fallback format
   return {
     durationEstimate,
-    voiceId,
+    voiceId: preset.id,
     provider: 'browser_speech',
   };
 }

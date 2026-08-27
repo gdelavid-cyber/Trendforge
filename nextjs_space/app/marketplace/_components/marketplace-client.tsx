@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface Props {
   templates: { id: string; title: string; description: string; price: number; category: string; downloads: number; userName: string }[];
@@ -17,13 +18,16 @@ export function MarketplaceClient({ templates }: Props) {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="font-display font-bold text-3xl flex items-center gap-2 mb-1">
+      <div className="mb-6">
+        <h1 className="font-display font-bold text-3xl flex items-center gap-2 mb-1 text-white">
           <Store className="w-7 h-7 text-gold" /> Template Marketplace
         </h1>
-        <p className="text-muted-foreground">Buy and sell templates, checklists, and resources</p>
+        <p className="text-muted-foreground text-sm">Buy and sell templates, checklists, and resources</p>
         <p className="text-xs text-muted-foreground mt-1">Creators earn 80% of each sale · 20% platform commission</p>
       </div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

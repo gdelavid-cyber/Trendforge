@@ -6,6 +6,8 @@ import { TaskFilters } from './task-filters';
 import { InfiniteTaskList } from './infinite-task-list';
 import { TrendingFeed } from './trending-feed';
 
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
+
 interface FiltersState {
   search: string;
   difficulty: string;
@@ -36,12 +38,15 @@ export function TasksContainer({ userRole }: Props) {
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
       {/* Title */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl md:text-4xl text-white uppercase tracking-wider flex items-center gap-2 mb-2">
           <Zap className="w-7 h-7 text-[#00F0FF]" /> Power Stream
         </h1>
         <p className="text-xs text-[#8892B0] font-mono uppercase tracking-wider">Access infinite money-making opportunities and real-time live pulses.</p>
       </div>
+
+      {/* Section Guide Banner */}
+      <SectionHelpBanner />
 
       {/* Tabs Navigation */}
       <div className="flex border-b border-white/[0.06] mb-8 gap-3">

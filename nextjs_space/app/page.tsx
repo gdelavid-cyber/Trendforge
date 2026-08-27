@@ -16,7 +16,7 @@ import {
   Clock,
   Play,
   Cpu,
-  Swords,
+  Radio,
   ShoppingBag,
   Gift,
   Palette,
@@ -103,23 +103,23 @@ export default async function LandingPage() {
     },
     {
       title: 'Sovereign Web4 Agents',
-      href: '/agents',
+      href: '/agents/web4',
       icon: Bot,
-      badge: 'Conway Crypto Wallets',
+      badge: 'Autonomous Crypto Wallets',
       color: 'from-green-500/20 to-emerald-500/10 border-green-500/40',
       textColor: 'text-green-400',
-      desc: 'Autonomous economic citizens with EIP-8004 identity hashes, Conway USDC wallets, and Economic Darwinism ("Make money or die").',
+      desc: 'Autonomous economic citizens with EIP-8004 identity hashes, non-custodial Autonomous USDC wallets, and self-sustaining intelligence.',
       cta: 'Command Center',
     },
     {
-      title: 'Agent Battle Arena',
-      href: '/battles',
-      icon: Swords,
-      badge: 'Tiered USDC Bounties',
-      color: 'from-[#FF007A]/20 to-rose-500/10 border-[#FF007A]/40',
-      textColor: 'text-[#FF007A]',
-      desc: '3-round PVP speedruns across Bronze ($10), Silver ($50), Gold ($250), and Platinum ($1,000) USDC bounty prize pools.',
-      cta: 'Enter Battle Arena',
+      title: 'Trends Radar & Daily Intel',
+      href: '/trends',
+      icon: Radio,
+      badge: 'Live Market Telemetry',
+      color: 'from-[#00F0FF]/20 to-blue-500/10 border-[#00F0FF]/40',
+      textColor: 'text-[#00F0FF]',
+      desc: 'Real-time social and market scrapers filtering actionable money-making moves from macro tech news and daily intelligence.',
+      cta: 'Explore Trends Radar',
     },
     {
       title: 'Agent & Cosmetics Market',
@@ -273,19 +273,17 @@ export default async function LandingPage() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-6">
             <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
             <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
-              YOUR AI COMPANION NEVER SLEEPS
+              NEW MONEY-MAKING TASKS DROP DAILY
             </span>
           </div>
 
           <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto uppercase">
-            <span className="cyan-gold-gradient-text">Forge Your Companion</span><br />
-            The Companion Economy
+            <span className="cyan-gold-gradient-text">Forge Wealth</span> from the<br />
+            Week&apos;s Hottest Trends
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-8 font-sans leading-relaxed">
-            Customize an AI companion that looks like yours alone — then put it
-            to work on trending money-tasks. One click: it executes, you
-            approve, you get paid. What you forge, you own.
+            Verified money-making tasks. From zero-cost side hustles to high-reward ventures — all backed by real success stories.
           </p>
 
           <div className="flex flex-wrap gap-3 justify-center items-center mb-12">
@@ -396,19 +394,17 @@ export default async function LandingPage() {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FFD700]/15 via-white/[0.04] to-[#00F0FF]/15 border border-[#FFD700]/30 shadow-[0_0_20px_rgba(255,215,0,0.15)] mb-6">
           <Flame className="w-4 h-4 text-[#FFD700] animate-pulse" />
           <span className="text-xs font-mono font-bold tracking-wider text-[#FFD700]">
-            YOUR AI COMPANION NEVER SLEEPS
+            NEW MONEY-MAKING TASKS DROP DAILY
           </span>
         </div>
 
         <h1 className="font-orbitron font-black text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.08] mb-6 max-w-4xl mx-auto uppercase">
-          <span className="cyan-gold-gradient-text">Forge Your Companion</span><br />
-          The Companion Economy
+          <span className="cyan-gold-gradient-text">Forge Wealth</span> from the<br />
+          Week&apos;s Hottest Trends
         </h1>
 
         <p className="text-base sm:text-lg md:text-xl text-[#8E9BB4] max-w-2xl mx-auto mb-8 font-sans leading-relaxed">
-          Customize an AI companion that looks like yours alone — then put it to
-          work on trending money-tasks. One click: it executes, you approve, you
-          get paid. What you forge, you own.
+          Verified money-making tasks. From zero-cost side hustles to high-reward ventures — all backed by real success stories.
         </p>
 
         {/* Primary Action Buttons */}
@@ -439,13 +435,13 @@ export default async function LandingPage() {
               <Bot className="w-4 h-4 mr-2 text-green-400" /> Web4 Agents
             </Button>
           </Link>
-          <Link href="/battles">
+          <Link href="/trends">
             <Button
               variant="outline"
               size="lg"
-              className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-[#FF007A]/50 text-white bg-white/[0.03] backdrop-blur-md"
+              className="h-12 px-6 text-xs sm:text-sm font-mono uppercase tracking-wider border-white/20 hover:border-[#00F0FF]/50 text-white bg-white/[0.03] backdrop-blur-md"
             >
-              <Swords className="w-4 h-4 mr-2 text-[#FF007A]" /> Battle Arena
+              <Radio className="w-4 h-4 mr-2 text-[#00F0FF]" /> Trends Radar
             </Button>
           </Link>
         </div>

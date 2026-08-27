@@ -23,6 +23,7 @@ import { CompanionCard } from './companion-card';
 import { Gift } from 'lucide-react';
 import { useState } from 'react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface DashboardClientProps {
   user: {
@@ -105,6 +106,9 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
           </Link>
         </div>
       </motion.div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       {/* 5-Step Interactive Onboarding Modal */}
       <OnboardingTour user={user} />

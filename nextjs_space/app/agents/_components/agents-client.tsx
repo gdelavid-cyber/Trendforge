@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 import Link from 'next/link';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
@@ -276,7 +277,12 @@ export function AgentsClient({ user }: { user: any }) {
         <p className="text-sm text-[#8892B0] max-w-3xl mt-2 font-sans leading-relaxed">
           Deploy specialized 1-click autonomous worker agents that continuously scrape recurring market pain points, calculate prediction arbitrage spreads, deploy scraping nodes, create viral video scripts, and scaffold full-stack micro-SaaS codebases.
         </p>
+      </motion.div>
 
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
+
+      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
         {/* Weekly Quota Alert & Progress Bar */}
         {!isPro && (
           <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-white/[0.04] to-black/40 border border-white/10 max-w-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">

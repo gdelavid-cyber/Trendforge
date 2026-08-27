@@ -21,8 +21,11 @@ import {
   Zap,
   Volume2,
   Settings,
+  Mic,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { VOICE_PRESETS, getVoicePresetById } from '@/lib/agent/voice-presets';
+import { VoiceSelectorModal } from '@/components/avatar/VoiceSelectorModal';
 
 export interface ChatInterfaceProps {
   agent?: any;
@@ -87,6 +90,7 @@ export function ChatInterface({
   const [wireframe, setWireframe] = useState<boolean>(false);
   const [autoVoiceReply, setAutoVoiceReply] = useState<boolean>(true);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [customPersonality, setCustomPersonality] = useState<string>(agent?.personality || '');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -313,8 +317,47 @@ export function ChatInterface({
                 value={customPersonality}
                 onChange={(e) => setCustomPersonality(e.target.value)}
                 placeholder="e.g. You are an aggressive Wall Street trader who speaks in sharp financial analogies..."
-                className="w-full h-28 bg-black/60 border border-white/10 rounded-xl p-3 text-xs font-mono text-white focus:border-[#00F0FF] outline-none"
+                className="w-full h-24 bg-black/60 border border-white/10 rounded-xl p-3 text-xs font-mono text-white focus:border-[#00F0FF] outline-none"
               />
+            </div>
+
+            {/* Neural Voice Engine Selector */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-mono text-[#8E9BB4] uppercase font-bold">
+                  Neural Voice Engine:
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowVoiceModal(true)}
+                  className="text-[10px] font-mono text-[#00F0FF] hover:underline"
+                >
+                  Browse 5 Voices &rarr;
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {VOICE_PRESETS.map((vp) => {
+                  const isSelected = (config.voiceId || 'nova_executive') === vp.id;
+                  return (
+                    <button
+                      key={vp.id}
+                      type="button"
+                      onClick={() => {
+                        setConfig((prev) => ({ ...prev, voiceId: vp.id }));
+                        toast.success(`Voice set to ${vp.name} (${vp.codename})`);
+                      }}
+                      className={`p-2 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'bg-[#00F0FF]/15 border-[#00F0FF] text-white shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+                          : 'bg-black/40 border-white/10 text-[#8E9BB4] hover:text-white'
+                      }`}
+                    >
+                      <div className="text-[11px] font-mono font-bold">{vp.name}</div>
+                      <div className="text-[9px] text-[#8E9BB4] truncate">{vp.codename}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5">
@@ -441,6 +484,18 @@ export function ChatInterface({
           </>
         )}
       </div>
+
+      {/* Neural Voice Engine Selection Modal */}
+      <VoiceSelectorModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        selectedVoiceId={config.voiceId || 'nova_executive'}
+        onSelectVoice={(vid) => {
+          setConfig((prev) => ({ ...prev, voiceId: vid }));
+          const preset = getVoicePresetById(vid);
+          toast.success(`Voice set to ${preset.name} (${preset.codename})`);
+        }}
+      />
     </div>
   );
 }

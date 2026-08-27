@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 import Link from 'next/link';
 import { AvatarRenderer } from '@/components/avatar/AvatarRenderer';
 import { FighterStatsBar } from '@/components/avatar/FighterStatsBar';
@@ -33,12 +35,16 @@ import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/li
 import { calculateFighterStats, FighterLoadout, getLoadoutModifiers } from '@/lib/cosmetics/stats';
 import { AvatarEmotion } from '@/hooks/useAvatar';
 import { GuideTour } from '@/components/guide/GuideTour';
+import { VOICE_PRESETS, getVoicePresetById } from '@/lib/agent/voice-presets';
+import { VoiceSelectorModal } from '@/components/avatar/VoiceSelectorModal';
 
 const BASE_MODELS = [
-  { id: 'cyber_humanoid', name: 'Cyber Humanoid', archetype: 'DATA_MINER', color: '#00F0FF', desc: 'High-frequency executioner chassis' },
-  { id: 'quantum_android', name: 'Quantum Android', archetype: 'DEFI_ARBITRAGEUR', color: '#A855F7', desc: 'Zero-latency chameleon alloy' },
-  { id: 'wall_street_titan', name: 'Wall Street Titan', archetype: 'SAAS_ARCHITECT', color: '#FFD700', desc: '24K gold-plated executive plate' },
-  { id: 'cosmic_entity', name: 'Cosmic Entity', archetype: 'VIRAL_CREATOR', color: '#EC4899', desc: 'Transdimensional energy form' },
+  { id: 'cyber_humanoid', name: 'Kairos (Cyber Humanoid)', archetype: 'DATA_MINER', color: '#00F0FF', desc: 'Tactical matte-titanium neural cyborg' },
+  { id: 'quantum_android', name: 'UNIT-O (Quantum Android)', archetype: 'DEFI_ARBITRAGEUR', color: '#A855F7', desc: 'Pearl-white ceramic & violet quantum AI' },
+  { id: 'wall_street_titan', name: 'Midas (Wall Street Titan)', archetype: 'SAAS_ARCHITECT', color: '#FFD700', desc: '24K gold & obsidian executive sentinel' },
+  { id: 'cosmic_entity', name: 'Nyx (Cosmic Entity)', archetype: 'VIRAL_CREATOR', color: '#EC4899', desc: 'Deep space void nebula stardust form' },
+  { id: 'shadow_syndicate', name: 'Viper (Shadow Syndicate)', archetype: 'SHADOW_SYNDICATE', color: '#EF4444', desc: 'Stealth carbon-fiber crimson ninja operative' },
+  { id: 'apex_predator', name: 'Hyperion (Apex Predator)', archetype: 'APEX_PREDATOR', color: '#F59E0B', desc: 'Heavy titanium mecha defense juggernaut' },
 ];
 
 const SLOT_CONFIG: Record<CombatSlot, { label: string; icon: any; color: string; desc: string }> = {
@@ -51,20 +57,14 @@ const SLOT_CONFIG: Record<CombatSlot, { label: string; icon: any; color: string;
 };
 
 export function AvatarStudioClient({ user, initialCatalog }: { user: any; initialCatalog?: CatalogItem[] }) {
-  const VOICE_PRESETS = [
-    { id: 'deep', label: 'Deep', pitch: 0.6, rate: 0.95 },
-    { id: 'cheerful', label: 'Cheerful', pitch: 1.4, rate: 1.15 },
-    { id: 'robotic', label: 'Robotic', pitch: 0.8, rate: 1.0 },
-    { id: 'mysterious', label: 'Mysterious', pitch: 0.75, rate: 0.85 },
-    { id: 'professional', label: 'Professional', pitch: 1.0, rate: 1.05 },
-  ] as const;
   const [agents, setAgents] = useState<any[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [activeSlot, setActiveSlot] = useState<CombatSlot>('HEAD');
   const [selectedBaseModel, setSelectedBaseModel] = useState<string>('cyber_humanoid');
   const [saving, setSaving] = useState(false);
   const [mood, setMood] = useState<AvatarEmotion>('battle');
-  const [voiceId, setVoiceId] = useState('21m00Tcm4TlvDq8ikWAM');
+  const [voiceId, setVoiceId] = useState<string>('nova_executive');
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   // Sync merged catalog overrides on mount
   useEffect(() => {
@@ -226,15 +226,31 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
   // Voice Test
   const handleTestVoice = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const preset = VOICE_PRESETS.find((v) => v.id === voiceId) ?? VOICE_PRESETS[0];
+      const preset = getVoicePresetById(voiceId);
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(
-        `Combat systems calibrated. Loadout modifiers active. Ready for tournament deployment.`
-      );
+      const utterance = new SpeechSynthesisUtterance(preset.sampleText);
       utterance.pitch = preset.pitch;
       utterance.rate = preset.rate;
+
+      const availableVoices = window.speechSynthesis.getVoices();
+      if (availableVoices && availableVoices.length > 0) {
+        let matchedVoice = null;
+        for (const pref of preset.preferredSystemVoices) {
+          const found = availableVoices.find((v) =>
+            v.name.toLowerCase().includes(pref.toLowerCase())
+          );
+          if (found) {
+            matchedVoice = found;
+            break;
+          }
+        }
+        if (matchedVoice) {
+          utterance.voice = matchedVoice;
+        }
+      }
+
       window.speechSynthesis.speak(utterance);
-      toast.info(`Synthesizing ${preset.label.toLowerCase()} briefing audio...`);
+      toast.info(`Synthesizing ${preset.name} (${preset.codename}) neural audio...`);
     }
   };
 
@@ -256,9 +272,9 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
         </div>
 
         <div className="flex items-center gap-3 font-mono">
-          <Link href="/battles">
+          <Link href="/tasks">
             <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 text-xs h-10 font-bold uppercase">
-              &larr; Enter the Battle Arena
+              &larr; Weekly Tasks
             </Button>
           </Link>
           <Button
@@ -271,6 +287,9 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
           </Button>
         </div>
       </div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       {/* =========================================================================
           THE FORGE 3-PANEL LAYOUT
@@ -456,7 +475,7 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
                 ))}
               </div>
 
-              {/* Voice Preset Selector */}
+              {/* 5 Professional Neural Voice Preset Selector */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {VOICE_PRESETS.map((vp) => (
                   <button
@@ -468,28 +487,40 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ config: { voiceId: vp.id } }),
                       }).catch(() => {});
+                      toast.success(`Active voice set to ${vp.name} (${vp.codename})`);
                     }}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase transition-all ${
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold font-mono uppercase transition-all ${
                       voiceId === vp.id
-                        ? 'bg-gold text-black'
-                        : 'bg-white/5 text-[#8E9BB4] hover:text-white'
+                        ? 'bg-[#00F0FF] text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                        : 'bg-white/5 text-[#8E9BB4] hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    {vp.label}
+                    {vp.name} ({vp.gender[0]})
                   </button>
                 ))}
               </div>
 
-              {/* Voice Test Button */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleTestVoice}
-                className="h-7 text-[10px] border-white/20 text-[#00F0FF] hover:bg-[#00F0FF]/10 font-mono font-bold"
-              >
-                <Volume2 className="w-3 h-3 mr-1" />
-                TEST VOICE
-              </Button>
+              {/* Voice Actions: Test & Open Modal */}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTestVoice}
+                  className="h-7 text-[10px] border-white/20 text-[#00F0FF] hover:bg-[#00F0FF]/10 font-mono font-bold"
+                >
+                  <Volume2 className="w-3 h-3 mr-1" />
+                  TEST VOICE
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsVoiceModalOpen(true)}
+                  className="h-7 text-[10px] border-[#FFD700]/30 text-[#FFD700] hover:bg-[#FFD700]/10 font-mono font-bold"
+                >
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  VOICE STUDIO &rarr;
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -564,6 +595,23 @@ export function AvatarStudioClient({ user, initialCatalog }: { user: any; initia
           { title: 'Base Chassis (Right Panel)', body: 'The base model decides who your companion IS — KAIROS the cyber operative, UNIT-Ω the quantum android, MIDAS the titan, or VEIL the cosmic entity. Each has unique hair and outfit.' },
           { title: 'Lock It In', body: 'SAVE LOADOUT persists everything to your agent. The stats panel shows how your gear shifts Power, Speed, Defense and Synergy before battle deployment.' },
         ]}
+      />
+
+      {/* Voice Synthesis Modal */}
+      <VoiceSelectorModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        selectedVoiceId={voiceId}
+        onSelectVoice={(vid) => {
+          setVoiceId(vid);
+          fetch('/api/companion', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config: { voiceId: vid } }),
+          }).catch(() => {});
+          const preset = getVoicePresetById(vid);
+          toast.success(`Voice set to ${preset.name} (${preset.codename})`);
+        }}
       />
     </div>
   );

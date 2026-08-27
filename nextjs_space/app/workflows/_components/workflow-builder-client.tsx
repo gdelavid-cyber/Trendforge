@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 const getStepArchetype = (agentType: string) => {
   switch (agentType) {
@@ -97,6 +98,9 @@ export function WorkflowBuilderClient({ user }: { user: any }) {
           Chain multiple autonomous Swarm Agents sequentially: feed extracted pain points directly into software scaffolding and video marketing assets.
         </p>
       </motion.div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       {/* Builder Visual Canvas */}
       <div className="glass-card p-6 md:p-8 mb-8 border border-white/10">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Inbox, RefreshCw, XCircle } from 'lucide-react';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface ApprovalRow {
   id: string;
@@ -77,6 +78,9 @@ export function ApprovalsClient() {
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       {error && (
         <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-xs font-mono p-3">

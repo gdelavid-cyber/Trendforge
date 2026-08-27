@@ -6,7 +6,11 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, useGLTF, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { FighterLoadout } from '@/lib/cosmetics/stats';
+import { NftMecha3D } from './NftMecha3D';
+import { NftStageCompanion } from './NftStageCompanion';
 import { AnimeCompanion } from './AnimeCompanion';
+import { DivineCompanion } from './divine/DivineCompanion';
+import { MetahumanCompanion } from './MetahumanCompanion';
 import { useInViewport } from './useInViewport';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 
@@ -20,6 +24,12 @@ export interface Stage3DCanvasProps {
   isWorking?: boolean;
   workLabel?: string;
   workProgress?: number;
+  /** renderer chassis — 'anime' (default) or the procedural 'divine' final form */
+  variant?: 'anime' | 'divine' | 'metahuman';
+  /** URL to Metahuman GLB (used when variant === 'metahuman') */
+  metahumanGlbUrl?: string;
+  /** Viseme input for lip sync (used when variant === 'metahuman') */
+  visemes?: Array<{ name: string; weight: number }>;
 }
 
 function CustomGLBModel({ url }: { url: string }) {
@@ -115,7 +125,7 @@ function StageRings() {
   );
 }
 
-export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, loadout }: Stage3DCanvasProps) {
+export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, loadout, variant = 'anime', metahumanGlbUrl, visemes }: Stage3DCanvasProps) {
   const { ref: vpRef, inView } = useInViewport<HTMLDivElement>();
   return (
     <div ref={vpRef} className={`relative w-full h-full min-h-[320px] ${className}`}>
@@ -123,26 +133,26 @@ export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cybe
         shadows
         frameloop={inView ? 'always' : 'never'}
         dpr={[1, 1.75]}
-        camera={{ fov: 35, position: [0.35, 1.15, 3.3] }}
+        camera={{ fov: 38, position: [0.15, 0.45, 2.7] }}
         gl={{ antialias: true, alpha: true }}
       >
         {/* depth falloff sells the "4D" stage dimensionality */}
         <fog attach="fog" args={['#05060c', 6.5, 14]} />
 
-        <ambientLight intensity={0.38} />
-        <directionalLight position={[3, 5, 4]} intensity={1.1} castShadow shadow-mapSize={[1024, 1024]} />
-        {/* key cyan + gold practicals */}
-        <pointLight position={[-3, 1.6, -2]} intensity={1.6} distance={8} color="#00F0FF" />
-        <pointLight position={[3, 1.2, -2.5]} intensity={1.1} distance={8} color="#FFD700" />
-        {/* colored rims from behind separate the character from the void */}
-        <spotLight position={[-2.4, 2.8, -2.6]} angle={0.7} penumbra={1} intensity={2.2} distance={12} color="#7DF9FF" />
-        <spotLight position={[2.6, 2.2, -2.8]} angle={0.7} penumbra={1} intensity={1.5} distance={12} color="#FF9D66" />
+        {/* Unreal Engine 5 Lumen-Style Cinematic 5-Point Studio Rig */}
+        <ambientLight intensity={0.52} />
+        <directionalLight position={[3.5, 6, 4.5]} intensity={1.4} castShadow shadow-mapSize={[1024, 1024]} />
+        <pointLight position={[-2.8, 1.8, 1.8]} intensity={2.2} distance={9} color="#00F0FF" />
+        <pointLight position={[2.8, 1.4, 1.8]} intensity={1.5} distance={9} color="#FFD700" />
+        <spotLight position={[-2.8, 3.2, -2.4]} angle={0.65} penumbra={0.9} intensity={2.8} distance={12} color="#7DF9FF" />
+        <spotLight position={[2.8, 2.6, -2.4]} angle={0.65} penumbra={0.9} intensity={1.9} distance={12} color="#FF8C42" />
+        <pointLight position={[0, -0.2, 1.2]} intensity={0.6} distance={4} color="#00F0FF" />
 
-        <Suspense fallback={<AnimeCompanion avatarId={avatarId} emotion={emotion} isSpeaking={isSpeaking} loadout={loadout} />}>
+        <Suspense fallback={null}>
           {overrideGlbUrl ? (
             <CustomGLBModel url={overrideGlbUrl} />
-          ) : (
-            <AnimeCompanion
+          ) : variant === 'divine' ? (
+            <DivineCompanion
               avatarId={avatarId}
               loadout={loadout}
               emotion={emotion}
@@ -151,14 +161,27 @@ export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cybe
               workLabel={workLabel}
               workProgress={workProgress}
             />
-          )}
-        </Suspense>
-
-        <Suspense fallback={<AnimeCompanion avatarId={avatarId} emotion={emotion} isSpeaking={isSpeaking} loadout={loadout} />}>
-          {overrideGlbUrl ? (
-            <CustomGLBModel url={overrideGlbUrl} />
+          ) : variant === 'metahuman' ? (
+            <MetahumanCompanion
+              glbUrl={metahumanGlbUrl ?? overrideGlbUrl ?? ''}
+              loadout={loadout}
+              emotion={emotion}
+              isSpeaking={isSpeaking}
+              isWorking={isWorking}
+              workLabel={workLabel}
+              workProgress={workProgress}
+              visemes={visemes}
+            />
           ) : (
-            <AnimeCompanion avatarId={avatarId} loadout={loadout} emotion={emotion} isSpeaking={isSpeaking} />
+            <NftMecha3D
+              avatarId={avatarId}
+              loadout={loadout}
+              emotion={emotion}
+              isSpeaking={isSpeaking}
+              isWorking={isWorking}
+              workLabel={workLabel}
+              workProgress={workProgress}
+            />
           )}
         </Suspense>
 
@@ -181,7 +204,7 @@ export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cybe
           autoRotateSpeed={0.55}
           enableZoom={false}
           enablePan={false}
-          target={[0, 0.55, 0]}
+          target={[0, 0.25, 0]}
           minPolarAngle={Math.PI / 3.4}
           maxPolarAngle={Math.PI / 1.75}
           minAzimuthAngle={-Math.PI / 2.6}

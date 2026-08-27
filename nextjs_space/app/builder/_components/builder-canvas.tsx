@@ -28,6 +28,7 @@ import { SKILLS_LIBRARY, SkillDefinition } from '@/lib/web4/skills-library';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
+import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 
 const getArchetypeModel = (archetype: string) => {
   switch (archetype) {
@@ -69,6 +70,7 @@ export function BuilderCanvas({ user }: { user: any }) {
   const [agentArchetype, setAgentArchetype] = useState('DATA_MINER');
   const [testing, setTesting] = useState(false);
   const [minting, setMinting] = useState(false);
+  const [showMintModal, setShowMintModal] = useState(false);
   const [isVoiceTesting, setIsVoiceTesting] = useState(false);
   const [sandboxLogs, setSandboxLogs] = useState<any[] | null>(null);
 
@@ -153,7 +155,8 @@ export function BuilderCanvas({ user }: { user: any }) {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(`Minted ${data.agent.name} with EIP-8004 identity!`);
+        setShowMintModal(false);
+        toast.success(`🎉 Successfully Minted ${data.agent.name} (${data.nft?.tokenId || 'EIP-8004 NFT'})!`);
         router.push('/agents/web4');
       } else {
         toast.error(data.error || 'Failed to mint agent.');
@@ -180,7 +183,7 @@ export function BuilderCanvas({ user }: { user: any }) {
             Agent <span className="cyan-gold-gradient-text">Studio Canvas</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#8E9BB4] font-sans mt-1">
-            Drag, configure, and connect 50+ autonomous skill blocks. Test in real-time sandbox and mint as sovereign Web4 agents.
+            Drag, configure, and connect 50+ autonomous skill blocks. Test in real-time sandbox and mint as sovereign Web4 AI NFTs.
           </p>
         </div>
 
@@ -213,12 +216,12 @@ export function BuilderCanvas({ user }: { user: any }) {
           </Button>
 
           <Button
-            onClick={handleMintAgent}
-            disabled={minting || nodes.length === 0}
+            onClick={() => setShowMintModal(true)}
+            disabled={nodes.length === 0}
             size="sm"
-            className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono"
+            className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono shadow-[0_0_20px_rgba(0,240,255,0.3)]"
           >
-            <Bot className="w-3.5 h-3.5 mr-1.5 fill-current" /> {minting ? 'Minting On-Chain...' : 'Mint Sovereign Agent'}
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Mint Agent NFT &rarr;
           </Button>
         </div>
       </div>
@@ -401,22 +404,44 @@ export function BuilderCanvas({ user }: { user: any }) {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-xs font-mono text-[#00F0FF] font-bold">
                   <Terminal className="w-3.5 h-3.5" />
-                  <span>SANDBOX EXECUTION TELEMETRY (VERIFIED 200 OK)</span>
+                  <span>SANDBOX EXECUTION TELEMETRY</span>
                 </div>
-                <span className="text-[10px] font-mono text-green-400">100% SUCCESS RATIO</span>
+                {(() => {
+                  const real = sandboxLogs.filter((l) => !l.simulated && l.status !== 'FAILED').length;
+                  const sim = sandboxLogs.filter((l) => l.simulated).length;
+                  const fail = sandboxLogs.filter((l) => l.status === 'FAILED').length;
+                  const color = fail > 0 ? 'text-rose-400' : real > 0 ? 'text-green-400' : 'text-[#8E9BB4]';
+                  return (
+                    <span className={`text-[10px] font-mono ${color}`}>
+                      {real} REAL · {sim} SIM · {fail} FAIL
+                    </span>
+                  );
+                })()}
               </div>
 
-              <div className="p-3 bg-black/80 rounded-lg text-xs font-mono space-y-2 text-[#CCD6F6] max-h-48 overflow-y-auto">
-                {sandboxLogs.map((log, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-[#00F0FF]">[{log.stepIndex}]</span>
-                    <div>
-                      <span className="text-white font-bold">{log.skillName}</span>:{' '}
-                      <span className="text-[#8E9BB4]">{log.outputSummary}</span>
-                      <span className="text-[#FFD700] ml-2 font-bold">(-${log.computeBurn} USDC)</span>
+              <div className="p-3 bg-black/80 rounded-lg text-xs font-mono space-y-2 text-[#CCD6F6] max-h-64 overflow-y-auto">
+                {sandboxLogs.map((log, i) => {
+                  const tag = log.status === 'FAILED' ? { t: 'FAIL', c: 'text-rose-400' } : log.simulated ? { t: 'SIM', c: 'text-[#8E9BB4]' } : { t: 'REAL', c: 'text-green-400' };
+                  return (
+                    <div key={i} className="flex flex-col gap-1">
+                      <div className="flex items-start gap-2">
+                        <span className="text-[#00F0FF]">[{log.stepIndex}]</span>
+                        <span className={`font-bold ${tag.c}`}>[{tag.t}]</span>
+                        <div>
+                          <span className="text-white font-bold">{log.skillName}</span>:{' '}
+                          <span className="text-[#8E9BB4]">{log.outputSummary}</span>
+                          <span className="text-[#FFD700] ml-2 font-bold">(-${log.computeBurn} USDC)</span>
+                        </div>
+                      </div>
+                      {!log.simulated && log.result && (
+                        <pre className="ml-12 text-[10px] text-[#5A7A99] whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                          {JSON.stringify(log.result, null, 2)}
+                        </pre>
+                      )}
+                      {log.error && <div className="ml-12 text-[10px] text-rose-400">{log.error}</div>}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -436,6 +461,109 @@ export function BuilderCanvas({ user }: { user: any }) {
         user={user}
         initialMessage={`Greetings, Creator. I am configured as ${agentName} (${agentArchetype}). My autonomous skill pipeline contains ${nodes.length} chained execution stages with an estimated compute burn of $${totalComputeCost.toFixed(4)} USDC. How shall we calibrate my intelligence?`}
       />
+
+      {/* Autonomous AI NFT Minting Portal Modal */}
+      <AnimatePresence>
+        {showMintModal && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setShowMintModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="glass-card border border-[#00F0FF]/30 rounded-3xl p-6 md:p-8 w-full max-w-2xl text-left relative overflow-hidden shadow-[0_0_60px_rgba(0,240,255,0.25)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#00F0FF]/20 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-orbitron font-black text-base uppercase text-white">
+                      Mint Autonomous AI NFT
+                    </h3>
+                    <span className="text-[10px] font-mono text-[#8E9BB4] uppercase block">
+                      EIP-8004 On-Chain Sovereign Token Standard
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMintModal(false)}
+                  className="text-[#8E9BB4] hover:text-white text-xs font-mono px-2 py-1 bg-white/5 rounded-lg border border-white/10"
+                >
+                  ESC ✕
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+                {/* 3D Holographic Character Preview */}
+                <div className="sm:col-span-5 flex flex-col items-center">
+                  <div className="w-48 h-48 rounded-2xl overflow-hidden border border-[#00F0FF]/40 shadow-[0_0_30px_rgba(0,240,255,0.25)] relative">
+                    <CompanionPortrait
+                      archetype={getArchetypeModel(agentArchetype)}
+                      className="w-full h-full"
+                      showNftBadge={true}
+                      seed={agentName.length}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-[#00F0FF] mt-2 block font-bold">
+                    3D Holographic Dynamic Mesh
+                  </span>
+                </div>
+
+                {/* NFT Token Specifications */}
+                <div className="sm:col-span-7 space-y-3 font-mono text-xs">
+                  <div className="p-3 bg-black/60 rounded-xl border border-white/10 space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-[#8E9BB4]">Agent Identity:</span>
+                      <span className="text-white font-bold">{agentName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#8E9BB4]">Archetype Class:</span>
+                      <span className="text-[#00F0FF] font-bold">{agentArchetype}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#8E9BB4]">Skill DAG Stages:</span>
+                      <span className="text-white font-bold">{nodes.length} Execution Nodes</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#8E9BB4]">Compute Burn:</span>
+                      <span className="text-[#FFD700] font-bold">${totalComputeCost.toFixed(4)} USDC / run</span>
+                    </div>
+                  </div>
+
+                  {/* Multi-Bot Mint Policy Notice */}
+                  <div className="p-3 bg-purple-500/[0.08] rounded-xl border border-purple-500/25 text-[11px] text-[#D8B4FE] leading-relaxed">
+                    🛡️ <strong>Autonomous AI NFT Minting:</strong> Your 1st Genesis Prototype is free. All additional autonomous bots must be minted on-chain to unlock concurrent multi-agent execution.
+                  </div>
+
+                  {/* Mint Action Button */}
+                  <Button
+                    onClick={handleMintAgent}
+                    disabled={minting}
+                    className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-11 holographic-btn font-mono shadow-[0_0_25px_rgba(0,240,255,0.4)]"
+                  >
+                    {minting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Minting On-Chain NFT...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Confirm &amp; Mint Autonomous AI NFT &rarr;
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

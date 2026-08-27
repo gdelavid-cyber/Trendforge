@@ -154,6 +154,12 @@ model Trend {
   confidence          Float          @default(0)
   category            TrendCategory  @default(OTHER)
   status              TrendStatus    @default(ACTIVE)
+  isMonetizable       Boolean        @default(true)
+  monetizationScore   Float          @default(0.85)
+  monetizationRationale String?
+  newsSummary         String?
+  whyItMatters        String?
+  newsSourceUrl       String?
   detectedAt          DateTime       @default(now())
   hoursSinceDetection Float          @default(0)
   createdAt           DateTime       @default(now())
@@ -163,6 +169,7 @@ model Trend {
   @@index([status])
   @@index([detectedAt])
   @@index([category])
+  @@index([isMonetizable])
 }
 
 model Task {

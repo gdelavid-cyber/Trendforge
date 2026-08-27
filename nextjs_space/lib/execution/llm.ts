@@ -108,8 +108,26 @@ export function opencodeRunLlm(
 export function makeLlm(): LlmFn {
   if (process.env.LLM_PROVIDER === 'opencode') {
     const serveUrl = process.env.OPENCODE_SERVE_URL;
-    if (serveUrl) return opencodeServeLlm(serveUrl);
-    return opencodeRunLlm();
+    if (serveUrl) {
+      const serveFn = opencodeServeLlm(serveUrl);
+      return async (messages, jsonMode) => {
+        try {
+          return await serveFn(messages, jsonMode);
+        } catch (err: any) {
+          console.warn('[LLM] opencode serve unreachable, falling back to platform LLM:', err.message);
+          return (callLLM as unknown as LlmFn)(messages, jsonMode);
+        }
+      };
+    }
+    const runFn = opencodeRunLlm();
+    return async (messages, jsonMode) => {
+      try {
+        return await runFn(messages, jsonMode);
+      } catch (err: any) {
+        console.warn('[LLM] opencode run failed, falling back to platform LLM:', err.message);
+        return (callLLM as unknown as LlmFn)(messages, jsonMode);
+      }
+    };
   }
   return callLLM as unknown as LlmFn;
 }

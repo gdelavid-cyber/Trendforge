@@ -3,7 +3,7 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
-import { AnimeCompanion } from './AnimeCompanion';
+import { NftMecha3D } from './NftMecha3D';
 import { useInViewport } from './useInViewport';
 import { FighterLoadout } from '@/lib/cosmetics/stats';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
@@ -34,15 +34,14 @@ export function MiniStage3D({
   side = null,
 }: MiniStage3DProps) {
   const { ref: vpRef, inView } = useInViewport<HTMLDivElement>();
-  const camX = side === 'left' ? 0.55 : side === 'right' ? -0.55 : 0.15;
-  const faceAngle = side === 'left' ? -0.45 : side === 'right' ? 0.45 : 0;
+  const camX = side === 'left' ? 0.45 : side === 'right' ? -0.45 : 0.0;
 
   return (
     <div ref={vpRef} className={`relative ${className}`}>
       <Canvas
         dpr={[1, 1.5]}
         frameloop={inView ? 'always' : 'never'}
-        camera={{ fov: 33, position: [camX, 1.02, 2.95] }}
+        camera={{ fov: 36, position: [camX, 0.45, 2.7] }}
         gl={{ antialias: true, alpha: true }}
       >
         <ambientLight intensity={0.6} />
@@ -50,14 +49,13 @@ export function MiniStage3D({
         <pointLight position={[-2, 1.4, -2]} intensity={1.3} distance={7} color="#00F0FF" />
         <pointLight position={[2, 1, -2.4]} intensity={0.9} distance={7} color="#FFD700" />
         <Suspense fallback={null}>
-          <AnimeCompanion
+          <NftMecha3D
             avatarId={avatarId}
             emotion={emotion}
             isSpeaking={isSpeaking}
             isWorking={isWorking}
             workLabel={workLabel}
             workProgress={workProgress}
-            faceAngle={faceAngle}
             loadout={loadout}
           />
         </Suspense>

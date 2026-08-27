@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { VisemeKeyframe, getVisemeFromAudioFrequencies } from '@/lib/agent/lipsync';
+import { getVoicePresetById } from '@/lib/agent/voice-presets';
 
 export type AvatarEmotion = 'neutral' | 'happy' | 'surprised' | 'thinking' | 'confident' | 'battle';
 export type AvatarPose = 'idle' | 'talking' | 'thinking' | 'battle' | 'celebrating';
@@ -144,13 +145,42 @@ export function useAvatar(initialConfig?: Partial<AvatarConfigState>) {
         }
       }
 
-      // Strategy B: Browser Web Speech Synthesis with keyframe timer fallback
+      // Strategy B: Browser Web Speech Synthesis with natural voice matching
       if (text && typeof window !== 'undefined' && 'speechSynthesis' in window) {
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
-          utterance.rate = 1.05;
-          utterance.pitch = config.baseModel === 'QUANTUM_ANDROID' ? 0.9 : config.baseModel === 'WALL_STREET_TITAN' ? 0.95 : 1.05;
+          const preset = getVoicePresetById(config.voiceId);
+
+          utterance.rate = preset.rate;
+          utterance.pitch = preset.pitch;
+
+          // Intelligently select best available high-fidelity browser voice
+          const availableVoices = window.speechSynthesis.getVoices();
+          if (availableVoices && availableVoices.length > 0) {
+            let matchedVoice = null;
+            for (const pref of preset.preferredSystemVoices) {
+              const found = availableVoices.find((v) =>
+                v.name.toLowerCase().includes(pref.toLowerCase())
+              );
+              if (found) {
+                matchedVoice = found;
+                break;
+              }
+            }
+
+            if (!matchedVoice) {
+              // Fallback to any high-quality English voice
+              matchedVoice =
+                availableVoices.find((v) => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Premium'))) ||
+                availableVoices.find((v) => v.lang.startsWith('en')) ||
+                availableVoices[0];
+            }
+
+            if (matchedVoice) {
+              utterance.voice = matchedVoice;
+            }
+          }
 
           utterance.onend = () => {
             setIsSpeaking(false);

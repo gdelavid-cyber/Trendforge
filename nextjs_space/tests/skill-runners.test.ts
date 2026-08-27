@@ -318,7 +318,131 @@ describe('trade runner', () => {
     expect((outcome.artifact?.meta as any)?.sizeUsdc).toBe(25);
     expect(outcome.output).toContain('STAGED TRADE TICKET');
     expect(outcome.output).toContain('no funds moved');
-    // No CLOB order routing call was made — staging only.
     expect(fetchMock.mock.calls.every(([r]: any[]) => String(r).startsWith('https://gamma-api.polymarket.com'))).toBe(true);
   });
 });
+
+describe('voice runner', () => {
+  it('synthesizes spoken voice notes and records a VOICE artifact', async () => {
+    const voiceJson = JSON.stringify({
+      tone: 'confident and consultative',
+      archetype: 'growth_specialist',
+      targetDurationSec: 45,
+      pacing: 'brisk and natural',
+      transcript: 'Hey Sarah, saw your latest product release and wanted to share a 30-second breakdown.',
+      audioNotes: 'Natural rhythm with a brief pause before the value offer.',
+    });
+    const llm = vi.fn(async () => voiceJson);
+    const step = makeStep('voice' as any, 'Record voice note pitch');
+    const outcome = await createSkillRunner(llm).run(step, makeCtx(llm));
+
+    expect(outcome.blocked).toBeFalsy();
+    expect(outcome.artifact?.kind).toBe('VOICE');
+    expect(outcome.output).toContain('Voice Message Synthesized');
+    expect((outcome.artifact?.meta as any)?.transcript).toContain('Hey Sarah');
+    expect((outcome.artifact?.meta as any)?.durationSec).toBe(45);
+  });
+});
+
+describe('video runner', () => {
+  it('generates a 9:16 viral video package with scenes and hashtags', async () => {
+    const videoJson = JSON.stringify({
+      title: 'How to automate trend research in 60s',
+      format: 'TIKTOK_9_16',
+      hook: 'Stop doing manual data entry in 2026.',
+      scenes: [
+        {
+          sceneNumber: 1,
+          durationSec: 4,
+          visualDescription: 'Split screen comparing manual vs autonomous swarm',
+          voiceover: 'Here is what happens when you deploy an AI companion.',
+          onScreenText: 'STOP DOING THIS 🛑',
+        },
+      ],
+      caption: 'Autonomous AI swarms doing the heavy lifting. 🔥',
+      hashtags: ['#Trendforge', '#AIAutomation', '#Web4'],
+      estimatedViewsPotential: '50k - 100k',
+    });
+    const llm = vi.fn(async () => videoJson);
+    const step = makeStep('video' as any, 'Generate TikTok short');
+    const outcome = await createSkillRunner(llm).run(step, makeCtx(llm));
+
+    expect(outcome.blocked).toBeFalsy();
+    expect(outcome.artifact?.kind).toBe('VIDEO');
+    expect(outcome.output).toContain('Viral Video Production Package');
+    expect((outcome.artifact?.meta as any)?.format).toBe('TIKTOK_9_16');
+    expect((outcome.artifact?.meta as any)?.hook).toBe('Stop doing manual data entry in 2026.');
+    expect((outcome.artifact?.meta as any)?.scenes).toHaveLength(1);
+  });
+});
+
+describe('sales runner', () => {
+  it('constructs multi-touch client acquisition and pitch packages', async () => {
+    const salesJson = JSON.stringify({
+      targetPersona: 'Digital agency owners needing fast turn-around',
+      valueProposition: 'Deliver verified client research in 20 seconds.',
+      pricingOffer: '$1,500 setup + $300/mo',
+      outreachSequence: [
+        {
+          stage: 'Cold Email',
+          channel: 'EMAIL',
+          subject: 'Autonomous research demo',
+          messageBody: 'We synthesized this report for your team.',
+          callToAction: 'Open to a 60-second preview?',
+        },
+      ],
+      objectionHandling: [
+        { objection: 'Too expensive', counter: 'Saves 20 hours per week.' },
+      ],
+    });
+    const llm = vi.fn(async () => salesJson);
+    const step = makeStep('sales' as any, 'Package sales outreach');
+    const outcome = await createSkillRunner(llm).run(step, makeCtx(llm));
+
+    expect(outcome.blocked).toBeFalsy();
+    expect(outcome.artifact?.kind).toBe('SALES');
+    expect(outcome.output).toContain('Autonomous Sales & Client Acquisition Package');
+    expect((outcome.artifact?.meta as any)?.pricingOffer).toBe('$1,500 setup + $300/mo');
+    expect((outcome.artifact?.meta as any)?.outreachSequence).toHaveLength(1);
+  });
+});
+
+describe('squad brainstorm', () => {
+  it('orchestrates collaborative strategy between squad archetypes', async () => {
+    const { runSquadBrainstorm } = await import('../lib/execution/brainstorm');
+    const bsJson = JSON.stringify({
+      consensusStrategy: 'Scrape high-intent pain points and deploy direct viral outreach.',
+      keyTactics: ['Scrape Reddit & Twitter', 'Synthesize voice note', 'Send cold outreach'],
+      roleAssignments: [{ stepIndex: 0, assignedTo: 'Kairos', specialty: 'Scraping' }],
+      dialogue: [
+        {
+          speaker: 'Kairos',
+          archetype: 'KAIROS',
+          roleTitle: 'Lead Strategist',
+          thought: 'Focus on proof',
+          proposal: 'I will coordinate execution.',
+        },
+        {
+          speaker: 'UNIT-O',
+          archetype: 'UNIT_O',
+          roleTitle: 'Data Specialist',
+          thought: 'Ensure accuracy',
+          proposal: 'Telemetry ready.',
+        },
+      ],
+    });
+    const llm = vi.fn(async () => bsJson);
+    const result = await runSquadBrainstorm({
+      taskTitle: 'Reddit Problem Scraper',
+      taskCategory: 'SCRAPING',
+      steps: [makeStep('scrape', 'Scrape Reddit')],
+      companionName: 'Kairos',
+      llm: llm as any,
+    });
+
+    expect(result.consensusStrategy).toContain('Scrape high-intent pain points');
+    expect(result.dialogue).toHaveLength(2);
+    expect(result.keyTactics).toHaveLength(3);
+  });
+});
+

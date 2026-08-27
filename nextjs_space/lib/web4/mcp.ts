@@ -1,4 +1,5 @@
 import { SKILLS_LIBRARY, SkillDefinition } from './skills-library';
+import { executeSkill } from './executor';
 
 /**
  * Model Context Protocol (MCP) Server Adapter
@@ -39,15 +40,16 @@ export async function executeMCPTool(toolName: string, args: any): Promise<any> 
     throw new Error(`MCP Tool ${toolName} not registered.`);
   }
 
-  // Simulated live execution payload return
+  // Real execution when an executor exists; otherwise an explicitly-labeled sim.
+  const res = await executeSkill(toolName, args ?? {});
   return {
     tool: toolName,
-    status: 'SUCCESS',
+    status: res.status,
+    simulated: res.simulated,
     timestamp: Date.now(),
-    computeBurnUsdc: skill.computeCostUsdc,
-    result: {
-      summary: `Successfully executed ${skill.name}`,
-      dataGenerated: { ...args, sampleYield: 150 + Math.random() * 350 },
-    },
+    computeBurnUsdc: res.computeBurnUsdc,
+    outputSummary: res.outputSummary,
+    result: res.result,
+    error: res.error,
   };
 }

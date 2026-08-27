@@ -1,11 +1,11 @@
 import crypto from 'crypto';
 
 /**
- * Conway & x402 Protocol Implementation
+ * Web4 Autonomous Wallet & x402 Protocol Implementation
  * Provides sovereign crypto wallet generation (USDC/SOL/TREND) and HTTP 402 micro-payment proxy.
  */
 
-export interface ConwayWallet {
+export interface AutonomousWallet {
   address: string;
   publicKey: string;
   chain: 'SOLANA' | 'BASE' | 'ETHEREUM';
@@ -13,8 +13,11 @@ export interface ConwayWallet {
   balance: number;
 }
 
-export function generateConwayWallet(agentId: string, chain: 'SOLANA' | 'BASE' = 'SOLANA'): ConwayWallet {
-  const seed = crypto.createHash('sha256').update(`conway-wallet-${agentId}-${Date.now()}`).digest('hex');
+// Backwards-compatibility alias
+export type ConwayWallet = AutonomousWallet;
+
+export function generateAutonomousWallet(agentId: string, chain: 'SOLANA' | 'BASE' = 'SOLANA'): AutonomousWallet {
+  const seed = crypto.createHash('sha256').update(`autonomous-wallet-${agentId}-${Date.now()}`).digest('hex');
   
   // Deterministic address generation
   const address = chain === 'SOLANA' 
@@ -26,9 +29,12 @@ export function generateConwayWallet(agentId: string, chain: 'SOLANA' | 'BASE' =
     publicKey: 'pk_' + seed.substring(0, 32),
     chain,
     currency: 'USDC',
-    balance: 0.0, // Real funds only — agents start dormant until a deposit credits the ledger
+    balance: 0.0, // Real funds only — agents start dormant ($0.00) until an operator explicitly deposits funds
   };
 }
+
+// Backwards-compatibility alias
+export const generateConwayWallet = generateAutonomousWallet;
 
 /**
  * Generates an x402 Payment Required response or payload

@@ -52,6 +52,12 @@ export interface AvatarRendererProps {
   showParallax?: boolean;
   className?: string;
   onClick?: () => void;
+  /** renderer chassis — 'anime' (default) or the procedural 'divine' final form */
+  variant?: 'anime' | 'divine' | 'metahuman';
+  /** URL to Metahuman GLB (used when variant === 'metahuman') */
+  metahumanGlbUrl?: string;
+  /** Viseme input for lip sync (used when variant === 'metahuman') */
+  visemes?: Array<{ name: string; weight: number }>;
 }
 
 export const AVATAR_MAP: Record<string, { name: string; themeColor: string; title: string }> = {
@@ -123,6 +129,9 @@ export function AvatarRenderer({
   workProgress,
   className = '',
   onClick,
+  variant,
+  metahumanGlbUrl,
+  visemes,
 }: AvatarRendererProps) {
   const activeAvatarKey = avatarId || config?.baseModel || 'cyber_humanoid';
   const currentEmotion = emotion || mood || 'confident';
@@ -160,6 +169,9 @@ export function AvatarRenderer({
         isWorking={isWorking}
         workLabel={workLabel}
         workProgress={workProgress}
+        variant={variant}
+        metahumanGlbUrl={metahumanGlbUrl}
+        visemes={visemes}
         fallback={fallback}
         className="w-full h-full"
       />

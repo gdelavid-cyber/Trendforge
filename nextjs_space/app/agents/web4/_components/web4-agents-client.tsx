@@ -17,12 +17,19 @@ import {
   Copy,
   Landmark,
   ArrowUpFromLine,
+  BookOpen,
+  Info,
+  CheckCircle2,
+  Sparkles,
+  HelpCircle,
+  Coins,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 export function Web4AgentsClient({ user }: { user: any }) {
   const [agents, setAgents] = useState<any[]>([]);
@@ -208,21 +215,26 @@ export function Web4AgentsClient({ user }: { user: any }) {
   return (
     <div className="max-w-[1360px] mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-2">
             <Shield className="w-3.5 h-3.5" />
-            <span>ECONOMIC CITIZENS // CONWAY WALLETS // EIP-8004 IDENTITIES</span>
+            <span>ECONOMIC CITIZENS // AUTONOMOUS WALLETS // EIP-8004 IDENTITIES</span>
           </div>
           <h1 className="font-orbitron text-3xl md:text-5xl font-black uppercase tracking-wider text-white">
             Web4 <span className="cyan-gold-gradient-text">Sovereign Agents</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#8E9BB4] font-sans mt-1">
-            Autonomous economic citizens with sovereign crypto wallets, visual avatars, and Darwinian survival instincts ("Make money or die").
+            Autonomous economic citizens with non-custodial crypto wallets, visual avatars, and self-sustaining intelligence.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link href="/manifesto">
+            <Button variant="outline" size="sm" className="border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20">
+              <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Web4 Manifesto
+            </Button>
+          </Link>
           <Link href="/avatar-studio">
             <Button variant="outline" size="sm" className="border-white/10 text-xs font-mono uppercase text-white bg-white/[0.03]">
               <Palette className="w-3.5 h-3.5 mr-1.5 text-[#00F0FF]" /> Avatar Studio
@@ -231,6 +243,43 @@ export function Web4AgentsClient({ user }: { user: any }) {
           <Link href="/builder">
             <Button size="sm" className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 holographic-btn font-mono">
               <Plus className="w-3.5 h-3.5 mr-1 stroke-[3]" /> Mint New Agent
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Web4 & Autonomous Wallets Quick Guide Banner */}
+      <div className="mb-8 rounded-2xl border border-[#00F0FF]/25 bg-gradient-to-r from-[#00F0FF]/[0.07] via-black/50 to-purple-500/[0.05] p-5 backdrop-blur-md">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#00F0FF]" />
+              <h3 className="font-mono font-bold text-xs uppercase text-white tracking-wider">
+                What is Web4 & How Do Autonomous Wallets Work?
+              </h3>
+            </div>
+            <p className="text-xs text-[#CCD6F6] leading-relaxed">
+              <strong>Web4 represents the Autonomous Execution Layer of the Internet:</strong> AI agents hold non-custodial <strong>Autonomous Wallets</strong> capable of deploying capital, purchasing API compute, and settling real-world value directly.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-[11px] font-mono">
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-[#00F0FF] block font-bold mb-0.5">🔒 Zero-Default Risk</span>
+                <span className="text-[#8E9BB4]">All agent wallets start with $0.00 available. Zero funds at risk by default.</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-green-400 block font-bold mb-0.5">📥 Optional Deposits</span>
+                <span className="text-[#8E9BB4]">Deposit USDC via Solana or Base only when you want an agent to execute live tasks.</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                <span className="text-[#FFD700] block font-bold mb-0.5">💸 100% Withdrawable</span>
+                <span className="text-[#8E9BB4]">Withdraw unspent funds back to your external crypto wallet at any time.</span>
+              </div>
+            </div>
+          </div>
+
+          <Link href="/manifesto" className="shrink-0">
+            <Button size="sm" className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 font-mono shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+              Read Manifesto &rarr;
             </Button>
           </Link>
         </div>
@@ -247,7 +296,7 @@ export function Web4AgentsClient({ user }: { user: any }) {
           <Bot className="w-12 h-12 text-[#00F0FF] mx-auto animate-pulse" />
           <h3 className="text-lg font-bold text-white font-orbitron uppercase">No Sovereign Agents Deployed Yet</h3>
           <p className="text-xs text-[#8E9BB4] font-sans">
-            Use the No-Code Agent Studio to connect skill blocks and deploy your first autonomous economic citizen with a Conway crypto wallet.
+            Use the No-Code Agent Studio to connect skill blocks and deploy your first autonomous economic citizen with an Autonomous Crypto Wallet.
           </p>
           <Link href="/builder">
             <Button className="cyan-gradient text-black font-bold uppercase text-xs font-mono">
@@ -260,6 +309,7 @@ export function Web4AgentsClient({ user }: { user: any }) {
           {agents.map((agent) => {
             const isExecuting = executingAgentId === agent.id;
             const isDead = agent.status === 'DEAD';
+            const hasFunds = agent.walletBalance > 0;
 
             return (
               <motion.div
@@ -280,7 +330,13 @@ export function Web4AgentsClient({ user }: { user: any }) {
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/20 px-2 py-0.5 rounded">
                       {agent.archetype}
                     </span>
-                    {getStatusBadge(agent.status)}
+                    {hasFunds ? (
+                      getStatusBadge(agent.status)
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-white/5 text-[#8E9BB4] border border-white/10">
+                        Dormant ($0.00)
+                      </span>
+                    )}
                   </div>
 
                   {/* Visual Avatar & Name Header */}
@@ -301,48 +357,63 @@ export function Web4AgentsClient({ user }: { user: any }) {
                           </span>
                         )}
                       </h3>
-                      <span className="text-[10px] text-[#8E9BB4] font-mono block mt-0.5 truncate max-w-[200px]">
-                        ID: {agent.walletAddress}
+                      <span className="text-[10px] text-[#00F0FF] font-mono block mt-0.5">
+                        {agent.avatarConfig?.nftTokenId || '#0001-NFT'} // {agent.archetype}
                       </span>
                     </div>
                   </div>
 
-                  {/* Financial Telemetry & Conway Wallet */}
-                  <div className="p-3 bg-black/50 rounded-xl border border-white/5 space-y-2 mb-4">
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-[#8E9BB4] flex items-center gap-1">
-                        <Wallet className="w-3 h-3 text-[#00F0FF]" /> Conway Wallet:
-                      </span>
-                      <span className="text-green-400 font-bold text-sm">
-                        ${agent.walletBalance.toFixed(2)} USDC
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-xs font-mono">
-                      <span className="text-[#8E9BB4]">Total Net Profit:</span>
-                      <span className="text-[#FFD700] font-bold">
-                        +${agent.profit.toFixed(2)} USDC
-                      </span>
-                    </div>
-
-                    {/* Survival Score Meter */}
-                    <div className="pt-2 border-t border-white/5">
-                      <div className="flex justify-between text-[10px] font-mono mb-1">
-                        <span className="text-[#8E9BB4]">Darwinian Survival Score</span>
-                        <span className={`font-bold ${agent.survivalScore > 50 ? 'text-[#00F0FF]' : 'text-[#FF007A]'}`}>
-                          {agent.survivalScore}/100
+                  {/* Financial Telemetry & Autonomous Wallet - Display ONLY if funded */}
+                  {hasFunds ? (
+                    <div className="p-3.5 bg-black/50 rounded-xl border border-green-500/20 space-y-2.5 mb-4 shadow-[0_0_15px_rgba(34,197,94,0.08)]">
+                      <div className="flex justify-between items-center text-xs font-mono">
+                        <span className="text-[#8E9BB4] flex items-center gap-1">
+                          <Wallet className="w-3.5 h-3.5 text-green-400" /> Active Autonomous Funds:
+                        </span>
+                        <span className="text-green-400 font-bold text-sm">
+                          ${agent.walletBalance.toFixed(2)} USDC
                         </span>
                       </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            agent.survivalScore > 50 ? 'bg-[#00F0FF]' : 'bg-[#FF007A]'
-                          }`}
-                          style={{ width: `${Math.max(agent.survivalScore, 5)}%` }}
-                        />
+
+                      <div className="flex justify-between items-center text-xs font-mono">
+                        <span className="text-[#8E9BB4]">Total Net Profit:</span>
+                        <span className="text-[#FFD700] font-bold">
+                          +${agent.profit.toFixed(2)} USDC
+                        </span>
+                      </div>
+
+                      {/* Autonomous Sustainability Score Meter */}
+                      <div className="pt-2 border-t border-white/5">
+                        <div className="flex justify-between text-[10px] font-mono mb-1">
+                          <span className="text-[#8E9BB4]">Autonomous Sustainability Health</span>
+                          <span className={`font-bold ${agent.survivalScore > 50 ? 'text-[#00F0FF]' : 'text-[#FF007A]'}`}>
+                            {agent.survivalScore}/100
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              agent.survivalScore > 50 ? 'bg-[#00F0FF]' : 'bg-[#FF007A]'
+                            }`}
+                            style={{ width: `${Math.max(agent.survivalScore, 5)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-[9px] font-mono text-[#8E9BB4] pt-1 truncate border-t border-white/5">
+                        <span className="text-[#00F0FF]">Wallet:</span> {agent.walletAddress}
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-3.5 bg-black/40 rounded-xl border border-white/5 space-y-1.5 mb-4 text-center">
+                      <span className="text-[11px] font-mono font-bold text-[#8E9BB4] uppercase block">
+                        Dormant // Unfunded NFT Bot
+                      </span>
+                      <p className="text-[10px] font-mono text-[#8E9BB4]/80">
+                        Deposit capital to activate autonomous execution and unlock wallet telemetry.
+                      </p>
+                    </div>
+                  )}
 
                   {/* EIP-8004 Protocol Tag */}
                   {agent.eip8004Hash && (
@@ -354,25 +425,30 @@ export function Web4AgentsClient({ user }: { user: any }) {
 
                 {/* Controls */}
                 <div className="space-y-2 pt-2">
-                  <Button
-                    onClick={() => handleExecute(agent.id)}
-                    disabled={isExecuting || isDead || agent.status === 'DORMANT'}
-                    className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
-                  >
-                    {isExecuting ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Executing Mission...
-                      </>
-                    ) : agent.status === 'DORMANT' ? (
-                      <>
-                        <Moon className="w-3 h-3 mr-1.5" /> Dormant — Fund To Activate
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3 h-3 mr-1.5 fill-current" /> Execute Mission Workflow
-                      </>
-                    )}
-                  </Button>
+                  {!hasFunds ? (
+                    <Button
+                      onClick={() => openFundPanel(agent)}
+                      className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
+                    >
+                      <Coins className="w-3.5 h-3.5 mr-1.5" /> Deposit To Fund Wallet
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => handleExecute(agent.id)}
+                      disabled={isExecuting || isDead}
+                      className="w-full cyan-gradient text-black font-extrabold uppercase text-xs h-9 holographic-btn font-mono"
+                    >
+                      {isExecuting ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Executing Mission...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3 h-3 mr-1.5 fill-current" /> Execute Mission Workflow
+                        </>
+                      )}
+                    </Button>
+                  )}
 
                   <div className="grid grid-cols-2 gap-2">
                     <Button

@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 const ALL_SKILLS = [
   'copywriting',
@@ -350,6 +351,9 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
           </Link>
         </div>
       </div>
+
+      {/* Section Guide & Info */}
+      <SectionHelpBanner />
 
       {/* "My Impact" Telemetry Grid */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-8">

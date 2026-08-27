@@ -55,9 +55,12 @@ export interface Stage3DProps {
   isWorking?: boolean;
   workLabel?: string;
   workProgress?: number;
+  variant?: 'anime' | 'divine' | 'metahuman';
+  metahumanGlbUrl?: string;
+  visemes?: Array<{ name: string; weight: number }>;
 }
 
-export function Stage3D({ loadout, fallback, overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress }: Stage3DProps) {
+export function Stage3D({ loadout, fallback, overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, variant, metahumanGlbUrl, visemes }: Stage3DProps) {
   const [hasWebGL, setHasWebGL] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -88,6 +91,9 @@ export function Stage3D({ loadout, fallback, overrideGlbUrl, className = '', ava
           isWorking={isWorking}
           workLabel={workLabel}
           workProgress={workProgress}
+          variant={variant}
+          metahumanGlbUrl={metahumanGlbUrl}
+          visemes={visemes}
         />
       </div>
     </Stage3DErrorBoundary>
