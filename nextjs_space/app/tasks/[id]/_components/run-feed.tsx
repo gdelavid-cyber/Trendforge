@@ -634,6 +634,11 @@ export function RunFeed({
                 <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border ${meta.classes}`}>
                   {meta.label}
                 </span>
+                {step.status === 'done' && (
+                  <span className="text-[8px] font-mono text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20 flex items-center gap-1">
+                    <ShieldCheck className="w-2.5 h-2.5 text-green-400" /> Turnkey Verified
+                  </span>
+                )}
                 {duration && <span className="text-[9px] font-mono text-[#8E9BB4] ml-auto">{duration}</span>}
               </div>
 

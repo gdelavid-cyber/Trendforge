@@ -480,6 +480,34 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
         {/* Section Guide & Tactical Help */}
         <SectionHelpBanner />
 
+        {/* 100% Autonomous Turnkey Execution Guarantee */}
+        <div className="rounded-2xl border border-green-500/30 bg-gradient-to-r from-green-950/30 via-black/60 to-[#00F0FF]/10 p-5 shadow-[0_0_25px_rgba(34,197,94,0.12)]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-green-400" />
+                <h4 className="font-orbitron font-bold text-xs uppercase text-white tracking-wider">
+                  100% Autonomous Turnkey Completion Guarantee
+                </h4>
+                <span className="text-[9px] font-mono font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30">
+                  ENFORCED
+                </span>
+              </div>
+              <p className="text-xs text-[#CCD6F6] font-sans leading-relaxed">
+                Your AI bot is strictly bound to execute every single step to full completion — with <strong>ZERO placeholders, full working code, complete outreach copy, and actionable production deliverables</strong>.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 text-[10px] font-mono text-[#8E9BB4]">
+              <span className="flex items-center gap-1 bg-black/50 px-2.5 py-1 rounded-lg border border-white/10 text-green-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> Multi-Pass QA
+              </span>
+              <span className="flex items-center gap-1 bg-black/50 px-2.5 py-1 rounded-lg border border-white/10 text-[#00F0FF]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#00F0FF]" /> Self-Correcting
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Action Panel: Companion modes + Launch & Step tracker */}
         <div className="glass-card border border-[#00F0FF]/20 rounded-xl p-6" data-tour="task-modes">
           <h3 className="font-display font-black text-sm text-white uppercase tracking-wider mb-4 flex items-center gap-2">

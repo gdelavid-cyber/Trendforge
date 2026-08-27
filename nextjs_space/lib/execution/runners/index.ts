@@ -10,6 +10,8 @@ import { runVoiceStep } from './voice';
 import { runVideoStep } from './video';
 import { runSalesStep } from './sales';
 
+import { guaranteeTurnkeyExecution } from '../guarantee';
+
 // Skill runner registry: maps step actions to real work. Internal actions run
 // through the LLM (grounded by earlier steps); external actions run real
 // integrations from the user's vault — and NEVER fake success: a missing key
@@ -34,17 +36,31 @@ async function llmFallback(step: ParsedStep, ctx: StepContext, llm: LlmFn): Prom
   const history = ctx.previousResults.length
     ? `Prior step results:\n${ctx.previousResults.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
     : 'This is the first step.';
-  const output = await llm([
+  const rawOutput = await llm([
     {
       role: 'system',
-      content: `You are ${ctx.companionName}, an autonomous money-making companion executing "${ctx.taskTitle}". Produce concrete, usable output for the current step — no filler, no disclaimers.`,
+      content: `You are ${ctx.companionName}, an autonomous money-making companion executing "${ctx.taskTitle}".
+Produce exhaustive, 100% turnkey and production-ready output for the current step.
+- NO placeholders (e.g. do not write "[insert here]", "TODO", or "...rest of code goes here").
+- Provide complete working files, code snippets, copy, or step-by-step implementation details.
+- Provide maximum practical depth.`,
     },
     {
       role: 'user',
-      content: `${history}\n\nCurrent step (${step.action}): ${step.title}\n${step.description}\nDeliver the actual result for this step now.`,
+      content: `${history}\n\nCurrent step (${step.action}): ${step.title}\n${step.description}\nDeliver the complete, unshortened 100% turnkey result for this step now.`,
     },
   ]);
-  return { output: output || '(no output produced)', costUsd: 0.005 };
+
+  const output = await guaranteeTurnkeyExecution({
+    output: rawOutput || '(no output produced)',
+    stepTitle: step.title,
+    stepAction: step.action,
+    taskTitle: ctx.taskTitle,
+    companionName: ctx.companionName,
+    llm,
+  });
+
+  return { output, costUsd: 0.005 };
 }
 
 export function createSkillRunner(llm: LlmFn) {
