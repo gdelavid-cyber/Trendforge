@@ -367,6 +367,8 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
             Click "Run Autonomous Scraper & Classifier" above to scrape live internet trends and populate the radar.
           </p>
         </div>
+      )}
+
       {/* 3D Holographic Spoken Market Debrief Broadcast Modal */}
       <MarketDebriefModal
         isOpen={isDebriefOpen}
