@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 240 25% 2%;
+    --background: 0 0% 2%;
     --foreground: 0 0% 100%;
-    --card: 240 20% 5%;
+    --card: 0 0% 5%;
     --card-foreground: 0 0% 100%;
-    --popover: 240 25% 3%;
+    --popover: 0 0% 3%;
     --popover-foreground: 0 0% 100%;
-    --primary: 184 100% 50%;
+    --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 48 100% 50%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 240 20% 8%;
-    --muted-foreground: 220 20% 65%;
-    --accent: 184 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 330 100% 50%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 0% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.12;
-    --ring: 184 100% 50%;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.15;
+    --ring: 0 0% 100%;
     --radius: 1rem;
   }
 }
@@ -33,77 +33,104 @@
   }
 
   body {
-    background: #040408;
+    background: #02040A;
     color: #FFFFFF;
-    font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
-    selection-background-color: #00F0FF;
-    selection-color: #000000;
   }
 
-  ::selection {
-    background: #00F0FF;
-    color: #000000;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
+    font-weight: 500;
   }
 
-  h1, .h1 {
-    font-family: var(--font-orbitron), 'Orbitron', sans-serif;
-    font-weight: 900;
-    letter-spacing: 0.04em;
-  }
-
-  h2, .h2 {
-    font-family: var(--font-orbitron), 'Orbitron', sans-serif;
-    font-weight: 800;
-    letter-spacing: 0.03em;
-  }
-
-  h3, .h3 {
-    font-family: var(--font-orbitron), 'Orbitron', sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  .font-orbitron {
-    font-family: var(--font-orbitron), 'Orbitron', sans-serif;
-  }
-
-  .stat-number {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', monospace;
-    font-weight: 700;
+  h1 em, h1 i, h1 .italic,
+  h2 em, h2 i, h2 .italic,
+  h3 em, h3 i, h3 .italic {
+    font-family: var(--font-source-serif), 'Source Serif 4', serif;
+    font-style: italic;
   }
 }
 
-/* =========================================================================
-   FUTURISTIC CYBERNETIC DESIGN SYSTEM
-   ========================================================================= */
+@layer components {
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: none;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
 
-/* Deep Cosmic & Ambient Light Canvas */
-.cyber-space-canvas {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-  background-color: #040408;
-  background-image: 
-    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(0, 240, 255, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 50% at 85% 25%, rgba(157, 0, 255, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 15% 60%, rgba(0, 240, 255, 0.03) 0%, transparent 50%);
-}
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.15) 20%,
+      transparent 40%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.15) 80%,
+      rgba(255, 255, 255, 0.45) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 
-/* Futuristic Holographic Glassmorphic Card */
-.glass-card {
-  background: rgba(10, 10, 20, 0.6);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
+  .liquid-glass-strong {
+    background: rgba(255, 255, 255, 0.01);
+    background-blend-mode: luminosity;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    border: none;
+    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .liquid-glass-strong::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.4px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.2) 80%,
+      rgba(255, 255, 255, 0.5) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
 }
 
 .glass-card:hover {

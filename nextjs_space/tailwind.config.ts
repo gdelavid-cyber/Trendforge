@@ -64,9 +64,10 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'Inter', 'sans-serif'],
-        display: ['var(--font-orbitron)', 'Orbitron', 'sans-serif'],
-        mono: ['var(--font-space-grotesk)', 'Space Grotesk', 'monospace'],
+        sans: ['var(--font-poppins)', 'Poppins', 'sans-serif'],
+        display: ['var(--font-poppins)', 'Poppins', 'sans-serif'],
+        serif: ['var(--font-source-serif)', 'Source Serif 4', 'serif'],
+        mono: ['monospace'],
       },
       boxShadow: {
         'cyan-glow': '0 0 25px rgba(0, 240, 255, 0.35)',
