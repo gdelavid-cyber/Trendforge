@@ -1306,6 +1306,336 @@ model TaskBlueprint {
   @@index([isCustom])
 }
 
+// ============================================================================
+// AUTONOMOUS REVENUE SWARM v2 (MAXIMIZE REVENUE OR DIE)
+// ============================================================================
+
+model AutonomousAgent {
+  id                 String   @id @default(cuid())
+  role               String   // DISCOVERER | ANALYST | BUILDER | VALIDATOR | LISTER | OUTREACHER | SELLER | CLOSER | DELIVERER | LOGGER | DISPUTE_HANDLER
+  modelTier          String   // cheap | standard | premium | master
+  status             String   @default("ACTIVE") // SPAWNING | ACTIVE | PAUSED | KILLED | DEGRADED | IDLE | WORKING | COOLDOWN | DEAD
+  performanceScore   Float    @default(50.0)
+  tasksCompleted     Int      @default(0)
+  tasksFailed        Int      @default(0)
+  revenueContributed Float    @default(0.0)
+  costIncurred       Float    @default(0.0)
+  cyclesSinceRevenue Int      @default(0)
+  performanceWindow  Int      @default(10)
+  windowProgress     Int      @default(0)
+  capabilities       Json?    @default("{}")
+  rateLimits         Json?    @default("{}")
+  spawnTime          DateTime @default(now())
+  lastActiveTime     DateTime @updatedAt
+  currentTaskId      String?
+  config             Json?
+  killReason         String?
+
+  activityLogs       AgentActivityLog[]
+
+  @@index([role, status])
+  @@index([performanceScore])
+  @@index([status])
+}
+
+model SwarmTask {
+  id                    String    @id @default(cuid())
+  trendId               String?
+  templateId            String
+  templateType          String?   // FACELESS_VIDEO | ECOMMERCE_LISTING | LANDING_PAGE | LOGO_PACK | RESUME_REWRITE | SOCIAL_MEDIA_KIT | SIMPLE_VIDEO_EDIT
+  pricingTier           String    @default("STANDARD") // BUDGET | STANDARD | PREMIUM
+  state                 String    @default("DISCOVERY") // DISCOVERY | EVALUATION | BUILDING | VALIDATION | LISTING | OUTREACH | NEGOTIATION | CLOSING | DELIVERY | LOGGING | COMPLETED | FAILED | DISPUTED | REFUNDED
+  phase                 String    @default("DISCOVERY")
+  swarmId               String?
+  assignedAgents        Json      @default("{}") // { role: agentId }
+  costEstimate          Float     @default(0.0)
+  actualCost            Float?    @default(0.0)
+  estimatedCost         Float?    @default(0.0)
+  salePrice             Float?
+  buyerId               String?
+  buyerEmail            String?
+  buyerPlatform         String?
+  buyerFeedback         Int?      // 1-5 stars
+  buyerComment          String?
+  stripePaymentIntentId String?
+  escrowStatus          String    @default("NONE") // NONE | AUTHORIZED | HELD | CAPTURED | REFUNDED | DISPUTED
+  evidenceBundleId      String?
+  attestationId         String?
+  deliverableUrl        String?
+  buildManifest         Json?
+  checkpoint            Json?     // TaskCheckpoint for crash recovery
+  analysisResult        Json?
+  validationResult      Json?
+  listingResult         Json?
+  outreachResult        Json?
+  closeResult           Json?
+  deliveryResult        Json?
+  disputeResult         Json?
+  errorMessage          String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  completedAt           DateTime?
+
+  evidenceBundle        EvidenceBundle?
+  attestation           Attestation?
+  escrowLedger          EscrowLedger?
+  outreachRecords       OutreachRecord[]
+  brainDecisions        SwarmBrainDecision[]
+
+  @@index([state])
+  @@index([templateId])
+  @@index([trendId])
+  @@index([createdAt])
+}
+
+model EvidenceBundle {
+  id              String    @id @default(cuid())
+  taskId          String    @unique
+  runId           String
+  artifacts       Json      // [{type, url, hash}]
+  agentActions    Json      // [{agentId, action, timestamp, data}]
+  paymentRecords  Json?     @default("{}")
+  logs            Json?     @default("[]")
+  validators      Json?     @default("[]")
+  merkleRoot      String
+  ipfsHash        String?
+  storageUri      String    @default("")
+  createdAt       DateTime  @default(now())
+
+  task            SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  attestation     Attestation?
+
+  @@index([taskId])
+  @@index([merkleRoot])
+}
+
+model Attestation {
+  id               String          @id @default(cuid())
+  taskId           String          @unique
+  evidenceBundleId String?         @unique
+  runId            String
+  result           String
+  merkleRoot       String
+  templateId       String
+  salePrice        Float?
+  signerId         String          @default("trendly-platform")
+  signerPublicKey  String          @default("0x0")
+  signature        String          // EIP-712 / HMAC signature
+  payload          Json
+  polygonTxHash    String?
+  chainTxHash      String?
+  createdAt        DateTime        @default(now())
+
+  task             SwarmTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  evidenceBundle   EvidenceBundle? @relation(fields: [evidenceBundleId], references: [id])
+
+  @@index([taskId])
+  @@index([merkleRoot])
+}
+
+model EscrowLedger {
+  id                    String    @id @default(cuid())
+  taskId                String    @unique
+  stripePaymentIntentId String    @unique
+  payerEmail            String
+  amount                Float
+  currency              String    @default("USD")
+  status                String    @default("HELD") // NONE | AUTHORIZED | HELD | CAPTURED | REFUNDED | DISPUTED
+  authorizedAt          DateTime?
+  heldAt                DateTime? @default(now())
+  capturedAt            DateTime?
+  refundedAt            DateTime?
+  createdAt             DateTime  @default(now())
+
+  task                  SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([status])
+}
+
+model RevenueSummary {
+  id             String   @id @default(cuid())
+  date           DateTime @db.Date @unique
+  templateId     String?
+  grossRevenue   Float    @default(0.0)
+  netRevenue     Float    @default(0.0)
+  totalCosts     Float    @default(0.0)
+  totalCost      Float    @default(0.0)
+  tasksCompleted Int      @default(0)
+  tasksFailed    Int      @default(0)
+  salesCount     Int      @default(0)
+  refundsCount   Int      @default(0)
+  disputesCount  Int      @default(0)
+  survivalMode   Boolean  @default(false)
+  conversionRate Float    @default(0.0)
+  avgSalePrice   Float    @default(0.0)
+  perTemplate    Json?    @default("{}")
+  perAgent       Json?    @default("{}")
+  createdAt      DateTime @default(now())
+
+  @@index([date])
+}
+
+model SwarmBrainState {
+  id                    String    @id @default("global")
+  status                String    @default("ACTIVE") // ACTIVE | SURVIVAL | DEGRADED | PAUSED
+  survivalMode          Boolean   @default(false)
+  survivalModeEnteredAt DateTime?
+  survivalModeDays      Int       @default(0)
+  dailyBudgetCap        Float     @default(200.0)
+  dailySpend            Float     @default(0.0)
+  maxConcurrentTasks    Int       @default(5)
+  activeTasks           Int       @default(0)
+  totalAgents           Int       @default(0)
+  activeAgents          Int       @default(0)
+  strategyVersion       Int       @default(1)
+  strategyState         Json      @default("{}")
+  lastDecisionAt        DateTime?
+  lastMicroReviewAt     DateTime?
+  lastFullReviewAt      DateTime?
+  tasksSinceMicroReview Int       @default(0)
+  tasksSinceFullReview  Int       @default(0)
+  enabledTemplates      Json?     @default("[]")
+  confidenceThresholds  Json?     @default("{}")
+  consecutiveLossDays   Int       @default(0)
+  todayGross            Float     @default(0.0)
+  todayCost             Float     @default(0.0)
+  todayNet              Float     @default(0.0)
+  isRunning             Boolean   @default(true)
+  isPaused              Boolean   @default(false)
+  dryRun                Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model SwarmBrainDecision {
+  id              String     @id @default(cuid())
+  taskId          String?
+  agentId         String?
+  decisionType    String
+  reasoning       String
+  confidenceScore Int        @default(85) // 0-100
+  expectedOutcome String
+  actualOutcome   String?
+  inputState      Json?      @default("{}")
+  outputAction    Json?      @default("{}")
+  createdAt       DateTime   @default(now())
+
+  task            SwarmTask? @relation(fields: [taskId], references: [id])
+
+  @@index([createdAt])
+  @@index([decisionType])
+}
+
+model AgentActivityLog {
+  id           String          @id @default(cuid())
+  agentId      String
+  agentRole    String
+  taskId       String?
+  activity     String?
+  actionType   String?
+  model        String
+  modelUsed    String?
+  tokensIn     Int             @default(0)
+  tokensOut    Int             @default(0)
+  tokenCount   Int?            @default(0)
+  cost         Float           @default(0.0)
+  costIncurred Float?          @default(0.0)
+  inputParams  Json?           @default("{}")
+  outputResult Json?           @default("{}")
+  timestamp    DateTime        @default(now())
+
+  agent        AutonomousAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, timestamp])
+  @@index([taskId])
+  @@index([timestamp])
+}
+
+model StrategyUpdate {
+  id                String   @id @default(cuid())
+  version           Int      @default(1)
+  previousStrategy  Json?    @default("{}")
+  newStrategy       Json?    @default("{}")
+  reviewData        Json?    @default("{}")
+  reasoning         String
+  confidenceScore   Int      @default(80)
+  expectedImpact    String   @default("")
+  actualImpact      String?
+  tasksBeforeReview Int      @default(0)
+  tasksAfterReview  Int?
+  appliedAt         DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  @@index([appliedAt])
+}
+
+model BotConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
+
+model PerformancePattern {
+  id              String    @id @default(cuid())
+  type            String?   // WIN | LOSS | DISPUTE | COST_SPIKE
+  patternType     String    @default("WIN") // WIN | LOSS | DISPUTE | COST_SPIKE
+  templateId      String?
+  templateType    String?
+  trendType       String?
+  agentRole       String?
+  platform        String?
+  priceRange      String?
+  description     String?
+  pattern         Json?     @default("{}")
+  data            Json?     @default("{}")
+  frequency       Int       @default(1)
+  occurrenceCount Int       @default(1)
+  firstSeenAt     DateTime  @default(now())
+  lastSeenAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([patternType, templateId])
+}
+
+model GoldenSample {
+  id           String   @id @default(cuid())
+  templateType String   // FACELESS_VIDEO | ECOMMERCE_LISTING | LANDING_PAGE | LOGO_PACK | RESUME_REWRITE | SOCIAL_MEDIA_KIT | SIMPLE_VIDEO_EDIT
+  artifactUrl  String
+  buyerRating  Int      @default(5) // 1-5 stars
+  buyerComment String?
+  specData     Json?    @default("{}")
+  acceptedAt   DateTime @default(now())
+
+  @@index([templateType])
+}
+
+model OutreachRecord {
+  id              String    @id @default(cuid())
+  taskId          String
+  platform        String    // fiverr | upwork | reddit | twitter | email
+  recipientId     String?
+  messageContent  String
+  messageVariant  String    @default("A")
+  status          String    @default("DRAFT") // DRAFT | APPROVED | SENT | RESPONDED | IGNORED | BANNED
+  humanApproved   Boolean   @default(false)
+  sentAt          DateTime?
+  respondedAt     DateTime?
+  responseContent String?
+  createdAt       DateTime  @default(now())
+
+  task            SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, status])
+  @@index([platform, status])
+}
+
+
+
 
 
 

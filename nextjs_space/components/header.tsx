@@ -164,6 +164,7 @@ export function Header(props?: any) {
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
 
   const adminLinks = [
+    { href: '/web4/swarm', label: 'Revenue Swarm', icon: Zap, color: 'text-cyan-400' },
     { href: '/admin/brain', label: 'Brain', icon: Cpu, color: 'text-purple-400' },
     { href: '/admin/health', label: 'Health', icon: Activity, color: 'text-green-400' },
   ];
