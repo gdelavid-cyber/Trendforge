@@ -1,51 +1,43 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Futuristic4DCanvas } from './futuristic-4d-canvas';
+import { useEffect, useRef } from 'react';
+
+const VIDEO_URL =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4';
 
 export function CyberBackground() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {
+        // Autoplay policy fallback handling
+      });
+    }
+  }, []);
+
   return (
-    <div className="cyber-space-canvas">
-      {/* Interactive 4D Hypercube Tesseract & Particle Neural Mesh */}
-      <Futuristic4DCanvas />
+    <div
+      className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden bg-[#040408]"
+      aria-hidden="true"
+    >
+      {/* Full-screen Autoplaying, Looping, Muted Video Background */}
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      >
+        <source src={VIDEO_URL} type="video/mp4" />
+      </video>
 
-      {/* 3D Perspective Ground Grid Floor */}
-      <div className="cyber-grid-floor" />
-
-      {/* Deep Space Starfield & Ambient Constellation Matrix */}
-      <div className="starfield-matrix" />
-
-      {/* Ambient Cosmic Volumetric Nebula Light Nodes */}
-      <motion.div
-        animate={{
-          scale: [1, 1.25, 1],
-          opacity: [0.12, 0.25, 0.12],
-          x: [0, 40, 0],
-          y: [0, -25, 0],
-        }}
-        transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-1/4 left-1/6 w-[28rem] h-[28rem] bg-[#00F0FF]/10 rounded-full blur-[100px] pointer-events-none"
-      />
-
-      <motion.div
-        animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.08, 0.2, 0.08],
-          x: [0, -35, 0],
-          y: [0, 35, 0],
-        }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-1/3 right-1/4 w-[34rem] h-[34rem] bg-[#9D00FF]/10 rounded-full blur-[120px] pointer-events-none"
-      />
-
-      <motion.div
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.06, 0.16, 0.06],
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-[#FFD700]/10 rounded-full blur-[90px] pointer-events-none"
-      />
+      {/* Subtle overlay to preserve high UI contrast and readability */}
+      <div className="absolute inset-0 bg-[#040408]/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#040408] via-transparent to-[#040408]/50 pointer-events-none" />
     </div>
   );
 }

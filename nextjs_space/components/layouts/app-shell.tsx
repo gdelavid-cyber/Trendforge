@@ -19,7 +19,7 @@ export function AppShell({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
