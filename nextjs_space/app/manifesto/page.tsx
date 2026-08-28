@@ -24,7 +24,7 @@ import {
 
 export default function Web4ManifestoPage() {
   return (
-    <div className="min-h-screen bg-[#07070C] text-white selection:bg-[#00F0FF]/30 selection:text-[#00F0FF]">
+    <div className="min-h-screen bg-transparent text-white selection:bg-[#00F0FF]/30 selection:text-[#00F0FF]">
       <Header />
 
       <main className="max-w-[1140px] mx-auto px-4 py-12 md:py-20 font-sans">

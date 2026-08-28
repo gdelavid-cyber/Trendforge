@@ -9,7 +9,7 @@ export default async function AgentStatusPage({ params }: { params: Promise<{ id
   const { id } = await params;
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <AgentStatusClient runId={id} />
     </div>
   );

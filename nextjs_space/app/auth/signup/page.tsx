@@ -49,7 +49,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0F] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-transparent px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">

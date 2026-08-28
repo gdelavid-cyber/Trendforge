@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function StatusPage() {
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <StatusClient />
     </div>
   );

@@ -35,7 +35,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <Header />
       <ProfileClient
         user={

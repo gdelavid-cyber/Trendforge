@@ -54,7 +54,7 @@ export default async function DashboardPage() {
   const completedCount = userTasks.filter((ut) => ut.status === 'COMPLETED').length;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
+    <div className="min-h-screen bg-transparent text-[#F3F3F5]">
       <Header />
       <DashboardClient
         user={

@@ -13,7 +13,7 @@ export default async function GuidePage() {
   const groups = ['Earn', 'Companions & Agents', 'World & Market', 'Account'] as const;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
+    <div className="min-h-screen bg-transparent text-[#F3F3F5]">
       <Header />
       <GuideHubClient signedIn={Boolean(session?.user)}>
         <div className="max-w-[1100px] mx-auto px-4 py-10">

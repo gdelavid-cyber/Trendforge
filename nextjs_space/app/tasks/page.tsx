@@ -12,7 +12,7 @@ export default async function TasksPage() {
   const userRole = (session.user as any)?.role || 'FREE';
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
+    <div className="min-h-screen bg-transparent text-[#F3F3F5]">
       <Header />
       <TasksContainer userRole={userRole} />
     </div>

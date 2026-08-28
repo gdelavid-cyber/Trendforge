@@ -173,7 +173,7 @@ export default async function LandingPage() {
 
   // Shared sections — rendered by both the contest and full landing layouts.
   const livePulseSection = livePulses.length > 0 ? (
-    <section className="border-y border-white/[0.06] py-4 bg-black/50 backdrop-blur-xl">
+    <section className="border-y border-white/[0.06] py-4 bg-black/20 backdrop-blur-md">
       <div className="max-w-[1240px] mx-auto px-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="w-2 h-2 rounded-full bg-[#FF007A] animate-ping" />
@@ -325,7 +325,7 @@ export default async function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section className="py-16 border-t border-white/[0.08] bg-black/60 backdrop-blur-2xl">
+        <section className="py-16 border-t border-white/[0.08] bg-black/20 backdrop-blur-md">
           <div className="max-w-[1100px] mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -363,7 +363,7 @@ export default async function LandingPage() {
         {featuredSection}
 
         {/* Final CTA */}
-        <section className="py-24 border-t border-white/[0.06] bg-black/40 text-center">
+        <section className="py-24 border-t border-white/[0.06] bg-black/20 backdrop-blur-md text-center">
           <div className="max-w-[900px] mx-auto px-4">
             <h2 className="font-orbitron text-3xl md:text-5xl text-white uppercase tracking-wider mb-4">
               Your first companion <span className="cyan-gold-gradient-text">works free.</span>
@@ -487,7 +487,7 @@ export default async function LandingPage() {
       </section>
 
       {/* WEB4 OPERATING SYSTEM LIVE ARCHITECTURE SHOWCASE */}
-      <section className="py-20 border-t border-white/[0.08] bg-black/60 backdrop-blur-2xl">
+      <section className="py-20 border-t border-white/[0.08] bg-black/20 backdrop-blur-md">
         <div className="max-w-[1280px] mx-auto px-4">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF] text-xs font-mono mb-3">
@@ -512,7 +512,7 @@ export default async function LandingPage() {
                 >
                   <div>
                     <div className="flex justify-between items-center mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center">
                         <Icon className={`w-6 h-6 ${p.textColor}`} />
                       </div>
                       <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-1 rounded-full bg-black/40 border border-white/10 text-white">
@@ -541,12 +541,12 @@ export default async function LandingPage() {
       </section>
 
       {/* DEDICATED WEB4 MANIFESTO & WHITE PAPER SHOWCASE BANNER */}
-      <section className="py-16 border-y border-white/[0.08] bg-gradient-to-r from-purple-950/40 via-black to-[#00F0FF]/10 relative overflow-hidden">
+      <section className="py-16 border-y border-white/[0.08] bg-gradient-to-r from-purple-950/20 via-black/30 to-[#00F0FF]/10 relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#00F0FF]/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-[1240px] mx-auto px-4 relative z-10">
-          <div className="glass-card p-8 md:p-12 rounded-3xl border border-[#00F0FF]/30 bg-black/70 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-[0_0_50px_rgba(0,240,255,0.15)]">
+          <div className="glass-card p-8 md:p-12 rounded-3xl border border-[#00F0FF]/30 bg-black/40 backdrop-blur-md flex flex-col lg:flex-row items-center justify-between gap-8 shadow-[0_0_50px_rgba(0,240,255,0.15)]">
             <div className="space-y-4 max-w-2xl text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00F0FF]/10 border border-[#00F0FF]/30 text-[#00F0FF] text-xs font-mono tracking-widest uppercase">
                 <BookOpen className="w-3.5 h-3.5 text-[#00F0FF]" />
@@ -595,7 +595,7 @@ export default async function LandingPage() {
       {featuredSection}
 
       {/* Subscription Pricing Matrix */}
-      <section className="py-24 border-t border-white/[0.06] bg-black/40">
+      <section className="py-24 border-t border-white/[0.06] bg-black/20 backdrop-blur-md">
         <div className="max-w-[1240px] mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="font-orbitron text-3xl md:text-5xl text-white uppercase tracking-wider mb-3">

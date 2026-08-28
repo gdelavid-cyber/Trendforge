@@ -16,7 +16,7 @@ export default function Stage3DDevPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-transparent text-white relative overflow-hidden font-sans">
       <Header />
       <Stage3DQaClient />
     </div>

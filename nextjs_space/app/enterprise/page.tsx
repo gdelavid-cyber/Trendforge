@@ -12,7 +12,7 @@ export default async function EnterprisePage() {
   const session = await getServerSession(authOptions);
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <Header />
       <EnterpriseClient user={session?.user || null} />
     </div>

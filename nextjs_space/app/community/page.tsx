@@ -49,7 +49,7 @@ export default async function CommunityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
+    <div className="min-h-screen bg-transparent text-[#F3F3F5]">
       <Header />
       <CommunityClient
         favors={favors.map((f: any) => ({ id: f.id, description: f.description, fromUser: f.fromUser?.name ?? 'Anonymous', task: f.task?.title ?? null, creditValue: f.creditValue }))}

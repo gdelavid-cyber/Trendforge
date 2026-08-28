@@ -14,7 +14,7 @@ export default async function WorkflowsPage() {
   if (!session?.user) redirect('/auth/signin');
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <Header />
       <WorkflowBuilderClient user={session.user} />
     </div>

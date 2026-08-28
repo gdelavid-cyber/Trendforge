@@ -37,7 +37,7 @@ export default async function TrendsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <Header />
       <TrendsClient
         trends={trends.map((t: any) => ({

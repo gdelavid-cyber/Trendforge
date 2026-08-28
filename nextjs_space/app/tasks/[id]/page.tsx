@@ -65,7 +65,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#F3F3F5]">
+    <div className="min-h-screen bg-transparent text-[#F3F3F5]">
       <Header userStats={headerStats} />
       <TaskDetailClient
         task={serialized}

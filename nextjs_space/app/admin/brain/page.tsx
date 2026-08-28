@@ -16,7 +16,7 @@ export default async function BrainAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07070C] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <BrainDashboard user={session.user} />
     </div>
   );
