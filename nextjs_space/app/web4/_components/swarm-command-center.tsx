@@ -116,11 +116,12 @@ export function SwarmCommandCenter() {
   const [spawnTier, setSpawnTier] = useState('outreach');
   const [selectedAttestationTask, setSelectedAttestationTask] = useState<any>(null);
   const [attestationVerification, setAttestationVerification] = useState<any>(null);
+  const [isDryRun, setIsDryRun] = useState(false);
 
   // Fetch Swarm Data
   const fetchData = async () => {
     try {
-      const [statusRes, tasksRes, decisionsRes, templateRes, rankingsRes, patternsRes, historyRes, timeseriesRes] =
+      const [statusRes, tasksRes, decisionsRes, templateRes, rankingsRes, patternsRes, historyRes, timeseriesRes, dryRunRes] =
         await Promise.all([
           fetch('/api/swarm/status').then(r => r.json()),
           fetch('/api/swarm/tasks/active').then(r => r.json()),
@@ -130,6 +131,7 @@ export function SwarmCommandCenter() {
           fetch('/api/swarm/learning/patterns').then(r => r.json()),
           fetch('/api/swarm/brain/strategy-history').then(r => r.json()),
           fetch('/api/swarm/revenue/timeseries').then(r => r.json()),
+          fetch('/api/swarm/dry-run').then(r => r.json()).catch(() => ({ dryRun: false })),
         ]);
 
       if (statusRes.success) setStatusData(statusRes);
@@ -140,6 +142,7 @@ export function SwarmCommandCenter() {
       if (patternsRes.success) setPatterns(patternsRes);
       if (historyRes.success) setStrategyHistory(historyRes.history || []);
       if (timeseriesRes.success) setTimeseries(timeseriesRes.timeseries || []);
+      if (typeof dryRunRes.dryRun === 'boolean') setIsDryRun(dryRunRes.dryRun);
     } catch (err) {
       console.error('Failed to load swarm data:', err);
     } finally {
@@ -202,6 +205,25 @@ export function SwarmCommandCenter() {
       }
     } catch (err: any) {
       toast.error(err?.message || 'Toggle failed');
+    }
+  };
+
+  // Toggle Dry-Run Mode
+  const handleToggleDryRun = async () => {
+    try {
+      const res = await fetch('/api/swarm/dry-run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !isDryRun }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsDryRun(data.dryRun);
+        toast.success(data.message || `Dry-Run Mode ${data.dryRun ? 'Enabled' : 'Disabled'}`);
+        await fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Dry-run toggle failed');
     }
   };
 
@@ -406,6 +428,20 @@ export function SwarmCommandCenter() {
             >
               {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-amber-400" />}
               {isPaused ? 'Resume Swarm' : 'Pause Swarm'}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleDryRun}
+              className={`border text-xs h-9 gap-1.5 transition-all ${
+                isDryRun
+                  ? 'border-amber-500/60 bg-amber-500/10 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                  : 'border-white/10 hover:bg-white/5 text-slate-300'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${isDryRun ? 'bg-amber-400 animate-ping' : 'bg-slate-500'}`} />
+              {isDryRun ? 'Dry-Run: ON (Safe)' : 'Dry-Run: OFF (Live)'}
             </Button>
 
             <Button
