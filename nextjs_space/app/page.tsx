@@ -173,7 +173,7 @@ export default async function LandingPage() {
 
   // Shared sections — rendered by both the contest and full landing layouts.
   const livePulseSection = livePulses.length > 0 ? (
-    <section className="border-y border-white/[0.06] py-4 bg-black/20 backdrop-blur-md">
+    <section className="border-y border-white/[0.03] py-4 bg-transparent">
       <div className="max-w-[1240px] mx-auto px-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="w-2 h-2 rounded-full bg-[#FF007A] animate-ping" />
