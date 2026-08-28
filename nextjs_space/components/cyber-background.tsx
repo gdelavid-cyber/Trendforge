@@ -18,33 +18,33 @@ export function CyberBackground() {
       {/* Ambient Cosmic Volumetric Nebula Light Nodes */}
       <motion.div
         animate={{
-          scale: [1, 1.25, 1],
-          opacity: [0.12, 0.25, 0.12],
-          x: [0, 40, 0],
-          y: [0, -25, 0],
+          scale: [1, 1.2, 1],
+          opacity: [0.1, 0.22, 0.1],
+          x: [0, 30, 0],
+          y: [0, -20, 0],
         }}
         transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-1/4 left-1/6 w-[28rem] h-[28rem] bg-[#00F0FF]/10 rounded-full blur-[100px] pointer-events-none"
+        className="absolute top-1/4 left-[15%] w-[28rem] h-[28rem] bg-[#00F0FF]/10 rounded-full blur-[100px] pointer-events-none"
       />
 
       <motion.div
         animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.08, 0.2, 0.08],
-          x: [0, -35, 0],
-          y: [0, 35, 0],
+          scale: [1, 1.25, 1],
+          opacity: [0.07, 0.18, 0.07],
+          x: [0, -30, 0],
+          y: [0, 30, 0],
         }}
         transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-1/3 right-1/4 w-[34rem] h-[34rem] bg-[#9D00FF]/10 rounded-full blur-[120px] pointer-events-none"
+        className="absolute top-1/3 right-[20%] w-[32rem] h-[32rem] bg-[#9D00FF]/10 rounded-full blur-[120px] pointer-events-none"
       />
 
       <motion.div
         animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.06, 0.16, 0.06],
+          scale: [1, 1.15, 1],
+          opacity: [0.05, 0.14, 0.05],
         }}
         transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-[#FFD700]/10 rounded-full blur-[90px] pointer-events-none"
+        className="absolute bottom-1/4 left-[30%] w-80 h-80 bg-[#FFD700]/10 rounded-full blur-[90px] pointer-events-none"
       />
     </div>
   );

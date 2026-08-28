@@ -13,13 +13,24 @@ export function Futuristic4DCanvas() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const setupCanvas = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+
+    setupCanvas();
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      setupCanvas();
     };
 
     window.addEventListener('resize', handleResize);
@@ -30,7 +41,7 @@ export function Futuristic4DCanvas() {
       y: height / 2,
       targetX: width / 2,
       targetY: height / 2,
-      radius: 180,
+      radius: 160,
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -41,7 +52,7 @@ export function Futuristic4DCanvas() {
     window.addEventListener('mousemove', handleMouseMove);
 
     // 1. Particle Constellation Nodes
-    const particleCount = Math.min(Math.floor((width * height) / 18000), 75);
+    const particleCount = Math.min(Math.floor((width * height) / 22000), 55);
     const particles: Array<{
       x: number;
       y: number;
@@ -59,12 +70,12 @@ export function Futuristic4DCanvas() {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        radius: Math.random() * 2 + 1,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 1.8 + 1,
         color: colors[Math.floor(Math.random() * colors.length)],
-        baseAlpha: Math.random() * 0.4 + 0.2,
-        alpha: 0.3,
+        baseAlpha: Math.random() * 0.35 + 0.15,
+        alpha: 0.25,
       });
     }
 
@@ -84,8 +95,7 @@ export function Futuristic4DCanvas() {
     const tesseractEdges: [number, number][] = [];
     for (let i = 0; i < 16; i++) {
       for (let j = i + 1; j < 16; j++) {
-        // Connected if they differ in exactly one coordinate (Hamming distance 1)
-        const diff = (i ^ j);
+        const diff = i ^ j;
         if (diff === 1 || diff === 2 || diff === 4 || diff === 8) {
           tesseractEdges.push([i, j]);
         }
@@ -103,41 +113,37 @@ export function Futuristic4DCanvas() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // A. Draw Subtle 4D Tesseract in Background Depth
-      angle4D += 0.006;
-      const tesseractCenter = { x: width * 0.8, y: height * 0.35 };
-      const tesseractScale = Math.min(width, height) * 0.16;
+      // A. Draw Subtle 4D Tesseract in Background Depth (Right-aligned, soft ambiance)
+      angle4D += 0.005;
+      const tesseractCenter = { x: width * 0.82, y: height * 0.38 };
+      const tesseractScale = Math.min(width, height) * 0.14;
 
-      // 4D Rotation matrix (XY and ZW plane rotations)
       const cosA = Math.cos(angle4D);
       const sinA = Math.sin(angle4D);
       const cosB = Math.cos(angle4D * 0.7);
       const sinB = Math.sin(angle4D * 0.7);
 
-      // Project 4D to 3D, then 3D to 2D
       const projected2D: { x: number; y: number; depth: number }[] = [];
 
       for (let i = 0; i < 16; i++) {
         let [x, y, z, w] = tesseractVertices[i];
 
         // 4D Rotations
-        // Rotate in XW
         const x1 = x * cosA - w * sinA;
         const w1 = x * sinA + w * cosA;
 
-        // Rotate in YZ
         const y1 = y * cosB - z * sinB;
         const z1 = y * sinB + z * cosB;
 
         // Perspective 4D -> 3D projection
-        const distance4D = 2.5;
+        const distance4D = 2.6;
         const scale4D = 1 / (distance4D - w1);
         const p3X = x1 * scale4D;
         const p3Y = y1 * scale4D;
         const p3Z = z1 * scale4D;
 
         // Perspective 3D -> 2D projection
-        const distance3D = 3.0;
+        const distance3D = 3.2;
         const scale3D = 1 / (distance3D - p3Z);
         const p2X = p3X * scale3D * tesseractScale + tesseractCenter.x;
         const p2Y = p3Y * scale3D * tesseractScale + tesseractCenter.y;
@@ -152,7 +158,7 @@ export function Futuristic4DCanvas() {
         const p2 = projected2D[v2];
 
         const avgDepth = (p1.depth + p2.depth) / 2;
-        const edgeAlpha = Math.max(0.04, Math.min(0.22, (avgDepth + 1.5) * 0.08));
+        const edgeAlpha = Math.max(0.03, Math.min(0.18, (avgDepth + 1.5) * 0.06));
 
         ctx.strokeStyle = `rgba(0, 240, 255, ${edgeAlpha})`;
         ctx.beginPath();
@@ -163,9 +169,9 @@ export function Futuristic4DCanvas() {
 
       // Draw Tesseract Vertex Nodes
       for (const p of projected2D) {
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.35)';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -173,46 +179,41 @@ export function Futuristic4DCanvas() {
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Motion
         p.x += p.vx;
         p.y += p.vy;
 
-        // Bounce on borders
         if (p.x < 0 || p.x > width) p.vx *= -1;
         if (p.y < 0 || p.y > height) p.vy *= -1;
 
-        // Mouse interaction (gentle proximity push and glow)
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const distToMouse = Math.sqrt(dx * dx + dy * dy);
 
         if (distToMouse < mouse.radius) {
-          const force = (1 - distToMouse / mouse.radius) * 1.5;
+          const force = (1 - distToMouse / mouse.radius) * 1.2;
           p.x -= (dx / distToMouse) * force;
           p.y -= (dy / distToMouse) * force;
-          p.alpha = Math.min(1, p.baseAlpha + force * 0.8);
+          p.alpha = Math.min(0.8, p.baseAlpha + force * 0.6);
         } else {
           p.alpha += (p.baseAlpha - p.alpha) * 0.05;
         }
 
-        // Draw Particle Node
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.alpha;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Connect nearby particles with laser filaments
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const pdist = Math.hypot(p.x - p2.x, p.y - p2.y);
-          const maxDistance = 140;
+          const maxDistance = 130;
 
           if (pdist < maxDistance) {
-            const lineAlpha = (1 - pdist / maxDistance) * 0.18;
+            const lineAlpha = (1 - pdist / maxDistance) * 0.14;
             ctx.strokeStyle = '#00F0FF';
             ctx.globalAlpha = lineAlpha;
-            ctx.lineWidth = 0.75;
+            ctx.lineWidth = 0.65;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
@@ -224,14 +225,14 @@ export function Futuristic4DCanvas() {
       ctx.globalAlpha = 1.0;
 
       // C. Periodic Ambient Laser Scanline
-      scanlineY = (scanlineY + 1.2) % height;
-      const scanGradient = ctx.createLinearGradient(0, scanlineY - 40, 0, scanlineY + 40);
+      scanlineY = (scanlineY + 1.0) % height;
+      const scanGradient = ctx.createLinearGradient(0, scanlineY - 30, 0, scanlineY + 30);
       scanGradient.addColorStop(0, 'rgba(0, 240, 255, 0)');
-      scanGradient.addColorStop(0.5, 'rgba(0, 240, 255, 0.04)');
+      scanGradient.addColorStop(0.5, 'rgba(0, 240, 255, 0.025)');
       scanGradient.addColorStop(1, 'rgba(0, 240, 255, 0)');
 
       ctx.fillStyle = scanGradient;
-      ctx.fillRect(0, scanlineY - 40, width, 80);
+      ctx.fillRect(0, scanlineY - 30, width, 60);
 
       animationFrameId = requestAnimationFrame(render);
     };
@@ -249,7 +250,6 @@ export function Futuristic4DCanvas() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0 opacity-80"
-      style={{ filter: 'drop-shadow(0 0 8px rgba(0, 240, 255, 0.15))' }}
     />
   );
 }

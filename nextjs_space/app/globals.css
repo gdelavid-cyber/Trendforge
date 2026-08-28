@@ -97,19 +97,20 @@
 /* 3D Perspective Ground Grid */
 .cyber-grid-floor {
   position: fixed;
-  bottom: -200px;
-  left: -50%;
-  right: -50%;
-  height: 600px;
+  bottom: 0;
+  left: -20%;
+  right: -20%;
+  height: 50vh;
   background-image: 
-    linear-gradient(to right, rgba(0, 240, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 240, 255, 0.08) 1px, transparent 1px);
-  background-size: 50px 50px;
-  transform: perspective(600px) rotateX(75deg);
+    linear-gradient(to right, rgba(0, 240, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 240, 255, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+  transform-origin: 50% 100%;
+  transform: perspective(500px) rotateX(68deg);
   pointer-events: none;
   z-index: 0;
-  mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 85%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 85%);
 }
 
 /* Shimmering Starfield */
