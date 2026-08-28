@@ -118,7 +118,21 @@ export function FloatingCompanionWidget() {
                 >
                   <Mic className="w-3.5 h-3.5 fill-black" /> Open 3D Voice Stage
                 </button>
-                <div className="text-[9px] text-[#8E9BB4] text-center">
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <a
+                    href="/dashboard/sales"
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00F0FF]/15 border border-white/10 text-[10px] text-center text-white/80 hover:text-white"
+                  >
+                    💰 Sales Ledger
+                  </a>
+                  <a
+                    href="/blueprints"
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-[#00F0FF]/15 border border-white/10 text-[10px] text-center text-white/80 hover:text-white"
+                  >
+                    ⚡ Blueprints
+                  </a>
+                </div>
+                <div className="text-[9px] text-[#8E9BB4] text-center pt-0.5">
                   Shortcut: <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-white/10 text-white">⌘K</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-white/10 text-white">Ctrl+K</kbd>
                 </div>
               </div>

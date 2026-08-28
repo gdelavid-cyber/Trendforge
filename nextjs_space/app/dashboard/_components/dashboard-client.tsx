@@ -154,7 +154,12 @@ export function DashboardClient({ user, trendingMoves, userTaskIds, trendSummary
 
       {/* Quick Launch Swarm Dock */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        {swarmShortcuts.map((s, idx) => (
+        {[
+          { name: 'Sales & Escrow Ledger', href: '/dashboard/sales', yieldText: 'live settlements', icon: '💰' },
+          { name: 'Task Blueprints', href: '/blueprints', yieldText: '7-step swarms', icon: '⚡' },
+          { name: 'Micro-SaaS Builder', href: '/agents', yieldText: 'target: $2k-$10k MRR', icon: '💻' },
+          { name: 'AI Video Maker', href: '/agents', yieldText: 'target: $300-$2.4k/mo', icon: '🎬' },
+        ].map((s, idx) => (
           <Link key={idx} href={s.href} className="glass-card p-3 flex items-center justify-between group hover:border-[#00F0FF]/40 transition-all">
             <div className="flex items-center gap-2.5">
               <span className="text-xl">{s.icon}</span>

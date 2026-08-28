@@ -14,6 +14,11 @@ import { completePowerMoveAction } from '@/app/actions';
 import { parseSteps } from '@/lib/tasks/steps';
 import { RunFeed } from './run-feed';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
+import { AutonomousMilestonesTimeline } from '@/components/execution/AutonomousMilestonesTimeline';
+import { ArtifactsVault } from '@/components/execution/ArtifactsVault';
+import { SalesPipelineCard } from '@/components/execution/SalesPipelineCard';
+import { LiveLogTerminal } from '@/components/execution/LiveLogTerminal';
+import { LogSaleModal } from '@/components/execution/LogSaleModal';
 
 interface Props {
   task: any;
@@ -402,6 +407,110 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
 
   const companionActive = ['STEP_EXECUTING', 'PENDING_APPROVAL'].includes(companionState?.status ?? '');
 
+  // ---- Autonomous End-to-End Engine State ----
+  const [autonomousPlan, setAutonomousPlan] = useState<any>(null);
+  const [artifactsList, setArtifactsList] = useState<any[]>([]);
+  const [leadsList, setLeadsList] = useState<any[]>([]);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [isLogSaleOpen, setIsLogSaleOpen] = useState(false);
+
+  const fetchAutonomousData = useCallback(async () => {
+    if (!task?.id) return;
+    try {
+      const [planRes, artRes, leadsRes] = await Promise.all([
+        fetch(`/api/tasks/${task.id}/execution-plan`),
+        fetch(`/api/tasks/${task.id}/artifacts`),
+        fetch(`/api/tasks/${task.id}/leads`),
+      ]);
+
+      const [planData, artData, leadsData] = await Promise.all([
+        planRes.json(),
+        artRes.json(),
+        leadsRes.json(),
+      ]);
+
+      if (planData.success) setAutonomousPlan(planData.plan);
+      if (artData.success) setArtifactsList(artData.artifacts);
+      if (leadsData.success) setLeadsList(leadsData.leads);
+    } catch (e) {}
+  }, [task?.id]);
+
+  useEffect(() => {
+    fetchAutonomousData();
+  }, [fetchAutonomousData]);
+
+  const handleAutonomousExecute = async () => {
+    setPlanLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Autonomous swarm running milestones!');
+        await fetchAutonomousData();
+      } else {
+        toast.error(data.error || 'Execution failed');
+      }
+    } catch (e) {
+      toast.error('Network error starting autonomous execution');
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
+  const handleAutonomousPause = async () => {
+    setPlanLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/pause`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        toast.info('Autonomous execution paused.');
+        await fetchAutonomousData();
+      }
+    } catch (e) {
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
+  const handleAutonomousResume = async () => {
+    setPlanLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/resume`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Autonomous swarm resumed.');
+        await fetchAutonomousData();
+      }
+    } catch (e) {
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
+  const handleSelectSalesOption = async (option: 'BOT_SELLS' | 'YOU_SELL' | 'HYBRID') => {
+    setPlanLoading(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/sales-option`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ option }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Sales execution mode set to ${option.replace('_', ' ')}!`);
+        await fetchAutonomousData();
+      }
+    } catch (e) {
+      toast.error('Failed to set sales option');
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -594,6 +703,45 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
             </div>
           )}
         </div>
+
+        {/* Autonomous 7-Milestone Execution Engine */}
+        {autonomousPlan && (
+          <AutonomousMilestonesTimeline
+            milestones={autonomousPlan.milestones || []}
+            currentMilestone={autonomousPlan.currentMilestone || 1}
+            progress={autonomousPlan.progress || 0}
+            planStatus={autonomousPlan.status || 'IN_PROGRESS'}
+            onExecute={handleAutonomousExecute}
+            onPause={handleAutonomousPause}
+            onResume={handleAutonomousResume}
+            onSelectOption={handleSelectSalesOption}
+            loading={planLoading}
+          />
+        )}
+
+        {/* Buyer Leads & Sales Pipeline Option Selector */}
+        <SalesPipelineCard
+          taskId={task.id}
+          leads={leadsList}
+          currentOption={autonomousPlan?.salesOption}
+          onSelectOption={handleSelectSalesOption}
+          onOpenLogSale={() => setIsLogSaleOpen(true)}
+          loading={planLoading}
+        />
+
+        {/* Generated Assets & Deliverable Vault */}
+        <ArtifactsVault artifacts={artifactsList} />
+
+        {/* Live Swarm Terminal & Immutable Audit Logs */}
+        <LiveLogTerminal taskId={task.id} />
+
+        {/* Quick Log Sale Modal */}
+        <LogSaleModal
+          taskId={task.id}
+          isOpen={isLogSaleOpen}
+          onClose={() => setIsLogSaleOpen(false)}
+          onSuccess={fetchAutonomousData}
+        />
 
         {/* Step-by-Step Action Plan with Interactive Directions */}
         <div className="glass-card border border-white/5 rounded-xl p-6">
