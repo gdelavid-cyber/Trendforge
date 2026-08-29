@@ -158,38 +158,79 @@ export function AvatarRenderer({
   );
 
   const sizeClass = SIZE_MAP[size] ?? SIZE_MAP.stage;
+  const themeColor = AVATAR_MAP[activeAvatarKey]?.themeColor ?? '#00F0FF';
 
   return (
-    <div className={`relative ${sizeClass} ${className} ${onClick ? 'cursor-pointer' : ''}`}>
-      <Stage3D
-        loadout={activeLoadout}
-        avatarId={activeAvatarKey}
-        emotion={currentEmotion}
-        isSpeaking={isSpeaking}
-        isWorking={isWorking}
-        workLabel={workLabel}
-        workProgress={workProgress}
-        variant={variant}
-        metahumanGlbUrl={metahumanGlbUrl}
-        visemes={visemes}
-        fallback={fallback}
-        className="w-full h-full"
-      />
+    <div className={`relative overflow-hidden rounded-2xl ${sizeClass} ${className} ${onClick ? 'cursor-pointer' : ''}`}>
+      {/* Moving Cybernetic Video Atmosphere Backdrop */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-2xl">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-35 mix-blend-screen scale-110"
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4"
+        />
+        {/* Dynamic Theme Glow Orb */}
+        <div
+          className="absolute inset-0 opacity-40 blur-[50px] mix-blend-color-dodge transition-all duration-700 animate-pulse pointer-events-none"
+          style={{ background: `radial-gradient(circle at 50% 45%, ${themeColor} 0%, transparent 65%)` }}
+        />
+        {/* Ambient Dark Sci-Fi Vignette */}
+        <div className="absolute inset-0 bg-radial-[at_50%_50%] from-transparent via-black/40 to-black/85" />
+      </div>
 
-      {/* status badges */}
+      {/* Rotating 4D Holographic Orbit Rings Behind Bot */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <div
+          className="w-48 h-48 sm:w-64 sm:h-64 rounded-full border border-dashed border-cyan-400/25 animate-[spin_24s_linear_infinite]"
+          style={{ borderColor: `${themeColor}44` }}
+        />
+        <div
+          className="absolute w-36 h-36 sm:w-48 sm:h-48 rounded-full border border-cyan-300/20 animate-[spin_16s_linear_infinite_reverse]"
+          style={{ borderColor: `${themeColor}33` }}
+        />
+      </div>
+
+      {/* 3D WebGL Avatar Engine */}
+      <div className="relative z-10 w-full h-full">
+        <Stage3D
+          loadout={activeLoadout}
+          avatarId={activeAvatarKey}
+          emotion={currentEmotion}
+          isSpeaking={isSpeaking}
+          isWorking={isWorking}
+          workLabel={workLabel}
+          workProgress={workProgress}
+          variant={variant}
+          metahumanGlbUrl={metahumanGlbUrl}
+          visemes={visemes}
+          fallback={fallback}
+          className="w-full h-full"
+        />
+      </div>
+
+      {/* Status Badges */}
       {isSpeaking && (
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#00F0FF]/15 border border-[#00F0FF]/30 text-[#00F0FF] text-[10px] font-mono animate-pulse pointer-events-none">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF]" />
-          <span>TRANSMITTING</span>
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00F0FF]/20 border border-[#00F0FF]/50 text-[#00F0FF] text-[10px] font-mono shadow-[0_0_15px_rgba(0,240,255,0.4)] animate-pulse pointer-events-none backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-ping" />
+          <span className="font-bold tracking-wider">LIVE TRANSMISSION</span>
         </div>
       )}
 
       {(isThinking || isListening) && (
-        <div className="absolute top-4 left-4 z-30 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFD700]/15 border border-[#FFD700]/30 text-[#FFD700] text-[10px] font-mono animate-pulse pointer-events-none">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
-          <span>{isThinking ? 'NEURAL COMPUTE' : 'LISTENING'}</span>
+        <div className="absolute top-4 left-4 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFD700]/20 border border-[#FFD700]/50 text-[#FFD700] text-[10px] font-mono shadow-[0_0_15px_rgba(255,215,0,0.3)] animate-pulse pointer-events-none backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-[#FFD700]" />
+          <span className="font-bold tracking-wider">{isThinking ? 'NEURAL COMPUTE' : 'LISTENING'}</span>
         </div>
       )}
+
+      {/* Holographic Stage Base Glow */}
+      <div
+        className="absolute bottom-0 inset-x-8 h-10 blur-xl opacity-60 pointer-events-none z-0"
+        style={{ background: `radial-gradient(ellipse at bottom, ${themeColor} 0%, transparent 70%)` }}
+      />
     </div>
   );
 }

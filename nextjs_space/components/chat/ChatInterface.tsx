@@ -232,7 +232,21 @@ export function ChatInterface({
   return (
     <div className={`w-full h-full flex flex-col lg:flex-row bg-[#08080E] text-white overflow-hidden ${standalone ? 'min-h-screen' : 'rounded-2xl border border-white/10'}`}>
       {/* Left Col: 3D Holographic Stage */}
-      <div className="lg:w-[45%] flex flex-col justify-between p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-white/10 relative bg-black/40">
+      <div className="lg:w-[45%] flex flex-col justify-between p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-white/10 relative overflow-hidden bg-black/60">
+        {/* Moving Cyber Background Layer */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-45 mix-blend-screen scale-110"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4"
+          />
+          <div className="absolute inset-0 bg-radial-[at_50%_40%] from-blue-600/20 via-[#0055FF]/10 to-[#02040A]/90 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
+        </div>
+
         {/* Stage Header */}
         <div className="flex items-center justify-between z-10 mb-2">
           <div className="flex items-center gap-2">
@@ -260,7 +274,7 @@ export function ChatInterface({
         </div>
 
         {/* 3D WebGL Avatar Viewport */}
-        <div className="relative flex-1 min-h-[300px] flex items-center justify-center">
+        <div className="relative flex-1 min-h-[300px] flex items-center justify-center z-10">
           <AvatarRenderer
             config={config}
             emotion={emotion}

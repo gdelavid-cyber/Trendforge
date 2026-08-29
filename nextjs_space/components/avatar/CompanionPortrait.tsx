@@ -152,13 +152,33 @@ export function CompanionPortrait({
           transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
         }}
       >
+        {/* Moving Cyber Video Background Layer */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-35 mix-blend-screen scale-110"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4"
+          />
+          {/* Cosmic Archetype Aura */}
+          <div
+            className="absolute inset-0 opacity-40 blur-[40px] mix-blend-color-dodge transition-opacity duration-500"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${meta.glowColor} 0%, transparent 70%)`,
+              opacity: hovered ? 0.75 : 0.35,
+            }}
+          />
+        </div>
+
         {/* Live 3D WebGL Robotic Character Engine */}
-        <div className="w-full h-full pointer-events-none">
+        <div className="relative z-10 w-full h-full pointer-events-none">
           <DynamicMiniStage3D avatarId={arch} className="w-full h-full" />
         </div>
 
         {/* Ambient Dark Sci-Fi Gradient Vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none z-10" />
 
         {/* Glowing Neural Circuit Border Accent */}
         <div

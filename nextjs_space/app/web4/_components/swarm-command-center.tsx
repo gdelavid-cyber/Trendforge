@@ -41,6 +41,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+
+const DynamicMiniStage3D = dynamic(
+  () => import('@/components/avatar/stage3d/MiniStage3D').then((mod) => mod.MiniStage3D),
+  {
+    ssr: false,
+    loading: () => <div className="w-12 h-12 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />,
+  }
+);
 
 interface AgentInstance {
   id: string;
@@ -377,10 +386,32 @@ export function SwarmCommandCenter() {
         {/* Top Swarm HUD Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-white/10">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-600/20 border border-cyan-500/40 text-cyan-400 shadow-inner">
-                <Brain className="w-7 h-7 animate-pulse" />
+            <div className="flex items-center gap-4">
+              {/* 3D Swarm Sentinel with Moving Cyber Background */}
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl p-1 bg-gradient-to-br from-cyan-500/30 via-indigo-600/30 to-purple-600/30 border border-cyan-400/40 shadow-[0_0_25px_rgba(0,240,255,0.3)] overflow-hidden shrink-0">
+                {/* Moving Cyber Background Video inside Bot Stage */}
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-screen scale-125 pointer-events-none"
+                  src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4"
+                />
+                <div className="absolute -inset-1 rounded-full border border-dashed border-cyan-400/30 animate-[spin_18s_linear_infinite] pointer-events-none" />
+                
+                {/* 3D WebGL Bot */}
+                <div className="relative z-10 w-full h-full">
+                  <DynamicMiniStage3D
+                    avatarId={isSurvival ? 'apex_predator' : 'cyber_humanoid'}
+                    emotion={isSurvival ? 'battle' : pulsing ? 'surprised' : 'confident'}
+                    isWorking={pulsing}
+                    workLabel={pulsing ? 'Executing Swarm Pulse...' : undefined}
+                    className="w-full h-full"
+                  />
+                </div>
               </div>
+
               <div>
                 <div className="flex items-center gap-2.5">
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-cyan-300">
