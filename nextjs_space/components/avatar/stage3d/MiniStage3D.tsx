@@ -44,13 +44,15 @@ export function MiniStage3D({
         camera={{ fov: 34, position: [camX, 0.38, 2.5] }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
-        {/* Cinematic Triple-A Studio & Rim Lighting */}
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[3, 5, 4]} intensity={1.5} color="#FFFFFF" />
-        <pointLight position={[-2.5, 2, 2]} intensity={2.0} distance={8} color="#00F0FF" />
-        <pointLight position={[2.5, 2, -2]} intensity={2.2} distance={8} color="#C084FC" />
-        <pointLight position={[0, -2, 1.5]} intensity={1.2} distance={6} color="#00F0FF" />
-        <pointLight position={[0, 3, -3]} intensity={1.8} distance={8} color="#38BDF8" />
+        {/* Ultra-Bright HDR Triple-A Studio & Neon Rim Lighting */}
+        <ambientLight intensity={1.2} />
+        <directionalLight position={[3, 6, 5]} intensity={3.2} color="#FFFFFF" />
+        <directionalLight position={[-3, 4, 3]} intensity={2.4} color="#E0F2FE" />
+        <pointLight position={[-2.5, 2.2, 2.2]} intensity={4.5} distance={10} color="#00F0FF" />
+        <pointLight position={[2.5, 2.2, -2]} intensity={4.2} distance={10} color="#E879F9" />
+        <pointLight position={[0, 0.6, 2.0]} intensity={3.0} distance={7} color="#38BDF8" />
+        <pointLight position={[0, -2, 1.5]} intensity={2.5} distance={7} color="#00F0FF" />
+        <pointLight position={[0, 4, -3]} intensity={2.8} distance={9} color="#67E8F9" />
 
         <Suspense fallback={null}>
           <NftMecha3D

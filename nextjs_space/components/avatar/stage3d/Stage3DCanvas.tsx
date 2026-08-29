@@ -132,14 +132,16 @@ export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cybe
         {/* depth falloff sells the "4D" stage dimensionality */}
         <fog attach="fog" args={['#05060c', 6.5, 14]} />
 
-        {/* Unreal Engine 5 Lumen-Style Cinematic 5-Point Studio Rig */}
-        <ambientLight intensity={0.52} />
-        <directionalLight position={[3.5, 6, 4.5]} intensity={1.4} castShadow shadow-mapSize={[1024, 1024]} />
-        <pointLight position={[-2.8, 1.8, 1.8]} intensity={2.2} distance={9} color="#00F0FF" />
-        <pointLight position={[2.8, 1.4, 1.8]} intensity={1.5} distance={9} color="#FFD700" />
-        <spotLight position={[-2.8, 3.2, -2.4]} angle={0.65} penumbra={0.9} intensity={2.8} distance={12} color="#7DF9FF" />
-        <spotLight position={[2.8, 2.6, -2.4]} angle={0.65} penumbra={0.9} intensity={1.9} distance={12} color="#FF8C42" />
-        <pointLight position={[0, -0.2, 1.2]} intensity={0.6} distance={4} color="#00F0FF" />
+        {/* Unreal Engine 5 Lumen-Style Ultra-Bright HDR Cinematic Rig */}
+        <ambientLight intensity={1.1} />
+        <directionalLight position={[3.5, 6, 4.5]} intensity={3.0} castShadow shadow-mapSize={[1024, 1024]} />
+        <directionalLight position={[-3.5, 4.5, 3.5]} intensity={2.2} color="#E0F2FE" />
+        <pointLight position={[-2.8, 2.2, 2.2]} intensity={4.5} distance={10} color="#00F0FF" />
+        <pointLight position={[2.8, 2.2, 2.2]} intensity={4.0} distance={10} color="#E879F9" />
+        <spotLight position={[-2.8, 3.2, -2.4]} angle={0.65} penumbra={0.9} intensity={4.0} distance={14} color="#7DF9FF" />
+        <spotLight position={[2.8, 2.6, -2.4]} angle={0.65} penumbra={0.9} intensity={3.5} distance={14} color="#F472B6" />
+        <pointLight position={[0, 0.4, 2.0]} intensity={3.0} distance={6} color="#38BDF8" />
+        <pointLight position={[0, -0.2, 1.2]} intensity={2.0} distance={5} color="#00F0FF" />
 
         <Suspense fallback={null}>
           {overrideGlbUrl ? (
