@@ -39,15 +39,19 @@ export function MiniStage3D({
   return (
     <div ref={vpRef} className={`relative ${className}`}>
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={[1, 2]}
         frameloop={inView ? 'always' : 'never'}
-        camera={{ fov: 36, position: [camX, 0.45, 2.7] }}
-        gl={{ antialias: true, alpha: true }}
+        camera={{ fov: 34, position: [camX, 0.38, 2.5] }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[2.5, 4, 3]} intensity={1.15} />
-        <pointLight position={[-2, 1.4, -2]} intensity={1.3} distance={7} color="#00F0FF" />
-        <pointLight position={[2, 1, -2.4]} intensity={0.9} distance={7} color="#FFD700" />
+        {/* Cinematic Triple-A Studio & Rim Lighting */}
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[3, 5, 4]} intensity={1.5} color="#FFFFFF" />
+        <pointLight position={[-2.5, 2, 2]} intensity={2.0} distance={8} color="#00F0FF" />
+        <pointLight position={[2.5, 2, -2]} intensity={2.2} distance={8} color="#C084FC" />
+        <pointLight position={[0, -2, 1.5]} intensity={1.2} distance={6} color="#00F0FF" />
+        <pointLight position={[0, 3, -3]} intensity={1.8} distance={8} color="#38BDF8" />
+
         <Suspense fallback={null}>
           <NftMecha3D
             avatarId={avatarId}
@@ -59,7 +63,7 @@ export function MiniStage3D({
             loadout={loadout}
           />
         </Suspense>
-        <ContactShadows position={[0, -0.432, 0]} opacity={0.5} scale={2.6} blur={1.4} far={1.4} color="#000000" />
+        <ContactShadows position={[0, -0.45, 0]} opacity={0.65} scale={3.0} blur={1.8} far={1.8} color="#000000" />
       </Canvas>
     </div>
   );

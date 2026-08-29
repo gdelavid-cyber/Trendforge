@@ -24,8 +24,8 @@ export interface Stage3DCanvasProps {
   isWorking?: boolean;
   workLabel?: string;
   workProgress?: number;
-  /** renderer chassis — 'anime' (default) or the procedural 'divine' final form */
-  variant?: 'anime' | 'divine' | 'metahuman';
+  /** renderer chassis — 'mecha' (default Next-Gen Triple-A), 'anime', 'divine', or 'metahuman' */
+  variant?: 'mecha' | 'anime' | 'divine' | 'metahuman';
   /** URL to Metahuman GLB (used when variant === 'metahuman') */
   metahumanGlbUrl?: string;
   /** Viseme input for lip sync (used when variant === 'metahuman') */
@@ -100,7 +100,7 @@ function StageRings() {
           ref={(m: THREE.MeshBasicMaterial | null) => { if (m) mats.current[1] = m; }}
           color="#FFD700"
           transparent
-          opacity={0.16}
+          opacity={0.18}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           side={THREE.DoubleSide}
@@ -109,15 +109,8 @@ function StageRings() {
       <group ref={ripples}>
         {[0, 1, 2].map((i) => (
           <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-            <ringGeometry args={[0.98, 1.01, 64]} />
-            <meshBasicMaterial
-              color="#5A7AFF"
-              transparent
-              opacity={0.2}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              side={THREE.DoubleSide}
-            />
+            <ringGeometry args={[0.7, 0.72, 64]} />
+            <meshBasicMaterial color="#00F0FF" transparent opacity={0.25} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         ))}
       </group>
@@ -125,7 +118,7 @@ function StageRings() {
   );
 }
 
-export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, loadout, variant = 'anime', metahumanGlbUrl, visemes }: Stage3DCanvasProps) {
+export function Stage3DCanvas({ overrideGlbUrl, className = '', avatarId = 'cyber_humanoid', emotion = 'confident', isSpeaking = false, isWorking = false, workLabel, workProgress, loadout, variant = 'mecha', metahumanGlbUrl, visemes }: Stage3DCanvasProps) {
   const { ref: vpRef, inView } = useInViewport<HTMLDivElement>();
   return (
     <div ref={vpRef} className={`relative w-full h-full min-h-[320px] ${className}`}>
