@@ -57,7 +57,7 @@ const EARN_GROUP: NavGroup = {
   label: 'Earn',
   icon: Coins,
   items: [
-    { href: '/tasks', label: 'Weekly Tasks', icon: ListChecks },
+    { href: '/trends', label: 'Weekly Trends', icon: Radio },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
     { href: '/stories', label: 'Success Stories', icon: BookOpen },
   ],
@@ -68,7 +68,7 @@ const EARN_GROUP_CORE: NavGroup = {
   label: 'Earn',
   icon: Coins,
   items: [
-    { href: '/tasks', label: 'Weekly Tasks', icon: ListChecks },
+    { href: '/trends', label: 'Weekly Trends', icon: Radio },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
   ],
 };

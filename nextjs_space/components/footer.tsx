@@ -6,7 +6,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
     title: 'Product & Docs',
     links: [
       { href: '/manifesto', label: 'Web4 Manifesto (White Paper)' },
-      { href: '/tasks', label: 'Weekly Tasks' },
+      { href: '/trends', label: 'Weekly Trends' },
       { href: '/trends', label: 'Trends Radar' },
       { href: '/stories', label: 'Success Stories' },
       { href: '/pricing', label: 'Pricing' },
@@ -38,7 +38,7 @@ const CONTEST_COLUMNS: { title: string; links: { href: string; label: string }[]
     title: 'Product & Docs',
     links: [
       { href: '/manifesto', label: 'Web4 Manifesto (White Paper)' },
-      { href: '/tasks', label: 'Weekly Tasks' },
+      { href: '/trends', label: 'Weekly Trends' },
       { href: '/trends', label: 'Trends Radar' },
       { href: '/pricing', label: 'Pricing' },
     ],

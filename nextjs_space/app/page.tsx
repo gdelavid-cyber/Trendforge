@@ -324,7 +324,7 @@ export default function HomePage() {
 
                 <nav className="space-y-3">
                   {[
-                    { label: 'Weekly Tasks', href: '/tasks', icon: Zap },
+                    { label: 'Weekly Trends', href: '/trends', icon: Zap },
                     { label: 'Trends Radar', href: '/trends', icon: TrendingUp },
                     { label: 'Companion Forge', href: '/avatar-studio', icon: Bot },
                     { label: 'Web4 Whitepaper', href: '/manifesto', icon: BookOpen },
