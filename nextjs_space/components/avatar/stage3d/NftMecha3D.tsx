@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sparkles, Float } from '@react-three/drei';
+import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { FighterLoadout } from '@/lib/cosmetics/stats';
 
@@ -17,9 +17,9 @@ export interface NftMecha3DProps {
 }
 
 /**
- * NEXT-GENERATION TRIPLE-A SCI-FI CYBERNETIC SENTINEL
- * Sculpted with curved biomechanical aerodynamic geometry, high-gloss PBR materials,
- * gyroscopic plasma Arc Reactor core, floating crystalline wing blades, and volumetric ion thrusters.
+ * NEXT-GENERATION TRIPLE-A SCI-FI CYBERNETIC ANDROID / SENTINEL
+ * Designed with precision biomechanical anatomy, high-gloss carbon/chrome PBR shaders,
+ * dual interactive glowing optical eye lenses, rotating Arc Reactor core, and floating drone wings.
  */
 export function NftMecha3D({
   avatarId = 'cyber_humanoid',
@@ -30,380 +30,392 @@ export function NftMecha3D({
 }: NftMecha3DProps) {
   const rootRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
+  const leftEyeRef = useRef<THREE.Mesh>(null);
+  const rightEyeRef = useRef<THREE.Mesh>(null);
+  const eyeGlowLeftRef = useRef<THREE.Mesh>(null);
+  const eyeGlowRightRef = useRef<THREE.Mesh>(null);
   const chestRef = useRef<THREE.Group>(null);
-  const coreOuterRef = useRef<THREE.Group>(null);
-  const coreInnerRef = useRef<THREE.Mesh>(null);
+  const reactorCoreRef = useRef<THREE.Mesh>(null);
   const gyroRing1Ref = useRef<THREE.Mesh>(null);
   const gyroRing2Ref = useRef<THREE.Mesh>(null);
   const haloRef = useRef<THREE.Group>(null);
-  const leftWingRef = useRef<THREE.Group>(null);
-  const rightWingRef = useRef<THREE.Group>(null);
+  const leftDroneWingRef = useRef<THREE.Group>(null);
+  const rightDroneWingRef = useRef<THREE.Group>(null);
   const leftArmRef = useRef<THREE.Group>(null);
   const rightArmRef = useRef<THREE.Group>(null);
-  const leftThrusterRef = useRef<THREE.Mesh>(null);
-  const rightThrusterRef = useRef<THREE.Mesh>(null);
-  const repulsorGlowRef = useRef<THREE.Mesh>(null);
+  const spineConduitRef = useRef<THREE.Group>(null);
 
-  // Triple-A Unreal Engine 5.5 PBR Shading Palette Profiles
+  // Triple-A Unreal Engine 5.5 Color Palettes
   const palette = useMemo(() => {
     const key = (avatarId || 'cyber_humanoid').toLowerCase();
     if (key.includes('quantum') || key.includes('omega') || key.includes('unit-o')) {
       return {
-        armorPrimary: '#F0F4FA', // Pearl white nano-ceramic
-        armorSecondary: '#141824', // Deep slate obsidian
-        metalChrome: '#E2E8F0', // Polished liquid chrome
-        accent: '#A855F7', // Quantum violet
-        glow: '#C084FC', // Emissive neon plasma
-        visor: '#00F0FF', // Cyan sensor visor
-        roughness: 0.12,
-        metalness: 0.92,
+        armorPrimary: '#F1F5F9', // Pearl nano-ceramic
+        armorSecondary: '#0F172A', // Obsidian carbon
+        chrome: '#E2E8F0', // Liquid chrome
+        accent: '#8B5CF6', // Electric violet
+        glow: '#A855F7', // Violet plasma
+        eyeColor: '#00F0FF', // Cyan optical sensor
+        metalness: 0.94,
+        roughness: 0.1,
       };
     }
     if (key.includes('titan') || key.includes('midas') || key.includes('wall_street')) {
       return {
-        armorPrimary: '#0E0F14', // Matte obsidian carbon
-        armorSecondary: '#D4AF37', // 24K Brushed imperial gold
-        metalChrome: '#FDE047', // Polished gold chrome
-        accent: '#EAB308', // Radiant gold
-        glow: '#F59E0B', // Molten amber core
-        visor: '#FEF08A', // Gold optical visor
-        roughness: 0.14,
-        metalness: 0.95,
+        armorPrimary: '#090A0F', // Stealth black carbon
+        armorSecondary: '#CA8A04', // 24K Brushed gold
+        chrome: '#FDE047', // Polished gold chrome
+        accent: '#EAB308', // Imperial gold
+        glow: '#F59E0B', // Amber energy
+        eyeColor: '#FEF08A', // Gold optical sensor
+        metalness: 0.96,
+        roughness: 0.12,
       };
     }
     if (key.includes('cosmic') || key.includes('veil') || key.includes('nyx')) {
       return {
-        armorPrimary: '#110C1D', // Deep cosmic void
-        armorSecondary: '#4C1D95', // Astral violet weave
-        metalChrome: '#C084FC', // Iridescent chrome
+        armorPrimary: '#0F091A', // Deep cosmic void
+        armorSecondary: '#581C87', // Astral violet weave
+        chrome: '#C084FC', // Iridescent chrome
         accent: '#06B6D4', // Supernova cyan
         glow: '#EC4899', // Plasma magenta
-        visor: '#22D3EE', // Holographic cyan
-        roughness: 0.16,
+        eyeColor: '#22D3EE', // Holographic cyan
         metalness: 0.9,
+        roughness: 0.14,
       };
     }
     if (key.includes('shadow') || key.includes('viper')) {
       return {
-        armorPrimary: '#08090D', // Stealth matte carbon
-        armorSecondary: '#3B0712', // Crimson weave
-        metalChrome: '#94A3B8', // Dark titanium
+        armorPrimary: '#050608', // Stealth matte carbon
+        armorSecondary: '#450A1A', // Crimson weave
+        chrome: '#94A3B8', // Dark gunmetal
         accent: '#EF4444', // Laser red
         glow: '#F43F5E', // Crimson plasma
-        visor: '#FF0055', // Red optical visor
-        roughness: 0.18,
+        eyeColor: '#FF0055', // Red optical visor
         metalness: 0.88,
+        roughness: 0.16,
       };
     }
     if (key.includes('predator') || key.includes('apex')) {
       return {
-        armorPrimary: '#171B24', // Heavy ballistic steel
-        armorSecondary: '#C2410C', // Hazard industrial orange
-        metalChrome: '#CBD5E1', // Heavy forged titanium
+        armorPrimary: '#11151C', // Heavy ballistic steel
+        armorSecondary: '#9A3412', // Hazard industrial orange
+        chrome: '#CBD5E1', // Heavy forged titanium
         accent: '#F97316', // Molten beacon
         glow: '#FB923C', // Solar flare core
-        visor: '#00F0FF', // Cyan targeting lens
-        roughness: 0.15,
+        eyeColor: '#00F0FF', // Cyan targeting lens
         metalness: 0.92,
+        roughness: 0.14,
       };
     }
-    // Default: Kairos Genesis Cyber Humanoid (Next-Gen Cyberpunk Cyan & Dark Gunmetal)
+    // Default: Genesis Kairos Cybernetic Android (Electric Cyan & Liquid Chrome)
     return {
-      armorPrimary: '#0A0E17', // Aerodynamic obsidian alloy
-      armorSecondary: '#00F0FF', // Cyberpunk electric cyan
-      metalChrome: '#E0F2FE', // Polished liquid chrome
-      accent: '#38BDF8', // Sky plasma
-      glow: '#00F0FF', // Neon cyan plasma
-      visor: '#00F0FF', // Electric visor
-      roughness: 0.12,
+      armorPrimary: '#070B12', // Deep aerodynamic obsidian
+      armorSecondary: '#0284C7', // Cyberpunk cobalt
+      chrome: '#F0F9FF', // Liquid silver chrome
+      accent: '#00F0FF', // Neon electric cyan
+      glow: '#00F0FF', // Cyan plasma
+      eyeColor: '#00F0FF', // Glowing cyan optics
       metalness: 0.92,
+      roughness: 0.1,
     };
   }, [avatarId]);
 
-  // Next-Gen PBR Shader Materials
+  // Triple-A PBR Shaders
   const materials = useMemo(() => {
     return {
-      // 1. Sleek Aerodynamic Primary Nano-Chassis
+      // 1. Aerodynamic Primary Nano-Composite Armor
       primaryArmor: new THREE.MeshStandardMaterial({
         color: new THREE.Color(palette.armorPrimary),
         metalness: palette.metalness,
         roughness: palette.roughness,
-        envMapIntensity: 2.2,
+        envMapIntensity: 2.5,
       }),
-      // 2. Secondary Carbon & Ceramic Armor Plates
+      // 2. Secondary Carbon Fiber Weave Plates
       secondaryArmor: new THREE.MeshStandardMaterial({
         color: new THREE.Color(palette.armorSecondary),
-        metalness: 0.85,
-        roughness: 0.22,
-        envMapIntensity: 1.8,
+        metalness: 0.88,
+        roughness: 0.18,
+        envMapIntensity: 2.0,
       }),
       // 3. Mirror-Polished Liquid Chrome & Hydraulic Tendons
       liquidChrome: new THREE.MeshStandardMaterial({
-        color: new THREE.Color(palette.metalChrome),
+        color: new THREE.Color(palette.chrome),
         metalness: 0.98,
-        roughness: 0.05,
-        envMapIntensity: 2.5,
+        roughness: 0.04,
+        envMapIntensity: 3.0,
       }),
-      // 4. Dark Sub-Frame & Joint Actuators
+      // 4. Dark Titanium Joint Actuators & Sub-Frame
       darkSubframe: new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#05070B'),
-        metalness: 0.7,
-        roughness: 0.35,
+        color: new THREE.Color('#030508'),
+        metalness: 0.75,
+        roughness: 0.28,
       }),
-      // 5. Metallic Accent Trims
+      // 5. High-Gloss Metallic Accent Trims
       accentTrim: new THREE.MeshStandardMaterial({
         color: new THREE.Color(palette.accent),
-        metalness: 0.92,
-        roughness: 0.15,
-        envMapIntensity: 2.0,
+        metalness: 0.95,
+        roughness: 0.12,
+        envMapIntensity: 2.2,
       }),
-      // 6. Curved Refractive Optical Visor Sensor
-      opticalVisor: new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color(palette.visor),
-        emissive: new THREE.Color(palette.glow),
-        emissiveIntensity: isSpeaking ? 3.2 : 2.0,
-        roughness: 0.04,
-        metalness: 0.2,
-        transmission: 0.6,
-        ior: 1.55,
+      // 6. Glowing Optical Camera Lenses (Dual Eyes)
+      opticalLens: new THREE.MeshBasicMaterial({
+        color: new THREE.Color(palette.eyeColor),
+      }),
+      // 7. Emissive Eye Glow Corona (Additive Blending)
+      eyeCorona: new THREE.MeshBasicMaterial({
+        color: new THREE.Color(palette.glow),
         transparent: true,
-        opacity: 0.95,
+        opacity: isSpeaking ? 0.95 : 0.75,
+        blending: THREE.AdditiveBlending,
       }),
-      // 7. Glowing Plasma Core (Volumetric Emissive)
+      // 8. Glowing Plasma Arc Core
       plasmaCore: new THREE.MeshBasicMaterial({
         color: new THREE.Color(palette.glow),
       }),
-      // 8. Holographic Energy Rings & Laser Blades (Additive Blending)
-      energyBlades: new THREE.MeshBasicMaterial({
+      // 9. Floating Holographic Energy Blades & Halo
+      holographicBlades: new THREE.MeshBasicMaterial({
         color: new THREE.Color(palette.glow),
         transparent: true,
         opacity: 0.85,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       }),
-      // 9. Ion Thruster Exhaust Plume
-      ionPlume: new THREE.MeshBasicMaterial({
-        color: new THREE.Color(palette.glow),
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending,
-      }),
     };
   }, [palette, isSpeaking]);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
+    const ptrX = state.pointer.x;
+    const ptrY = state.pointer.y;
 
     // 1. Natural Organic Hovering & Breathing
     if (rootRef.current) {
-      rootRef.current.position.y = Math.sin(t * 1.8) * 0.03 - 0.15;
+      rootRef.current.position.y = Math.sin(t * 1.8) * 0.025 - 0.12;
     }
 
-    // 2. Smooth Articulated Head Tracking
+    // 2. Interactive Head & Eye Tracking (Follows mouse cursor smoothly)
     if (headRef.current) {
-      headRef.current.rotation.y = Math.sin(t * 0.75) * 0.18;
-      headRef.current.rotation.x = Math.sin(t * 1.2) * 0.04 - 0.02;
+      headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, ptrX * 0.45, 0.08);
+      headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, -ptrY * 0.25 - 0.02, 0.08);
     }
 
-    // 3. Multi-Axis Arc Reactor Gyroscopic Rotation
-    if (coreOuterRef.current) {
-      coreOuterRef.current.rotation.z = t * 2.2;
-      coreOuterRef.current.rotation.y = t * 1.4;
+    // 3. Eye Blinking & Dilation Pulses
+    const blink = Math.sin(t * 0.5) > 0.98 ? 0.1 : 1.0;
+    if (leftEyeRef.current && rightEyeRef.current) {
+      leftEyeRef.current.scale.set(1, blink, 1);
+      rightEyeRef.current.scale.set(1, blink, 1);
     }
-    if (coreInnerRef.current) {
-      coreInnerRef.current.rotation.z = -t * 3.5;
-      coreInnerRef.current.rotation.x = t * 1.8;
-      const pulse = 1 + Math.sin(t * 6) * 0.12;
-      coreInnerRef.current.scale.set(pulse, pulse, pulse);
+    if (eyeGlowLeftRef.current && eyeGlowRightRef.current) {
+      const eyePulse = (1 + Math.sin(t * 4) * 0.15) * blink;
+      eyeGlowLeftRef.current.scale.set(eyePulse, eyePulse, 1);
+      eyeGlowRightRef.current.scale.set(eyePulse, eyePulse, 1);
     }
+
+    // 4. Arc Reactor Gyroscopic Rotation & Pulsing Core
     if (gyroRing1Ref.current) {
-      gyroRing1Ref.current.rotation.x = t * 2.8;
-      gyroRing1Ref.current.rotation.y = -t * 1.8;
+      gyroRing1Ref.current.rotation.x = t * 2.5;
+      gyroRing1Ref.current.rotation.y = -t * 1.6;
     }
     if (gyroRing2Ref.current) {
-      gyroRing2Ref.current.rotation.y = t * 3.1;
-      gyroRing2Ref.current.rotation.z = -t * 2.0;
+      gyroRing2Ref.current.rotation.y = t * 2.8;
+      gyroRing2Ref.current.rotation.z = -t * 1.9;
+    }
+    if (reactorCoreRef.current) {
+      const corePulse = 1 + Math.sin(t * 5) * 0.12;
+      reactorCoreRef.current.scale.set(corePulse, corePulse, corePulse);
     }
 
-    // 4. Floating Holographic Wings Breathing
-    if (leftWingRef.current && rightWingRef.current) {
-      const wingFlap = Math.sin(t * 2.0) * 0.08;
-      leftWingRef.current.rotation.y = -0.3 + wingFlap;
-      leftWingRef.current.rotation.z = 0.15 + wingFlap * 0.5;
-      rightWingRef.current.rotation.y = 0.3 - wingFlap;
-      rightWingRef.current.rotation.z = -0.15 - wingFlap * 0.5;
+    // 5. Floating Drone Wings Hovering (Physics-like micro-oscillation)
+    if (leftDroneWingRef.current && rightDroneWingRef.current) {
+      const flap = Math.sin(t * 2.2) * 0.06;
+      leftDroneWingRef.current.position.y = 0.38 + Math.sin(t * 2.2 + 0.5) * 0.02;
+      leftDroneWingRef.current.rotation.z = 0.2 + flap;
+      rightDroneWingRef.current.position.y = 0.38 + Math.sin(t * 2.2 + 0.5) * 0.02;
+      rightDroneWingRef.current.rotation.z = -0.2 - flap;
     }
 
-    // 5. Celestial Halo Orbit
+    // 6. Floating Holographic Halo Orbit
     if (haloRef.current) {
-      haloRef.current.rotation.z = t * 0.5;
-      haloRef.current.rotation.x = Math.PI / 4 + Math.sin(t * 0.8) * 0.1;
+      haloRef.current.rotation.z = t * 0.4;
+      haloRef.current.rotation.x = Math.PI / 4 + Math.sin(t * 0.6) * 0.08;
     }
 
-    // 6. Arm Servo Sway
+    // 7. Arm Sway
     if (leftArmRef.current && rightArmRef.current) {
-      leftArmRef.current.rotation.x = Math.sin(t * 1.8) * 0.05;
-      rightArmRef.current.rotation.x = -Math.sin(t * 1.8) * 0.05;
-    }
-
-    // 7. Ion Thruster Pulse
-    if (leftThrusterRef.current && rightThrusterRef.current) {
-      const thrusterPulse = 1 + Math.sin(t * 10) * 0.2;
-      leftThrusterRef.current.scale.set(1, thrusterPulse, 1);
-      rightThrusterRef.current.scale.set(1, thrusterPulse, 1);
-    }
-
-    // 8. Repulsor Wave Pulse
-    if (repulsorGlowRef.current) {
-      const repulse = 1 + Math.sin(t * 4) * 0.15;
-      repulsorGlowRef.current.scale.set(repulse, repulse, 1);
+      leftArmRef.current.rotation.x = Math.sin(t * 1.8) * 0.04;
+      rightArmRef.current.rotation.x = -Math.sin(t * 1.8) * 0.04;
     }
   });
 
   return (
-    <group ref={rootRef} position={[0, -0.15, 0]} scale={0.95}>
+    <group ref={rootRef} position={[0, -0.12, 0]} scale={0.96}>
       {/* ============================================================ */}
-      {/* 1. SCULPTED BIOMECHANICAL HELMET & VISOR                     */}
+      {/* 1. SCULPTED CYBERNETIC ANDROID HEAD & GLOWING OPTICAL EYES   */}
       {/* ============================================================ */}
-      <group ref={headRef} position={[0, 0.72, 0]}>
-        {/* Aerodynamic Cranium Shell (Smooth Sphere/Capsule Geometry) */}
-        <mesh material={materials.primaryArmor} position={[0, 0.06, 0]} castShadow receiveShadow>
-          <sphereGeometry args={[0.22, 32, 32]} />
+      <group ref={headRef} position={[0, 0.68, 0]}>
+        {/* Sleek Biomechanical Cranium Shell */}
+        <mesh material={materials.primaryArmor} position={[0, 0.05, 0]} castShadow receiveShadow>
+          <sphereGeometry args={[0.2, 32, 32]} />
         </mesh>
 
-        {/* Sleek Rear Head Extension (Streamlined Cyber Crest) */}
-        <mesh material={materials.secondaryArmor} position={[0, 0.08, -0.1]} rotation={[-0.35, 0, 0]} castShadow>
-          <capsuleGeometry args={[0.12, 0.22, 16, 24]} />
+        {/* Aerodynamic Carbon Temporal Brow Plates */}
+        <mesh material={materials.secondaryArmor} position={[0, 0.08, 0.08]} rotation={[0.2, 0, 0]} castShadow>
+          <capsuleGeometry args={[0.07, 0.18, 16, 24]} />
         </mesh>
 
-        {/* Top Aerodynamic Blade Fin */}
-        <mesh material={materials.accentTrim} position={[0, 0.24, -0.04]} rotation={[-0.2, 0, 0]} castShadow>
-          <coneGeometry args={[0.04, 0.28, 16]} />
-        </mesh>
-        <mesh material={materials.energyBlades} position={[0, 0.25, -0.04]} rotation={[-0.2, 0, 0]}>
-          <coneGeometry args={[0.02, 0.29, 8]} />
+        {/* Sculpted Faceplate Mask with Geometric Seams */}
+        <mesh material={materials.secondaryArmor} position={[0, -0.02, 0.1]} castShadow>
+          <sphereGeometry args={[0.16, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
         </mesh>
 
-        {/* Swept Sleek Temporal Antennae Blades (Left & Right) */}
-        <group position={[-0.18, 0.12, -0.05]} rotation={[0, -0.2, -0.4]}>
-          <mesh material={materials.secondaryArmor} castShadow>
-            <cylinderGeometry args={[0.02, 0.04, 0.26, 16]} />
+        {/* Sleek Carbon Crest & Blade Antennae */}
+        <mesh material={materials.accentTrim} position={[0, 0.22, -0.04]} rotation={[-0.25, 0, 0]} castShadow>
+          <coneGeometry args={[0.035, 0.26, 16]} />
+        </mesh>
+        <mesh material={materials.holographicBlades} position={[0, 0.23, -0.04]} rotation={[-0.25, 0, 0]}>
+          <coneGeometry args={[0.018, 0.28, 8]} />
+        </mesh>
+
+        {/* Swept Ear Sensor Fins (Left & Right) */}
+        <group position={[-0.17, 0.06, -0.04]} rotation={[0, -0.25, -0.35]}>
+          <mesh material={materials.liquidChrome} castShadow>
+            <cylinderGeometry args={[0.018, 0.035, 0.22, 16]} />
           </mesh>
-          <mesh material={materials.energyBlades} position={[0, 0.13, 0]}>
-            <coneGeometry args={[0.025, 0.08, 12]} />
+          <mesh material={materials.holographicBlades} position={[0, 0.11, 0]}>
+            <coneGeometry args={[0.02, 0.07, 8]} />
+          </mesh>
+        </group>
+        <group position={[0.17, 0.06, -0.04]} rotation={[0, 0.25, 0.35]}>
+          <mesh material={materials.liquidChrome} castShadow>
+            <cylinderGeometry args={[0.018, 0.035, 0.22, 16]} />
+          </mesh>
+          <mesh material={materials.holographicBlades} position={[0, 0.11, 0]}>
+            <coneGeometry args={[0.02, 0.07, 8]} />
           </mesh>
         </group>
 
-        <group position={[0.18, 0.12, -0.05]} rotation={[0, 0.2, 0.4]}>
-          <mesh material={materials.secondaryArmor} castShadow>
-            <cylinderGeometry args={[0.02, 0.04, 0.26, 16]} />
-          </mesh>
-          <mesh material={materials.energyBlades} position={[0, 0.13, 0]}>
-            <coneGeometry args={[0.025, 0.08, 12]} />
-          </mesh>
+        {/* DUAL NEXT-GEN GLOWING CYBERNETIC OPTICAL EYE LENSES */}
+        <group position={[0, 0.02, 0.16]}>
+          {/* Left Cyber Optical Eye */}
+          <group position={[-0.065, 0, 0]}>
+            {/* Chrome Eye Socket Ring */}
+            <mesh material={materials.liquidChrome}>
+              <torusGeometry args={[0.032, 0.008, 16, 24]} />
+            </mesh>
+            {/* Dark Inner Iris Aperture */}
+            <mesh material={materials.darkSubframe} position={[0, 0, -0.005]}>
+              <circleGeometry args={[0.028, 24]} />
+            </mesh>
+            {/* Glowing Optical Sensor Core */}
+            <mesh ref={leftEyeRef} material={materials.opticalLens} position={[0, 0, 0.002]}>
+              <circleGeometry args={[0.018, 24]} />
+            </mesh>
+            {/* Corona Glow Flare */}
+            <mesh ref={eyeGlowLeftRef} material={materials.eyeCorona} position={[0, 0, 0.004]}>
+              <circleGeometry args={[0.038, 24]} />
+            </mesh>
+          </group>
+
+          {/* Right Cyber Optical Eye */}
+          <group position={[0.065, 0, 0]}>
+            {/* Chrome Eye Socket Ring */}
+            <mesh material={materials.liquidChrome}>
+              <torusGeometry args={[0.032, 0.008, 16, 24]} />
+            </mesh>
+            {/* Dark Inner Iris Aperture */}
+            <mesh material={materials.darkSubframe} position={[0, 0, -0.005]}>
+              <circleGeometry args={[0.028, 24]} />
+            </mesh>
+            {/* Glowing Optical Sensor Core */}
+            <mesh ref={rightEyeRef} material={materials.opticalLens} position={[0, 0, 0.002]}>
+              <circleGeometry args={[0.018, 24]} />
+            </mesh>
+            {/* Corona Glow Flare */}
+            <mesh ref={eyeGlowRightRef} material={materials.eyeCorona} position={[0, 0, 0.004]}>
+              <circleGeometry args={[0.038, 24]} />
+            </mesh>
+          </group>
         </group>
 
-        {/* Sweeping Panoramic Curved Visor (Next-Gen Optical Shield) */}
-        <group position={[0, 0.04, 0.1]}>
-          {/* Curved Outer Visor Shield */}
-          <mesh material={materials.opticalVisor} rotation={[0, 0, 0]} castShadow>
-            <sphereGeometry args={[0.18, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.45]} />
-          </mesh>
-
-          {/* Internal Glowing Optical Blade Sensor */}
-          <mesh material={materials.plasmaCore} position={[0, 0.02, 0.06]}>
-            <torusGeometry args={[0.14, 0.012, 16, 32, Math.PI * 0.8]} />
-          </mesh>
-
-          {/* Twin Precision Targeting Sensors */}
-          <mesh material={materials.liquidChrome} position={[-0.09, 0.03, 0.12]}>
-            <sphereGeometry args={[0.016, 16, 16]} />
-          </mesh>
-          <mesh material={materials.liquidChrome} position={[0.09, 0.03, 0.12]}>
-            <sphereGeometry args={[0.016, 16, 16]} />
-          </mesh>
-        </group>
-
-        {/* Articulated Cyber Jaw & Audio Intake Vents */}
-        <group position={[0, -0.09, 0.08]}>
+        {/* Articulated Cybernetic Jaw & Audio Intake Vents */}
+        <group position={[0, -0.08, 0.09]}>
           <mesh material={materials.primaryArmor} castShadow>
-            <capsuleGeometry args={[0.08, 0.1, 16, 16]} />
+            <capsuleGeometry args={[0.065, 0.09, 16, 16]} />
           </mesh>
-          {/* Glowing Hexagonal Intake Matrix */}
-          <mesh material={materials.plasmaCore} position={[0, -0.02, 0.085]}>
-            <cylinderGeometry args={[0.04, 0.04, 0.01, 6]} rotation={[Math.PI / 2, 0, 0]} />
+          {/* Glowing Hexagonal Audio Vents */}
+          <mesh material={materials.plasmaCore} position={[0, -0.02, 0.075]}>
+            <cylinderGeometry args={[0.035, 0.035, 0.01, 6]} rotation={[Math.PI / 2, 0, 0]} />
           </mesh>
-          {/* Dual Chrome Neck Actuators */}
-          <mesh material={materials.liquidChrome} position={[-0.08, -0.06, -0.02]}>
-            <cylinderGeometry args={[0.018, 0.018, 0.12, 16]} />
+          {/* Dual Chrome Hydraulic Neck Pistons */}
+          <mesh material={materials.liquidChrome} position={[-0.07, -0.05, -0.02]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.12, 16]} />
           </mesh>
-          <mesh material={materials.liquidChrome} position={[0.08, -0.06, -0.02]}>
-            <cylinderGeometry args={[0.018, 0.018, 0.12, 16]} />
+          <mesh material={materials.liquidChrome} position={[0.07, -0.05, -0.02]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.12, 16]} />
           </mesh>
         </group>
       </group>
 
       {/* ============================================================ */}
-      {/* 2. CHASSIS & GYROSCOPIC PLASMA ARC REACTOR CORE             */}
+      {/* 2. SCULPTED BIOMECHANICAL TORSO & ARC REACTOR HEART          */}
       {/* ============================================================ */}
-      <group ref={chestRef} position={[0, 0.28, 0]}>
-        {/* Sculpted Biomechanical Torso Base */}
-        <mesh material={materials.primaryArmor} position={[0, 0.04, -0.02]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.26, 0.18, 0.42, 32]} />
+      <group ref={chestRef} position={[0, 0.26, 0]}>
+        {/* Aerodynamic Carbon Torso Core */}
+        <mesh material={materials.primaryArmor} position={[0, 0.02, -0.02]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.24, 0.16, 0.38, 32]} />
         </mesh>
 
-        {/* Sculpted Curved Pectoral Armor Plates */}
-        <mesh material={materials.secondaryArmor} position={[-0.12, 0.14, 0.12]} rotation={[0.15, -0.2, -0.1]} castShadow>
-          <capsuleGeometry args={[0.07, 0.14, 16, 16]} />
+        {/* Sculpted Curved Pectoral Muscle Plates */}
+        <mesh material={materials.secondaryArmor} position={[-0.11, 0.12, 0.11]} rotation={[0.12, -0.18, -0.08]} castShadow>
+          <capsuleGeometry args={[0.065, 0.13, 16, 16]} />
         </mesh>
-        <mesh material={materials.secondaryArmor} position={[0.12, 0.14, 0.12]} rotation={[0.15, 0.2, 0.1]} castShadow>
-          <capsuleGeometry args={[0.07, 0.14, 16, 16]} />
-        </mesh>
-
-        {/* Chrome Collar Clavicle Tendons */}
-        <mesh material={materials.liquidChrome} position={[-0.14, 0.25, 0.04]} rotation={[0, 0, 0.4]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.2, 16]} />
-        </mesh>
-        <mesh material={materials.liquidChrome} position={[0.14, 0.25, 0.04]} rotation={[0, 0, -0.4]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.2, 16]} />
+        <mesh material={materials.secondaryArmor} position={[0.11, 0.12, 0.11]} rotation={[0.12, 0.18, 0.08]} castShadow>
+          <capsuleGeometry args={[0.065, 0.13, 16, 16]} />
         </mesh>
 
-        {/* Central Quantum Arc Reactor Housing */}
-        <group position={[0, 0.06, 0.15]}>
-          {/* Beveled Reactor Rim */}
-          <mesh material={materials.accentTrim} castShadow>
-            <torusGeometry args={[0.11, 0.02, 16, 32]} />
+        {/* Clavicle Power Conduits (Liquid Chrome) */}
+        <mesh material={materials.liquidChrome} position={[-0.13, 0.22, 0.04]} rotation={[0, 0, 0.4]}>
+          <cylinderGeometry args={[0.018, 0.018, 0.18, 16]} />
+        </mesh>
+        <mesh material={materials.liquidChrome} position={[0.13, 0.22, 0.04]} rotation={[0, 0, -0.4]}>
+          <cylinderGeometry args={[0.018, 0.018, 0.18, 16]} />
+        </mesh>
+
+        {/* CENTRAL GLOWING QUANTUM ARC REACTOR CORE */}
+        <group position={[0, 0.05, 0.14]}>
+          {/* Beveled Chrome Reactor Housing */}
+          <mesh material={materials.liquidChrome} castShadow>
+            <torusGeometry args={[0.095, 0.018, 16, 32]} />
           </mesh>
 
-          {/* Gyroscopic Multi-Axis Outer Spinning Rings */}
-          <group ref={coreOuterRef}>
-            <mesh ref={gyroRing1Ref} material={materials.energyBlades}>
-              <torusGeometry args={[0.085, 0.008, 16, 24]} />
-            </mesh>
-            <mesh ref={gyroRing2Ref} material={materials.energyBlades}>
-              <torusGeometry args={[0.065, 0.006, 16, 24]} />
-            </mesh>
-          </group>
-
-          {/* Inner Pulsing Plasma Core */}
-          <mesh ref={coreInnerRef} material={materials.plasmaCore}>
-            <dodecahedronGeometry args={[0.04, 2]} />
+          {/* Gyroscopic Multi-Axis Spinning Rings */}
+          <mesh ref={gyroRing1Ref} material={materials.holographicBlades}>
+            <torusGeometry args={[0.075, 0.007, 16, 24]} />
           </mesh>
-          {/* Volumetric Core Glow Halo */}
-          <mesh material={materials.energyBlades}>
-            <sphereGeometry args={[0.06, 16, 16]} />
+          <mesh ref={gyroRing2Ref} material={materials.holographicBlades}>
+            <torusGeometry args={[0.055, 0.005, 16, 24]} />
+          </mesh>
+
+          {/* Inner Pulsing Plasma Crystal */}
+          <mesh ref={reactorCoreRef} material={materials.plasmaCore}>
+            <dodecahedronGeometry args={[0.035, 1]} />
+          </mesh>
+          {/* Volumetric Core Flare */}
+          <mesh material={materials.holographicBlades}>
+            <sphereGeometry args={[0.05, 16, 16]} />
           </mesh>
         </group>
 
-        {/* Exposed Spinal Hydraulic Vertebrae (Rear) */}
-        <group position={[0, 0.02, -0.16]}>
-          {[-0.12, -0.04, 0.04, 0.12].map((y, idx) => (
+        {/* Exposed Spinal Hydraulic Vertebrae (Rear Neural Conduits) */}
+        <group ref={spineConduitRef} position={[0, 0.02, -0.15]}>
+          {[-0.1, -0.03, 0.04, 0.11].map((y, idx) => (
             <group key={idx} position={[0, y, 0]}>
               <mesh material={materials.liquidChrome}>
-                <cylinderGeometry args={[0.04, 0.04, 0.05, 16]} rotation={[Math.PI / 2, 0, 0]} />
+                <cylinderGeometry args={[0.035, 0.035, 0.045, 16]} rotation={[Math.PI / 2, 0, 0]} />
               </mesh>
-              <mesh material={materials.plasmaCore} position={[0, 0, -0.02]}>
-                <sphereGeometry args={[0.012, 12, 12]} />
+              <mesh material={materials.plasmaCore} position={[0, 0, -0.018]}>
+                <sphereGeometry args={[0.01, 12, 12]} />
               </mesh>
             </group>
           ))}
@@ -411,187 +423,153 @@ export function NftMecha3D({
       </group>
 
       {/* ============================================================ */}
-      {/* 3. SCULPTED CYBERNETIC SHOULDERS & ARMS                      */}
+      {/* 3. ARTICULATED CYBERNETIC ARMS & SHOULDERS                  */}
       {/* ============================================================ */}
       {/* Left Arm & Pauldron */}
-      <group ref={leftArmRef} position={[-0.34, 0.42, 0]}>
-        {/* Layered Aerodynamic Pauldron (Shoulder Pad) */}
-        <mesh material={materials.primaryArmor} position={[-0.04, 0.02, 0]} rotation={[0, 0, 0.35]} castShadow>
-          <sphereGeometry args={[0.13, 24, 24]} />
+      <group ref={leftArmRef} position={[-0.31, 0.38, 0]}>
+        {/* Layered Aerodynamic Pauldron (Shoulder Armor) */}
+        <mesh material={materials.primaryArmor} position={[-0.03, 0.02, 0]} rotation={[0, 0, 0.3]} castShadow>
+          <sphereGeometry args={[0.11, 24, 24]} />
         </mesh>
-        <mesh material={materials.secondaryArmor} position={[-0.08, 0.06, 0]} rotation={[0, 0, 0.5]} castShadow>
-          <capsuleGeometry args={[0.06, 0.16, 12, 16]} />
+        <mesh material={materials.secondaryArmor} position={[-0.06, 0.05, 0]} rotation={[0, 0, 0.45]} castShadow>
+          <capsuleGeometry args={[0.05, 0.14, 12, 16]} />
         </mesh>
-        <mesh material={materials.energyBlades} position={[-0.14, 0.08, 0]} rotation={[0, 0, 0.5]}>
-          <coneGeometry args={[0.02, 0.18, 8]} />
-        </mesh>
-
-        {/* Upper Arm Bicep */}
-        <mesh material={materials.darkSubframe} position={[0, -0.16, 0]}>
-          <cylinderGeometry args={[0.045, 0.04, 0.18, 16]} />
-        </mesh>
-        <mesh material={materials.liquidChrome} position={[0.02, -0.16, 0.02]}>
-          <cylinderGeometry args={[0.015, 0.015, 0.2, 12]} />
+        <mesh material={materials.holographicBlades} position={[-0.12, 0.07, 0]} rotation={[0, 0, 0.45]}>
+          <coneGeometry args={[0.018, 0.16, 8]} />
         </mesh>
 
-        {/* Elbow Joint & Forearm Blade */}
-        <mesh material={materials.accentTrim} position={[0, -0.27, 0]}>
-          <sphereGeometry args={[0.04, 16, 16]} />
+        {/* Upper Bicep & Hydraulic Actuators */}
+        <mesh material={materials.darkSubframe} position={[0, -0.14, 0]}>
+          <cylinderGeometry args={[0.04, 0.035, 0.16, 16]} />
         </mesh>
-        <mesh material={materials.primaryArmor} position={[0, -0.42, 0.02]} castShadow>
-          <capsuleGeometry args={[0.048, 0.2, 16, 16]} />
-        </mesh>
-        <mesh material={materials.energyBlades} position={[-0.05, -0.42, -0.02]} rotation={[0, 0, -0.1]}>
-          <coneGeometry args={[0.02, 0.24, 8]} />
+        <mesh material={materials.liquidChrome} position={[0.02, -0.14, 0.02]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.18, 12]} />
         </mesh>
 
-        {/* Articulated Cyber Hand */}
-        <mesh material={materials.liquidChrome} position={[0, -0.58, 0.02]}>
+        {/* Elbow Joint & Forearm */}
+        <mesh material={materials.accentTrim} position={[0, -0.24, 0]}>
           <sphereGeometry args={[0.035, 16, 16]} />
+        </mesh>
+        <mesh material={materials.primaryArmor} position={[0, -0.38, 0.02]} castShadow>
+          <capsuleGeometry args={[0.042, 0.18, 16, 16]} />
+        </mesh>
+
+        {/* Articulated Cyber Hand & Plasma Fingers */}
+        <mesh material={materials.liquidChrome} position={[0, -0.52, 0.02]}>
+          <sphereGeometry args={[0.03, 16, 16]} />
         </mesh>
       </group>
 
       {/* Right Arm & Pauldron */}
-      <group ref={rightArmRef} position={[0.34, 0.42, 0]}>
+      <group ref={rightArmRef} position={[0.31, 0.38, 0]}>
         {/* Layered Aerodynamic Pauldron */}
-        <mesh material={materials.primaryArmor} position={[0.04, 0.02, 0]} rotation={[0, 0, -0.35]} castShadow>
-          <sphereGeometry args={[0.13, 24, 24]} />
+        <mesh material={materials.primaryArmor} position={[0.03, 0.02, 0]} rotation={[0, 0, -0.3]} castShadow>
+          <sphereGeometry args={[0.11, 24, 24]} />
         </mesh>
-        <mesh material={materials.secondaryArmor} position={[0.08, 0.06, 0]} rotation={[0, 0, -0.5]} castShadow>
-          <capsuleGeometry args={[0.06, 0.16, 12, 16]} />
+        <mesh material={materials.secondaryArmor} position={[0.06, 0.05, 0]} rotation={[0, 0, -0.45]} castShadow>
+          <capsuleGeometry args={[0.05, 0.14, 12, 16]} />
         </mesh>
-        <mesh material={materials.energyBlades} position={[0.14, 0.08, 0]} rotation={[0, 0, -0.5]}>
-          <coneGeometry args={[0.02, 0.18, 8]} />
-        </mesh>
-
-        {/* Upper Arm Bicep */}
-        <mesh material={materials.darkSubframe} position={[0, -0.16, 0]}>
-          <cylinderGeometry args={[0.045, 0.04, 0.18, 16]} />
-        </mesh>
-        <mesh material={materials.liquidChrome} position={[-0.02, -0.16, 0.02]}>
-          <cylinderGeometry args={[0.015, 0.015, 0.2, 12]} />
+        <mesh material={materials.holographicBlades} position={[0.12, 0.07, 0]} rotation={[0, 0, -0.45]}>
+          <coneGeometry args={[0.018, 0.16, 8]} />
         </mesh>
 
-        {/* Elbow Joint & Forearm Blade */}
-        <mesh material={materials.accentTrim} position={[0, -0.27, 0]}>
-          <sphereGeometry args={[0.04, 16, 16]} />
+        {/* Upper Bicep & Hydraulic Actuators */}
+        <mesh material={materials.darkSubframe} position={[0, -0.14, 0]}>
+          <cylinderGeometry args={[0.04, 0.035, 0.16, 16]} />
         </mesh>
-        <mesh material={materials.primaryArmor} position={[0, -0.42, 0.02]} castShadow>
-          <capsuleGeometry args={[0.048, 0.2, 16, 16]} />
-        </mesh>
-        <mesh material={materials.energyBlades} position={[0.05, -0.42, -0.02]} rotation={[0, 0, 0.1]}>
-          <coneGeometry args={[0.02, 0.24, 8]} />
+        <mesh material={materials.liquidChrome} position={[-0.02, -0.14, 0.02]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.18, 12]} />
         </mesh>
 
-        {/* Articulated Cyber Hand */}
-        <mesh material={materials.liquidChrome} position={[0, -0.58, 0.02]}>
+        {/* Elbow Joint & Forearm */}
+        <mesh material={materials.accentTrim} position={[0, -0.24, 0]}>
           <sphereGeometry args={[0.035, 16, 16]} />
         </mesh>
+        <mesh material={materials.primaryArmor} position={[0, -0.38, 0.02]} castShadow>
+          <capsuleGeometry args={[0.042, 0.18, 16, 16]} />
+        </mesh>
+
+        {/* Articulated Cyber Hand & Plasma Fingers */}
+        <mesh material={materials.liquidChrome} position={[0, -0.52, 0.02]}>
+          <sphereGeometry args={[0.03, 16, 16]} />
+        </mesh>
       </group>
 
       {/* ============================================================ */}
-      {/* 4. FLOATING CRYSTALLINE WING BLADES & ION THRUSTERS         */}
+      {/* 4. FLOATING MAGNETIC DRONE WINGS & CELESTIAL HALO            */}
       {/* ============================================================ */}
-      {/* Left Wing Blade Rig */}
-      <group ref={leftWingRef} position={[-0.22, 0.36, -0.18]}>
-        <mesh material={materials.secondaryArmor} rotation={[0, 0, -0.6]} castShadow>
-          <coneGeometry args={[0.045, 0.52, 16]} />
+      {/* Left Drone Wing */}
+      <group ref={leftDroneWingRef} position={[-0.26, 0.38, -0.15]}>
+        <mesh material={materials.secondaryArmor} rotation={[0, 0, -0.55]} castShadow>
+          <coneGeometry args={[0.038, 0.48, 16]} />
         </mesh>
-        <mesh material={materials.energyBlades} position={[-0.08, 0.12, 0]} rotation={[0, 0, -0.6]}>
-          <coneGeometry args={[0.025, 0.6, 8]} />
-        </mesh>
-        {/* Plasma Winglet */}
-        <mesh material={materials.energyBlades} position={[-0.14, 0.26, 0]} rotation={[0, 0, -0.8]}>
-          <coneGeometry args={[0.018, 0.32, 8]} />
+        <mesh material={materials.holographicBlades} position={[-0.07, 0.1, 0]} rotation={[0, 0, -0.55]}>
+          <coneGeometry args={[0.02, 0.54, 8]} />
         </mesh>
       </group>
 
-      {/* Right Wing Blade Rig */}
-      <group ref={rightWingRef} position={[0.22, 0.36, -0.18]}>
-        <mesh material={materials.secondaryArmor} rotation={[0, 0, 0.6]} castShadow>
-          <coneGeometry args={[0.045, 0.52, 16]} />
+      {/* Right Drone Wing */}
+      <group ref={rightDroneWingRef} position={[0.26, 0.38, -0.15]}>
+        <mesh material={materials.secondaryArmor} rotation={[0, 0, 0.55]} castShadow>
+          <coneGeometry args={[0.038, 0.48, 16]} />
         </mesh>
-        <mesh material={materials.energyBlades} position={[0.08, 0.12, 0]} rotation={[0, 0, 0.6]}>
-          <coneGeometry args={[0.025, 0.6, 8]} />
-        </mesh>
-        {/* Plasma Winglet */}
-        <mesh material={materials.energyBlades} position={[0.14, 0.26, 0]} rotation={[0, 0, 0.8]}>
-          <coneGeometry args={[0.018, 0.32, 8]} />
-        </mesh>
-      </group>
-
-      {/* Twin Ion Thruster Pods (Rear Lower) */}
-      <group position={[-0.14, 0.08, -0.2]}>
-        <mesh material={materials.darkSubframe} castShadow>
-          <cylinderGeometry args={[0.045, 0.055, 0.2, 24]} />
-        </mesh>
-        <mesh ref={leftThrusterRef} material={materials.ionPlume} position={[0, -0.16, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.04, 0.16, 16]} />
-        </mesh>
-      </group>
-
-      <group position={[0.14, 0.08, -0.2]}>
-        <mesh material={materials.darkSubframe} castShadow>
-          <cylinderGeometry args={[0.045, 0.055, 0.2, 24]} />
-        </mesh>
-        <mesh ref={rightThrusterRef} material={materials.ionPlume} position={[0, -0.16, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.04, 0.16, 16]} />
+        <mesh material={materials.holographicBlades} position={[0.07, 0.1, 0]} rotation={[0, 0, 0.55]}>
+          <coneGeometry args={[0.02, 0.54, 8]} />
         </mesh>
       </group>
 
       {/* Celestial Holographic Data Halo (Floating Overhead) */}
-      <group ref={haloRef} position={[0, 0.95, -0.12]}>
-        <mesh material={materials.energyBlades}>
-          <torusGeometry args={[0.34, 0.01, 16, 48]} />
+      <group ref={haloRef} position={[0, 0.9, -0.1]}>
+        <mesh material={materials.holographicBlades}>
+          <torusGeometry args={[0.3, 0.008, 16, 48]} />
         </mesh>
-        {/* Floating Rune Orbit Nodes */}
         {[0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2].map((angle, idx) => (
           <mesh
             key={idx}
             material={materials.plasmaCore}
-            position={[Math.cos(angle) * 0.34, Math.sin(angle) * 0.34, 0]}
+            position={[Math.cos(angle) * 0.3, Math.sin(angle) * 0.3, 0]}
           >
-            <sphereGeometry args={[0.018, 12, 12]} />
+            <sphereGeometry args={[0.014, 12, 12]} />
           </mesh>
         ))}
       </group>
 
       {/* ============================================================ */}
-      {/* 5. TAPERED WAIST & HOVERING ANTI-GRAVITY REPULSOR CORE       */}
+      {/* 5. TAPERED WAIST & ANTI-GRAVITY REPULSOR CORE               */}
       {/* ============================================================ */}
-      <group position={[0, -0.06, 0]}>
+      <group position={[0, -0.04, 0]}>
         {/* Tapered Ballistic Waist Pelvis */}
         <mesh material={materials.primaryArmor} castShadow>
-          <cylinderGeometry args={[0.16, 0.08, 0.22, 32]} />
+          <cylinderGeometry args={[0.14, 0.07, 0.18, 32]} />
         </mesh>
         {/* Chrome Hydraulic Hip Actuators */}
-        <mesh material={materials.liquidChrome} position={[-0.1, 0.02, 0]} rotation={[0, 0, 0.3]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.16, 16]} />
+        <mesh material={materials.liquidChrome} position={[-0.08, 0.02, 0]} rotation={[0, 0, 0.25]}>
+          <cylinderGeometry args={[0.016, 0.016, 0.14, 16]} />
         </mesh>
-        <mesh material={materials.liquidChrome} position={[0.1, 0.02, 0]} rotation={[0, 0, -0.3]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.16, 16]} />
+        <mesh material={materials.liquidChrome} position={[0.08, 0.02, 0]} rotation={[0, 0, -0.25]}>
+          <cylinderGeometry args={[0.016, 0.016, 0.14, 16]} />
         </mesh>
 
         {/* Anti-Gravity Repulsor Emitter (Bottom Plume) */}
-        <mesh material={materials.accentTrim} position={[0, -0.14, 0]}>
-          <cylinderGeometry args={[0.06, 0.04, 0.06, 24]} />
+        <mesh material={materials.accentTrim} position={[0, -0.12, 0]}>
+          <cylinderGeometry args={[0.05, 0.035, 0.05, 24]} />
         </mesh>
-        <mesh ref={repulsorGlowRef} material={materials.energyBlades} position={[0, -0.2, 0]}>
-          <torusGeometry args={[0.12, 0.015, 16, 32]} rotation={[Math.PI / 2, 0, 0]} />
+        <mesh material={materials.holographicBlades} position={[0, -0.18, 0]}>
+          <torusGeometry args={[0.1, 0.012, 16, 32]} rotation={[Math.PI / 2, 0, 0]} />
         </mesh>
-        <mesh material={materials.ionPlume} position={[0, -0.25, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.07, 0.22, 24]} />
+        <mesh material={materials.plasmaCore} position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[0.055, 0.18, 24]} />
         </mesh>
       </group>
 
-      {/* Volumetric Cosmic Sparkles & Floating Energy Dust */}
+      {/* Floating Cybernetic Sparkle Motes */}
       <Sparkles
-        count={35}
-        scale={2.2}
-        size={2.5}
-        speed={0.6}
+        count={25}
+        scale={2.0}
+        size={2.0}
+        speed={0.5}
         color={palette.glow}
-        opacity={0.7}
+        opacity={0.65}
       />
     </group>
   );

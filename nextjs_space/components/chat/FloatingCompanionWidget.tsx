@@ -142,7 +142,7 @@ export function FloatingCompanionWidget() {
 
         {/* Floating Avatar Trigger Orb */}
         <motion.button
-          whileHover={{ scale: 1.12 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => {
             if (showQuickMenu) {
@@ -151,36 +151,18 @@ export function FloatingCompanionWidget() {
               setShowQuickMenu(true);
             }
           }}
-          className="relative group p-1 rounded-full bg-gradient-to-r from-[#00F0FF] via-[#A855F7] to-[#FFD700] shadow-[0_0_35px_rgba(0,240,255,0.5)] cursor-pointer select-none"
+          className="relative group p-1 rounded-full bg-gradient-to-r from-[#00F0FF] via-[#A855F7] to-[#FFD700] shadow-[0_0_25px_rgba(0,240,255,0.4)] cursor-pointer select-none"
         >
-          {/* Outer Pulsing Rotating Cyber Ring */}
-          <div className="absolute -inset-1 rounded-full border border-dashed border-cyan-400/40 animate-[spin_12s_linear_infinite] pointer-events-none" />
-          <div className="absolute -inset-2.5 rounded-full border border-purple-500/20 animate-[spin_20s_linear_infinite_reverse] pointer-events-none" />
-
-          <div className="w-16 h-16 rounded-full bg-[#08080E] p-0.5 flex items-center justify-center overflow-hidden relative shadow-inner">
-            {/* Flowing Cybernetic Background Video inside Orb */}
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-screen scale-150 pointer-events-none"
-              src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4"
-            />
-            {/* Cosmic Radial Glow inside Orb */}
-            <div className="absolute inset-0 bg-radial-[at_50%_50%] from-cyan-500/30 via-indigo-600/20 to-black/60 mix-blend-color-dodge pointer-events-none" />
-
+          <div className="w-14 h-14 rounded-full bg-[#08080E] p-0.5 flex items-center justify-center overflow-hidden relative">
             {/* Live 3D companion — mirrors the user's real run state */}
-            <div className="relative z-10 w-full h-full">
-              <MiniStage3D
-                avatarId={(activeRun.working ? activeRun.archetype : (agentData.archetype || 'cyber_humanoid')).toLowerCase()}
-                emotion={activeRun.working ? 'battle' : 'confident'}
-                isWorking={activeRun.working}
-                workLabel={(activeRun.taskTitle || activeRun.label || '').slice(0, 42)}
-                workProgress={activeRun.progress ?? undefined}
-                className="w-full h-full"
-              />
-            </div>
+            <MiniStage3D
+              avatarId={(activeRun.working ? activeRun.archetype : (agentData.archetype || 'cyber_humanoid')).toLowerCase()}
+              emotion={activeRun.working ? 'battle' : 'confident'}
+              isWorking={activeRun.working}
+              workLabel={(activeRun.taskTitle || activeRun.label || '').slice(0, 42)}
+              workProgress={activeRun.progress ?? undefined}
+              className="w-full h-full"
+            />
 
             {/* Live / Running Badge */}
             <span
