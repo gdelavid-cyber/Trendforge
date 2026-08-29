@@ -41,24 +41,24 @@ export class OpenRouterError extends Error {
 
 export const MODEL_TIERS = {
   cheap: {
-    primary: 'openrouter/auto',
-    fallback: 'anthropic/claude-3-haiku',
+    primary: 'anthropic/claude-3-haiku',
+    fallback: 'openai/gpt-4o-mini',
     useFor: ['discovery', 'logging', 'delivery', 'simple_analysis'],
     temperature: 0.3,
     maxTokens: 4096,
     costCapPerCall: 0.02,
   },
   standard: {
-    primary: 'openrouter/auto',
-    fallback: 'openai/gpt-4o-mini',
+    primary: 'openai/gpt-4o-mini',
+    fallback: 'anthropic/claude-3-haiku',
     useFor: ['listing', 'outreach', 'validation', 'analysis'],
     temperature: 0.5,
     maxTokens: 8192,
     costCapPerCall: 0.10,
   },
   premium: {
-    primary: 'openrouter/auto',
-    fallback: 'anthropic/claude-3.5-sonnet',
+    primary: 'anthropic/claude-3.5-sonnet',
+    fallback: 'openai/gpt-4o',
     useFor: ['building', 'closing', 'dispute_handling', 'strategy', 'master'],
     temperature: 0.7,
     maxTokens: 16384,
@@ -73,8 +73,8 @@ export const MODEL_TIERS = {
     costCapPerCall: 0.50,
   },
   discovery: {
-    primary: 'openrouter/auto',
-    fallback: 'meta-llama/llama-3.1-70b-instruct',
+    primary: 'anthropic/claude-3-haiku',
+    fallback: 'openai/gpt-4o-mini',
     temperature: 0.3,
     maxTokens: 2048,
     costCapPerCall: 0.02,
@@ -88,9 +88,9 @@ export const MODEL_TIERS = {
   },
   validation: {
     primary: 'openai/gpt-4o-mini',
-    fallback: 'meta-llama/llama-3.1-8b-instruct',
-    temperature: 0.0,
-    maxTokens: 2048,
+    fallback: 'anthropic/claude-3-haiku',
+    temperature: 0.2,
+    maxTokens: 4096,
     costCapPerCall: 0.05,
   },
   outreach: {
@@ -184,6 +184,33 @@ export class OpenRouterClient {
           const data = await response.json();
           return data;
         }
+        
+        // If 402 (insufficient credits) or rate-limited, try OpenRouter's free high-quality models
+        if (response.status === 402 || response.status === 429 || response.status === 404) {
+          try {
+            const freeRes = await fetch(`${this.baseUrl}/chat/completions`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://trendly-platform-chi.vercel.app',
+                'X-Title': 'Trendly Swarm',
+              },
+              body: JSON.stringify({
+                ...request,
+                model: 'meta-llama/llama-3.3-70b-instruct:free',
+                max_tokens: Math.min(request.max_tokens || 4096, 4096),
+              }),
+              signal: AbortSignal.timeout(60000),
+            });
+            if (freeRes.ok) {
+              return await freeRes.json();
+            }
+          } catch {
+            // Proceed to secondary fallback
+          }
+        }
+
         console.warn(`OpenRouter primary error ${response.status}. Trying fallback providers...`);
       } catch (err) {
         console.warn('OpenRouter connection failed. Trying direct fallback providers:', err);
