@@ -360,7 +360,7 @@ describe('video runner', () => {
         },
       ],
       caption: 'Autonomous AI swarms doing the heavy lifting. 🔥',
-      hashtags: ['#Trendforge', '#AIAutomation', '#Web4'],
+      hashtags: ['#Trendly', '#AIAutomation', '#Web4'],
       estimatedViewsPotential: '50k - 100k',
     });
     const llm = vi.fn(async () => videoJson);

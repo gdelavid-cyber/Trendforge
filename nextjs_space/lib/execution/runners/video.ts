@@ -73,7 +73,7 @@ Format your output as clean JSON matching this exact structure (do NOT include m
     }
   ],
   "caption": "Viral post description text with curiosity loop",
-  "hashtags": ["#AIHustle", "#Trendforge", "#Web4", "#Automation", "#PassiveIncome"],
+  "hashtags": ["#AIHustle", "#Trendly", "#Web4", "#Automation", "#PassiveIncome"],
   "estimatedViewsPotential": "50k - 250k"
 }`;
 
@@ -118,7 +118,7 @@ Format your output as clean JSON matching this exact structure (do NOT include m
         },
       ],
       caption: `How autonomous AI agents are revolutionizing monetization workflows. Full blueprint inside. 🚀`,
-      hashtags: ['#Trendforge', '#AIAutomation', '#Web4', '#Productivity'],
+      hashtags: ['#Trendly', '#AIAutomation', '#Web4', '#Productivity'],
       estimatedViewsPotential: '25k - 100k',
     };
   }
@@ -131,7 +131,7 @@ Format your output as clean JSON matching this exact structure (do NOT include m
     )
     .join('\n\n');
 
-  const summaryOutput = `🎬 **Viral Video Production Package (9:16 Shorts/TikTok)**\n\n**Title:** ${parsed.title || step.title}\n**Hook:** "${parsed.hook}"\n\n### Storyboard & Script:\n${scenesText}\n\n**Post Caption:**\n${parsed.caption}\n\n**Hashtags:** ${Array.isArray(parsed.hashtags) ? parsed.hashtags.join(' ') : '#Trendforge #AI'}`;
+  const summaryOutput = `🎬 **Viral Video Production Package (9:16 Shorts/TikTok)**\n\n**Title:** ${parsed.title || step.title}\n**Hook:** "${parsed.hook}"\n\n### Storyboard & Script:\n${scenesText}\n\n**Post Caption:**\n${parsed.caption}\n\n**Hashtags:** ${Array.isArray(parsed.hashtags) ? parsed.hashtags.join(' ') : '#Trendly #AI'}`;
 
   return {
     title: parsed.title || step.title,

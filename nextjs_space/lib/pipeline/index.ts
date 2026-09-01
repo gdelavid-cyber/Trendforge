@@ -1,5 +1,7 @@
 // Enhanced Autonomous Viral Intelligence & Multi-Source Scraper Engine
 
+export * from './classifier';
+
 export function validatePipelineKey(request: Request): boolean {
   const valid = process.env.PIPELINE_API_KEY;
   if (!valid) return false;

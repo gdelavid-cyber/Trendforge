@@ -88,10 +88,10 @@ describe('guide content catalog', () => {
   });
 
   it('resolves the right guide for exact paths, prefixes, and dynamic routes', () => {
-    expect(guideForPath('/dashboard')?.title).toBe('Dashboard');
-    expect(guideForPath('/tasks?tab=stream')?.title).toBe('Weekly Tasks');
-    expect(guideForPath('/tasks/some-task-id')?.title).toBe('Task Detail');
-    expect(guideForPath('/agents/web4')?.title).toBe('Sovereign Agents');
+    expect(guideForPath('/dashboard')?.title).toBe('Dashboard & Portfolio');
+    expect(guideForPath('/tasks?tab=stream')?.title).toBe('Weekly Tasks & Power Moves');
+    expect(guideForPath('/tasks/some-task-id')?.title).toBe('Task War Room & Execution');
+    expect(guideForPath('/agents/web4')?.title).toBe('Sovereign Web4 Agents');
     expect(guideForPath('/totally-unknown')).toBeNull();
   });
 

@@ -1,5 +1,6 @@
-import { sendEmail, sendPasswordResetEmail, sendAgentBriefingEmail } from '@/lib/email/sendgrid';
-export { sendEmail, sendPasswordResetEmail, sendAgentBriefingEmail };
+import { sendEmail, sendPasswordResetEmail, sendAgentBriefingEmail } from './sendgrid';
+
+export * from './sendgrid';
 
 export async function sendNotificationEmail(params: {
   notificationId: string;

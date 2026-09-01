@@ -364,7 +364,7 @@ export function AgentStatusClient({ runId }: { runId: string }) {
 
                 <div className="flex items-center gap-3">
                   <a
-                    href="https://vercel.com/new/clone?repository-url=https://github.com/gdelavid-cyber/Trendforge"
+                    href="https://vercel.com/new/clone?repository-url=https://github.com/gdelavid-cyber/Trendly"
                     target="_blank"
                     rel="noreferrer"
                     className="px-4 py-2 bg-[#00F0FF] text-black font-extrabold rounded-lg text-xs uppercase flex items-center gap-1.5 hover:opacity-90 transition-opacity font-mono"
