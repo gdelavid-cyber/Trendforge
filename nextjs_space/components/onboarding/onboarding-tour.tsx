@@ -90,7 +90,7 @@ export function OnboardingTour({ user }: { user: any }) {
       body: JSON.stringify({ step: 5, isCompleted: true }),
     });
     setIsOpen(false);
-    toast.success('Onboarding complete! Your $25.00 Micro-Grant is ready to claim in Dashboard Grants.');
+    toast.success('Onboarding complete! Welcome to Trendly.');
   };
 
   if (!isOpen) return null;
@@ -148,7 +148,7 @@ export function OnboardingTour({ user }: { user: any }) {
               <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-1 text-xs font-mono text-green-400">
                 <div>✓ Conway Sovereign Crypto Wallets (USDC)</div>
                 <div>✓ EIP-8004 Verifiable On-Chain Identities</div>
-                <div>✓ $25.00 Bootstrap Micro-Grant for new operatives</div>
+                <div>✓ Autonomous Multi-Agent Swarm & Power Moves</div>
               </div>
               <Button
                 onClick={() => handleNextStep(2)}
