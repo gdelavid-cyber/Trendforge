@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,10 +20,15 @@ import {
   Users,
   Video,
   Zap,
+  Calculator,
+  Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { AgentSwarmDrawer } from '@/components/earn/agent-swarm-drawer';
+import { UnitEconomicsModal } from '@/components/earn/unit-economics-modal';
+import { FULL_FINANCIAL_MODELS, getPlatformArbitrageMatrix } from '@/lib/earn/agents';
 
 interface VideoPlay {
   id: string;
@@ -126,6 +131,8 @@ export function VideoEmpireFlow({ userEarnings = 0 }: { userEarnings?: number })
   const [videoRenderReady, setVideoRenderReady] = useState(false);
   const [sendingMode, setSendingMode] = useState<'MANUAL' | 'DRAFT_APPROVE' | 'FULL_AUTO'>('MANUAL');
   const [selectedBuyerIds, setSelectedBuyerIds] = useState<string[]>(['b-1', 'b-2', 'b-3']);
+  const [showEconomicsModal, setShowEconomicsModal] = useState(false);
+  const [syndicated, setSyndicated] = useState(false);
 
   // Video generation simulation in Step 3
   useEffect(() => {
@@ -157,9 +164,18 @@ export function VideoEmpireFlow({ userEarnings = 0 }: { userEarnings?: number })
           <h1 className="text-3xl sm:text-5xl font-black text-white mb-3">
             Pick Your Video Money Play
           </h1>
-          <p className="text-sm md:text-base text-[#8E9BB4]">
+          <p className="text-sm md:text-base text-[#8E9BB4] mb-4">
             Trendly’s faceless video maker builds high-retention 9:16 assets automatically. Select the business model that matches your target audience.
           </p>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowEconomicsModal(true)}
+            className="h-8 text-xs font-mono border-[#f59e0b]/30 text-[#f59e0b] hover:bg-[#f59e0b]/10"
+          >
+            <Calculator className="w-3.5 h-3.5 mr-1.5" /> Inspect Retainer Math ($4,705/hr Effective Rate)
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -647,6 +663,67 @@ export function VideoEmpireFlow({ userEarnings = 0 }: { userEarnings?: number })
               </div>
             </div>
 
+            {/* Platform Arbitrage Scout (Whop, Gumroad, Stan, Etsy) */}
+            <div className="p-6 rounded-2xl bg-black/40 border border-[#8b5cf6]/30 space-y-4 font-mono">
+              <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2">
+                  <Store className="w-4 h-4 text-[#8b5cf6]" />
+                  <span className="text-xs font-bold text-white uppercase">
+                    PLATFORM ARBITRAGE SCOUT (PASSIVE DIGITAL SALES)
+                  </span>
+                </div>
+                <span className="text-[10px] text-[#00FF66] bg-[#00FF66]/10 px-2 py-0.5 rounded border border-[#00FF66]/20 font-bold">
+                  MULTI-PLATFORM READY
+                </span>
+              </div>
+
+              <p className="text-xs text-[#8E9BB4]">
+                Don't just sell monthly retainers to clients. License this exact video clip bundle across high-volume digital marketplaces simultaneously.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-white">Whop Listing</div>
+                    <div className="text-[10px] text-[#8E9BB4]">$49.00 (95% Payout)</div>
+                  </div>
+                  <span className="text-[10px] text-[#00FF66] font-bold">Score: 94/100</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-white">Gumroad Asset</div>
+                    <div className="text-[10px] text-[#8E9BB4]">$39.00 (90% Payout)</div>
+                  </div>
+                  <span className="text-[10px] text-[#00FF66] font-bold">Score: 88/100</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-white">Stan Store Bundle</div>
+                    <div className="text-[10px] text-[#8E9BB4]">$29.00 (95% Payout)</div>
+                  </div>
+                  <span className="text-[10px] text-[#00FF66] font-bold">Score: 92/100</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-white">Etsy Template Pack</div>
+                    <div className="text-[10px] text-[#8E9BB4]">$19.00 (High Volume)</div>
+                  </div>
+                  <span className="text-[10px] text-[#00FF66] font-bold">Score: 82/100</span>
+                </div>
+              </div>
+
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSyndicated(true);
+                  toast.success('Syndicated video pack across Whop, Gumroad, Stan Store & Etsy!');
+                }}
+                className="w-full bg-[#8b5cf6] text-white font-bold uppercase text-xs h-9 hover:bg-[#8b5cf6]/90 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+              >
+                {syndicated ? '✓ Syndicated to All 4 Platforms' : 'Syndicate to Whop, Gumroad, Stan & Etsy &rarr;'}
+              </Button>
+            </div>
+
             {/* Progressive Scaling Unlocks */}
             <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="text-xs font-bold text-white uppercase">
@@ -682,6 +759,16 @@ export function VideoEmpireFlow({ userEarnings = 0 }: { userEarnings?: number })
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating 9-Agent Swarm Drawer */}
+      <AgentSwarmDrawer />
+
+      {/* Molecular Economics Modal */}
+      <UnitEconomicsModal
+        isOpen={showEconomicsModal}
+        onClose={() => setShowEconomicsModal(false)}
+        model={FULL_FINANCIAL_MODELS['video-local-business']}
+      />
     </div>
   );
 }

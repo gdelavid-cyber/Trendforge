@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { AgentSwarmDrawer } from '@/components/earn/agent-swarm-drawer';
 
 interface EarnLandingClientProps {
   userEarnings?: number;
@@ -531,6 +532,9 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
       <div className="text-[11px] font-mono text-[#8E9BB4] max-w-2xl mx-auto italic text-center pb-8 border-t border-white/[0.06] pt-6">
         Results vary. Requires consistent execution. Based on historical Trendly user data. Trendly does not make income promises or guarantees. All deliverables require your inspection and approval.
       </div>
+
+      {/* Floating 9-Agent Swarm Drawer */}
+      <AgentSwarmDrawer />
     </div>
   );
 }

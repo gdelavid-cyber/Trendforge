@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,10 +15,14 @@ import {
   Sparkles,
   Store,
   TrendingUp,
+  Calculator,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { AgentSwarmDrawer } from '@/components/earn/agent-swarm-drawer';
+import { UnitEconomicsModal } from '@/components/earn/unit-economics-modal';
+import { FULL_FINANCIAL_MODELS } from '@/lib/earn/agents';
 
 interface AutomatedAssetsFlowProps {
   userEarnings?: number;
@@ -27,6 +31,7 @@ interface AutomatedAssetsFlowProps {
 export function AutomatedAssetsFlow({ userEarnings = 0 }: AutomatedAssetsFlowProps) {
   const [activeAssetType, setActiveAssetType] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [showEconomicsModal, setShowEconomicsModal] = useState(false);
 
   // Referral flow state
   const referralCode = 'TRENDLY-VIP-88';
@@ -50,9 +55,17 @@ export function AutomatedAssetsFlow({ userEarnings = 0 }: AutomatedAssetsFlowPro
           <h1 className="text-3xl sm:text-5xl font-black text-white mb-3">
             Build Income While You Sleep
           </h1>
-          <p className="text-sm md:text-base text-[#8E9BB4]">
+          <p className="text-sm md:text-base text-[#8E9BB4] mb-4">
             Package winning moves into passive compounding engines. Choose your asset class to launch.
           </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowEconomicsModal(true)}
+            className="h-8 text-xs font-mono border-[#8b5cf6]/30 text-[#8b5cf6] hover:bg-[#8b5cf6]/10"
+          >
+            <Calculator className="w-3.5 h-3.5 mr-1.5" /> Inspect Passive Math ($11,500/mo Month 12)
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -378,6 +391,16 @@ export function AutomatedAssetsFlow({ userEarnings = 0 }: AutomatedAssetsFlowPro
           </Button>
         </div>
       )}
+
+      {/* Floating 9-Agent Swarm Drawer */}
+      <AgentSwarmDrawer />
+
+      {/* Molecular Economics Modal */}
+      <UnitEconomicsModal
+        isOpen={showEconomicsModal}
+        onClose={() => setShowEconomicsModal(false)}
+        model={FULL_FINANCIAL_MODELS['automated-assets-suite']}
+      />
     </div>
   );
 }
