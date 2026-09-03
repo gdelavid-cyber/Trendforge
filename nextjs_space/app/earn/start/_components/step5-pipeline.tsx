@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, DollarSign, Send, Share2, Sparkles, Store } from 'lucide-react';
+import { Bot, CheckCircle2, Clock, Copy, DollarSign, MessageSquare, Send, Share2, Sparkles, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -14,9 +14,37 @@ interface Step5Props {
   userEarnings: number;
 }
 
+interface ReplyScenario {
+  scenario: string;
+  trigger: string;
+  suggestedReply: string;
+}
+
+const REPLY_SUGGESTIONS: ReplyScenario[] = [
+  {
+    scenario: 'Prospect asks: "Can you send the demo link?"',
+    trigger: 'Demo Request',
+    suggestedReply:
+      'Absolutely. Here is the direct interactive demo link: [Insert Link]. You can test the input latency and emergency routing directly on your phone. If you want us to connect this to your live dispatch line this week, let me know and we will set up the webhook.',
+  },
+  {
+    scenario: 'Prospect asks: "What is the exact pricing breakdown?"',
+    trigger: 'Pricing Inquiry',
+    suggestedReply:
+      'Our turnkey implementation package is a one-time setup of $450.00, which includes full prompt tuning, emergency escalation rules, and technical handover. Zero monthly platform lock-in. Would you like me to send the Stripe invoice to lock in your onboarding slot?',
+  },
+  {
+    scenario: 'Prospect asks: "How long does setup take?"',
+    trigger: 'Timeline Inquiry',
+    suggestedReply:
+      'Delivery is complete within 24 to 48 hours of approval. All master assets, documentation, and handover instructions are already prepared and staged for immediate deployment.',
+  },
+];
+
 export function Step5Pipeline({ selectedLeadIds, leads, userEarnings }: Step5Props) {
   const [invoiceAmount, setInvoiceAmount] = useState('450');
   const [invoiceCreated, setInvoiceCreated] = useState(false);
+  const [activeReplyIndex, setActiveReplyIndex] = useState(0);
 
   return (
     <motion.div
@@ -33,7 +61,7 @@ export function Step5Pipeline({ selectedLeadIds, leads, userEarnings }: Step5Pro
           Track Deals &amp; Get Paid
         </h2>
         <p className="text-xs md:text-sm text-[#8E9BB4]">
-          Your outreach is live. Track replies, generate real invoices, and monitor genuine settled earnings.
+          Your outreach is live. Track replies, use AI reply suggestions to close deals, and generate real invoices.
         </p>
       </div>
 
@@ -149,6 +177,56 @@ export function Step5Pipeline({ selectedLeadIds, leads, userEarnings }: Step5Pro
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* AI-Drafted Reply Suggestions (Closing Playbook) */}
+      <div className="max-w-5xl mx-auto p-5 rounded-2xl bg-black/40 border border-white/10">
+        <div className="flex items-center gap-2 mb-3">
+          <Bot className="w-4 h-4 text-[#00F0FF]" />
+          <span className="text-xs font-bold text-white uppercase tracking-wider">
+            AI-DRAFTED REPLY ASSISTANT · FAST-CLOSE PLAYBOOK
+          </span>
+        </div>
+        <p className="text-xs text-[#8E9BB4] mb-4">
+          When a buyer responds, use these pre-formulated response scripts to convert inquiries into paid invoices.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+          {REPLY_SUGGESTIONS.map((rep, idx) => (
+            <button
+              key={rep.trigger}
+              onClick={() => setActiveReplyIndex(idx)}
+              className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                activeReplyIndex === idx
+                  ? 'bg-[#00F0FF]/10 border-[#00F0FF] text-white shadow-[0_0_12px_rgba(0,240,255,0.2)]'
+                  : 'bg-white/[0.02] border-white/5 text-[#8E9BB4] hover:text-white'
+              }`}
+            >
+              <div className="font-bold mb-1">{rep.trigger}</div>
+              <div className="text-[10px] line-clamp-1 opacity-75">{rep.scenario}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4 rounded-xl bg-black/60 border border-white/[0.08] relative">
+          <div className="flex items-center justify-between text-xs text-[#8E9BB4] mb-2">
+            <span>{REPLY_SUGGESTIONS[activeReplyIndex].scenario}</span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                navigator.clipboard.writeText(REPLY_SUGGESTIONS[activeReplyIndex].suggestedReply);
+                toast.success('Reply copied to clipboard!');
+              }}
+              className="h-7 text-xs text-[#00F0FF]"
+            >
+              <Copy className="w-3 h-3 mr-1" /> Copy Reply
+            </Button>
+          </div>
+          <p className="text-xs text-white whitespace-pre-line leading-relaxed">
+            {REPLY_SUGGESTIONS[activeReplyIndex].suggestedReply}
+          </p>
         </div>
       </div>
 
