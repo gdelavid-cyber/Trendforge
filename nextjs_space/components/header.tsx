@@ -57,21 +57,13 @@ const EARN_GROUP: NavGroup = {
   label: 'Earn',
   icon: Coins,
   items: [
-    { href: '/earn', label: '⚡ Earn Hub (9 Methods)', icon: Sparkles },
-    { href: '/earn/one-click-deliverables', label: '1. 1-Click Deliverables', icon: Zap },
-    { href: '/earn/autonomous-sales', label: '2. Autonomous Sales', icon: Flame },
-    { href: '/earn/reddit-arbitrage', label: '3. Reddit Arbitrage', icon: Radio },
-    { href: '/earn/marketplace-assets', label: '4. Marketplace Assets', icon: Store },
-    { href: '/earn/referrals', label: '5. 10% Referrals', icon: Gift },
-    { href: '/earn/micro-saas', label: '6. Turnkey Micro-SaaS', icon: Layers },
-    { href: '/earn/prediction-arbitrage', label: '7. Prediction Arbitrage', icon: Activity },
-    { href: '/earn/web4-agents', label: '8. Web4 Sovereign Agents', icon: ShieldCheck },
-    { href: '/earn/ai-swarm-launch', label: '9. AI Swarm Launch', icon: Bot },
+    { href: '/earn/start', label: '⚡ Make First $500', icon: Zap },
+    { href: '/earn', label: 'Earn Overview', icon: Sparkles },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
   ],
 };
 
-// Contest surface: all 9 methods accessible
+// Contest surface: the core guided loop
 const EARN_GROUP_CORE: NavGroup = EARN_GROUP;
 
 const COMPANION_GROUP: NavGroup = {
@@ -245,9 +237,7 @@ export function Header(props?: any) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.15 }}
-                        className={`absolute left-0 top-full mt-2 rounded-xl bg-[#06060E]/95 backdrop-blur-xl border border-white/[0.1] shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-1.5 ${
-                          entry.label === 'Earn' ? 'w-64 max-h-[75vh] overflow-y-auto' : 'w-52'
-                        }`}
+                        className="absolute left-0 top-full mt-2 w-52 rounded-xl bg-[#06060E]/95 backdrop-blur-xl border border-white/[0.1] shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-1.5"
                       >
                         {entry.items.map((item) => {
                           const itemActive =
