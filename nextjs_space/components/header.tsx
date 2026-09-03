@@ -23,6 +23,7 @@ import {
   Coins,
   ListChecks,
   Radio,
+  Video,
   BookOpen,
   Users,
   Store,
@@ -57,8 +58,10 @@ const EARN_GROUP: NavGroup = {
   label: 'Earn',
   icon: Coins,
   items: [
-    { href: '/earn/start', label: '⚡ Make First $500', icon: Zap },
-    { href: '/earn', label: 'Earn Overview', icon: Sparkles },
+    { href: '/earn', label: 'All 3 Pathways', icon: Sparkles },
+    { href: '/earn/quick-wins', label: '⚡ Quick Wins', icon: Zap },
+    { href: '/earn/video-empire', label: '🎬 Video Empire', icon: Video },
+    { href: '/earn/automated-assets', label: '♾️ Automated Assets', icon: Layers },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
   ],
 };
