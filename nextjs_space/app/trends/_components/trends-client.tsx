@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
+import { BrainstormModal } from '@/components/earn/brainstorm-modal';
 
 interface TrendItem {
   id: string;
@@ -56,6 +57,18 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
   const [activeTab, setActiveTab] = useState<'ALL' | 'MONETIZABLE' | 'NEWS'>('ALL');
   const [runningScraper, setRunningScraper] = useState(false);
   const [isDebriefOpen, setIsDebriefOpen] = useState(false);
+  const [isBrainstormOpen, setIsBrainstormOpen] = useState(false);
+  const [selectedTrend, setSelectedTrend] = useState<{ id: string; name: string; taskId?: string } | null>(null);
+
+  const handleDeploySwarmFromTrend = (trend: TrendItem) => {
+    const firstTaskId = trend.tasks?.[0]?.id;
+    setSelectedTrend({
+      id: trend.id,
+      name: trend.name,
+      taskId: firstTaskId,
+    });
+    setIsBrainstormOpen(true);
+  };
 
   const monetizableCount = trends.filter((t) => t.isMonetizable).length;
   const newsCount = trends.filter((t) => !t.isMonetizable).length;
@@ -257,6 +270,14 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
                       <div className="text-[9px] text-[#8892B0] uppercase mb-1">Sentiment</div>
                       <Progress value={(trend?.sentimentScore ?? 0.85) * 100} className="h-1.5 bg-black/60" />
                     </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() => handleDeploySwarmFromTrend(trend)}
+                      className="cyan-gradient text-black font-extrabold uppercase text-[10px] h-7 px-2.5 font-mono shadow-[0_0_12px_rgba(0,240,255,0.3)] shrink-0"
+                    >
+                      <Zap className="w-3 h-3 mr-1 fill-current" /> Deploy AI Swarm
+                    </Button>
                   </div>
                 </div>
 
@@ -373,6 +394,18 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
       <MarketDebriefModal
         isOpen={isDebriefOpen}
         onClose={() => setIsDebriefOpen(false)}
+      />
+
+      {/* AI Brainstorm Chamber Modal */}
+      <BrainstormModal
+        isOpen={isBrainstormOpen}
+        onClose={() => {
+          setIsBrainstormOpen(false);
+          setSelectedTrend(null);
+        }}
+        trendId={selectedTrend?.id}
+        taskId={selectedTrend?.taskId}
+        trendTitle={selectedTrend?.name}
       />
     </div>
   );

@@ -19,6 +19,7 @@ import { ArtifactsVault } from '@/components/execution/ArtifactsVault';
 import { SalesPipelineCard } from '@/components/execution/SalesPipelineCard';
 import { LiveLogTerminal } from '@/components/execution/LiveLogTerminal';
 import { LogSaleModal } from '@/components/execution/LogSaleModal';
+import { BrainstormModal } from '@/components/earn/brainstorm-modal';
 
 interface Props {
   task: any;
@@ -248,6 +249,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
 
   const [claiming, setClaiming] = useState(false);
   const [claimed, setClaimed] = useState(initialUserTask?.status === 'COMPLETED');
+  const [isSwarmModalOpen, setIsSwarmModalOpen] = useState(false);
 
   const risk = RISK_CONFIG[(task?.riskLevel ?? 'LOW') as keyof typeof RISK_CONFIG] ?? RISK_CONFIG.LOW;
   const parsedSteps = (() => { try { return parseSteps(task?.steps); } catch { return []; } })();
@@ -534,7 +536,31 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
           <h1 className="font-display font-black text-2xl md:text-3xl text-white uppercase tracking-wider mb-2">
             {task?.title ?? 'Power Move'}
           </h1>
-          <p className="text-[#B0B0C8] text-sm">{task?.description ?? ''}</p>
+          <p className="text-[#B0B0C8] text-sm mb-4">{task?.description ?? ''}</p>
+
+          <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setIsSwarmModalOpen(true)}
+                className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 font-mono shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:shadow-[0_0_25px_rgba(0,240,255,0.6)]"
+              >
+                <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" /> Deploy AI Swarm
+              </Button>
+              <Link href="/earn">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-white/10 text-[#8E9BB4] hover:text-white font-mono text-xs h-9 px-3"
+                >
+                  Explore 9 Earn Methods &rarr;
+                </Button>
+              </Link>
+            </div>
+            <span className="text-[11px] font-mono text-[#00F0FF]">
+              Autonomously dispatches parallel builders + sales scout
+            </span>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -1057,6 +1083,14 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
         <p className="text-[10px] text-muted-foreground text-center font-mono mt-8 uppercase">
           {task?.disclaimer ?? 'FOR EDUCATIONAL PURPOSES ONLY. FORGE IS NOT LIABLE FOR OPERATIONAL LOSSES.'}
         </p>
+
+        {/* AI Brainstorm Chamber Modal */}
+        <BrainstormModal
+          isOpen={isSwarmModalOpen}
+          onClose={() => setIsSwarmModalOpen(false)}
+          taskId={task?.id}
+          trendTitle={task?.title}
+        />
       </motion.div>
     </div>
   );
