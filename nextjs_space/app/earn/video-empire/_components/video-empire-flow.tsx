@@ -224,15 +224,25 @@ export function VideoEmpireFlow({ userEarnings = 0 }: { userEarnings?: number })
                 <div className="text-[10px] font-mono text-[#8E9BB4] mb-3">
                   Best for: {play.bestFor}
                 </div>
-                <Button
-                  onClick={() => {
-                    setSelectedPlay(play);
-                    setStep(1);
-                  }}
-                  className="w-full bg-[#f59e0b] text-black font-extrabold font-mono uppercase h-11 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:bg-[#f59e0b]/90"
-                >
-                  Start This Play &rarr;
-                </Button>
+                {play.id === 'local-business' ? (
+                  <Link href="/earn/video-empire/local-business" className="block">
+                    <Button
+                      className="w-full bg-[#f59e0b] text-black font-extrabold font-mono uppercase h-11 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:bg-[#f59e0b]/90"
+                    >
+                      Launch Play 1 (Cinematic) &rarr;
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      setSelectedPlay(play);
+                      setStep(1);
+                    }}
+                    className="w-full bg-white/10 hover:bg-white/20 text-white font-mono uppercase h-11 rounded-xl text-xs"
+                  >
+                    Start Play {play.number} &rarr;
+                  </Button>
+                )}
               </div>
             </div>
           ))}

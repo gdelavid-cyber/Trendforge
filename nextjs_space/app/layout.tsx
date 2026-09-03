@@ -6,7 +6,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { CyberBackground } from '@/components/cyber-background';
-import { FloatingCompanionWidget } from '@/components/chat/FloatingCompanionWidget';
+import { NovaAssistant } from '@/components/nova/nova-assistant';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="relative z-10">
             {children}
           </div>
-          <FloatingCompanionWidget />
+          <NovaAssistant />
           <Toaster position="top-right" theme="dark" richColors />
         </Providers>
       </body>

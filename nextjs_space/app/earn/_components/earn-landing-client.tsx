@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { AgentSwarmDrawer } from '@/components/earn/agent-swarm-drawer';
 
 interface EarnLandingClientProps {
@@ -152,27 +153,27 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
                   QUICK WINS
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-[#8E9BB4] uppercase bg-white/[0.04] px-2.5 py-1 rounded-full border border-white/5">
-                Fastest Cashflow
+              <span className="text-[10px] font-mono text-[#38bdf8] uppercase bg-[#38bdf8]/10 px-2.5 py-1 rounded-full border border-[#38bdf8]/20 font-bold">
+                Coming Soon (Phase 3)
               </span>
             </div>
 
             <h3 className="text-2xl font-black text-white mb-2">Get paid this week</h3>
             <p className="text-xs sm:text-sm text-[#8E9BB4] mb-6 leading-relaxed">
-              Perfect for beginners who need cash flow fast. AI builds the deliverable and finds the buyer.
+              Perfect for beginners who need cash flow fast. 1-click deliverables and local pain point arbitrage.
             </p>
 
             {/* Metrics */}
             <div className="space-y-2.5 py-4 border-y border-white/[0.06] font-mono text-xs mb-6">
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#38bdf8]" /> Time to first $:
+                  <Clock className="w-3.5 h-3.5 text-[#38bdf8]" /> Time to first sale:
                 </span>
-                <span className="font-bold text-white">24–72 hours</span>
+                <span className="font-bold text-white">1–7 days (estimated)</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-[#00FF66]" /> Upfront capital:
+                  <DollarSign className="w-3.5 h-3.5 text-[#00FF66]" /> Upfront cost:
                 </span>
                 <span className="font-bold text-[#00FF66]">$0 upfront</span>
               </div>
@@ -180,7 +181,7 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
                   <TrendingUp className="w-3.5 h-3.5 text-[#FFD700]" /> Potential:
                 </span>
-                <span className="font-bold text-[#FFD700]">$2K–$5K/mo</span>
+                <span className="font-bold text-[#FFD700]">$500–$5,000/mo*</span>
               </div>
             </div>
 
@@ -192,30 +193,30 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
               </div>
               <div className="flex items-center gap-2 text-white/90">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
-                <span>AI scouts verified local buyers</span>
+                <span>Public-data buyer match scout</span>
               </div>
               <div className="flex items-center gap-2 text-white/90">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
-                <span>AI drafts personalized outreach</span>
+                <span>AI-drafted outreach (manual approval)</span>
               </div>
               <div className="flex items-center gap-2 text-white/90">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
-                <span>You review, approve &amp; collect</span>
+                <span>Full rollout in Phase 3</span>
               </div>
             </div>
           </div>
 
           <div>
-            <Link href="/earn/quick-wins" className="block">
-              <Button
-                size="lg"
-                className="w-full bg-[#38bdf8] text-black font-extrabold uppercase font-mono h-12 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.3)] hover:bg-[#38bdf8]/90 hover:shadow-[0_0_30px_rgba(56,189,248,0.5)] transition-all"
-              >
-                Start Quick Wins <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => toast.info('Quick Wins unlocks in Phase 3. Start with Video Empire Play 1 today!')}
+              className="w-full border-white/10 text-[#8E9BB4] hover:text-white font-mono uppercase h-12 rounded-xl text-xs"
+            >
+              🔒 Coming Soon in Phase 3
+            </Button>
             <div className="text-center text-[10px] font-mono text-[#8E9BB4] mt-2.5">
-              ⭐⭐⭐⭐⭐ Most popular starting path
+              Available after Phase 1 &amp; 2 milestones
             </div>
           </div>
         </div>
@@ -246,26 +247,26 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
                 </span>
               </div>
               <span className="text-[10px] font-mono text-[#f59e0b] uppercase bg-[#f59e0b]/10 px-2.5 py-1 rounded-full border border-[#f59e0b]/20 font-bold">
-                5 Money Plays
+                Active in Phase 1
               </span>
             </div>
 
             <h3 className="text-2xl font-black text-white mb-2">Build a video business</h3>
             <p className="text-xs sm:text-sm text-[#8E9BB4] mb-6 leading-relaxed">
-              Turn Trendly’s faceless video maker into a recurring income machine. 5 proven money plays.
+              Turn Trendly’s faceless video maker into a recurring income machine. Start immediately with Play 1.
             </p>
 
             {/* Metrics */}
             <div className="space-y-2.5 py-4 border-y border-white/[0.06] font-mono text-xs mb-6">
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#f59e0b]" /> Time to first $:
+                  <Clock className="w-3.5 h-3.5 text-[#f59e0b]" /> Time to first sale:
                 </span>
-                <span className="font-bold text-white">1–14 days</span>
+                <span className="font-bold text-white">1–14 days (Play 1)</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-[#00FF66]" /> Upfront capital:
+                  <DollarSign className="w-3.5 h-3.5 text-[#00FF66]" /> Upfront cost:
                 </span>
                 <span className="font-bold text-[#00FF66]">$0 upfront</span>
               </div>
@@ -273,46 +274,46 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
                   <TrendingUp className="w-3.5 h-3.5 text-[#f59e0b]" /> Potential:
                 </span>
-                <span className="font-bold text-[#f59e0b]">$5K–$15K/mo realistic</span>
+                <span className="font-bold text-[#f59e0b]">$1,000–$15,000/mo*</span>
               </div>
             </div>
 
             {/* Checkpoints (The 5 Plays) */}
             <div className="space-y-2 mb-6 font-mono text-xs">
-              <div className="flex items-center gap-2 text-white/90">
+              <div className="flex items-center gap-2 text-white font-bold bg-[#f59e0b]/10 p-2 rounded-lg border border-[#f59e0b]/20">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
-                <span>Play 1: Local business video packages</span>
+                <span>Play 1: Local business video packages (LIVE)</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
+              <div className="flex items-center gap-2 text-[#8E9BB4]">
+                <span className="text-[10px] text-[#8E9BB4] border border-white/10 px-1.5 py-0.5 rounded">PHASE 2</span>
                 <span>Play 2: Creator clipping service</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
+              <div className="flex items-center gap-2 text-[#8E9BB4]">
+                <span className="text-[10px] text-[#8E9BB4] border border-white/10 px-1.5 py-0.5 rounded">PHASE 2</span>
                 <span>Play 3: E-commerce UGC ad bundles</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
+              <div className="flex items-center gap-2 text-[#8E9BB4]">
+                <span className="text-[10px] text-[#8E9BB4] border border-white/10 px-1.5 py-0.5 rounded">PHASE 2</span>
                 <span>Play 4: Coach content multiplication</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#f59e0b] shrink-0" />
+              <div className="flex items-center gap-2 text-[#8E9BB4]">
+                <span className="text-[10px] text-[#8E9BB4] border border-white/10 px-1.5 py-0.5 rounded">PHASE 2</span>
                 <span>Play 5: Your own faceless channel</span>
               </div>
             </div>
           </div>
 
           <div>
-            <Link href="/earn/video-empire" className="block">
+            <Link href="/earn/video-empire/local-business" className="block">
               <Button
                 size="lg"
                 className="w-full bg-[#f59e0b] text-black font-extrabold uppercase font-mono h-12 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:bg-[#f59e0b]/90 hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] transition-all"
               >
-                Start Video Empire <ArrowRight className="w-4 h-4 ml-1.5" />
+                Start Play 1: Local Business &rarr;
               </Button>
             </Link>
             <div className="text-center text-[10px] font-mono text-[#f59e0b] mt-2.5 font-bold">
-              🔥 Best use of your faceless video maker
+              🔥 5-Scene Cinematic Experience Ready
             </div>
           </div>
         </div>
@@ -338,7 +339,7 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
                 </span>
               </div>
               <span className="text-[10px] font-mono text-[#8b5cf6] uppercase bg-[#8b5cf6]/10 px-2.5 py-1 rounded-full border border-[#8b5cf6]/20 font-bold">
-                Compounding
+                Coming Soon (Phase 3)
               </span>
             </div>
 
@@ -351,21 +352,21 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
             <div className="space-y-2.5 py-4 border-y border-white/[0.06] font-mono text-xs mb-6">
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#8b5cf6]" /> Time to first $:
+                  <Clock className="w-3.5 h-3.5 text-[#8b5cf6]" /> Time to first sale:
                 </span>
-                <span className="font-bold text-white">1–3 weeks</span>
+                <span className="font-bold text-white">1–4 weeks (estimated)</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-[#8E9BB4]" /> Upfront capital:
+                  <DollarSign className="w-3.5 h-3.5 text-[#8E9BB4]" /> Upfront cost:
                 </span>
-                <span className="font-bold text-white">$0–$20 (domain)</span>
+                <span className="font-bold text-white">$0–$50</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[#8E9BB4] flex items-center gap-1.5">
                   <TrendingUp className="w-3.5 h-3.5 text-[#8b5cf6]" /> Potential:
                 </span>
-                <span className="font-bold text-[#8b5cf6]">$10K–$50K/mo passive</span>
+                <span className="font-bold text-[#8b5cf6]">$500–$10,000/mo passive*</span>
               </div>
             </div>
 
@@ -373,36 +374,34 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
             <div className="space-y-2 mb-6 font-mono text-xs">
               <div className="flex items-center gap-2 text-white/90">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
-                <span>Marketplace asset listing (70–80% split)</span>
+                <span>Priority 1: Marketplace asset listings</span>
               </div>
               <div className="flex items-center gap-2 text-white/90">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
-                <span>10% lifetime recurring referral links</span>
+                <span>Priority 2: 10% lifetime referral engine</span>
               </div>
               <div className="flex items-center gap-2 text-white/90">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
-                <span>Turnkey Next.js micro-SaaS deployments</span>
+                <span>Phase 4: Micro-SaaS builder (Vercel)</span>
               </div>
-              <div className="flex items-center gap-2 text-white/60">
-                <span className="text-[10px] text-[#FFD700] border border-[#FFD700]/30 bg-[#FFD700]/10 px-1.5 py-0.5 rounded mr-0.5">
-                  LOCKED
-                </span>
-                <span>Web4 Sovereign Agents (unlocks at $1K)</span>
+              <div className="flex items-center gap-2 text-[#8E9BB4]">
+                <span className="text-[10px] text-[#8E9BB4] border border-white/10 px-1.5 py-0.5 rounded">LOCKED</span>
+                <span>Web4 Autonomous Agents (requires $1K earned)</span>
               </div>
             </div>
           </div>
 
           <div>
-            <Link href="/earn/automated-assets" className="block">
-              <Button
-                size="lg"
-                className="w-full bg-[#8b5cf6] text-white font-extrabold uppercase font-mono h-12 rounded-xl shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:bg-[#8b5cf6]/90 hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all"
-              >
-                Start Building Assets <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => toast.info('Automated Assets unlocks in Phase 3. Start with Video Empire Play 1 today!')}
+              className="w-full border-white/10 text-[#8E9BB4] hover:text-white font-mono uppercase h-12 rounded-xl text-xs"
+            >
+              🔒 Coming Soon in Phase 3
+            </Button>
             <div className="text-center text-[10px] font-mono text-[#8E9BB4] mt-2.5">
-              💎 Long-term wealth compounding
+              Scheduled for Phase 3 rollout
             </div>
           </div>
         </div>
@@ -528,9 +527,9 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
         </div>
       </div>
 
-      {/* Honest Messaging Disclaimer */}
-      <div className="text-[11px] font-mono text-[#8E9BB4] max-w-2xl mx-auto italic text-center pb-8 border-t border-white/[0.06] pt-6">
-        Results vary. Requires consistent execution. Based on historical Trendly user data. Trendly does not make income promises or guarantees. All deliverables require your inspection and approval.
+      {/* Section 30 Mandatory Legal Disclaimer */}
+      <div className="text-[11px] font-mono text-[#8E9BB4] max-w-2xl mx-auto italic text-center pb-8 border-t border-white/[0.06] pt-6 leading-relaxed">
+        Trendly provides tools and guidance. Actual results depend on your execution, market conditions, and factors outside our control. Testimonials shown are individual experiences and not typical. No income is guaranteed.
       </div>
 
       {/* Floating 9-Agent Swarm Drawer */}

@@ -39,6 +39,7 @@ import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { SpotlightTour } from '@/components/guide/spotlight-tour';
 import { guideForPath } from '@/lib/guide/content';
 import { CONTEST_MODE } from '@/lib/flags';
+import { CreditBadge } from '@/components/credits/credit-badge';
 
 interface NavItem {
   href: string;
@@ -107,39 +108,23 @@ export function Header(props?: any) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const pathname = usePathname();
 
-  const signedInNav: NavEntry[] = CONTEST_MODE
-    ? [
-        { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { kind: 'group', ...EARN_GROUP_CORE },
-        { kind: 'group', ...COMPANION_GROUP },
-        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
-        { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
-      ]
-    : [
-        { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { kind: 'group', ...EARN_GROUP },
-        { kind: 'group', ...COMPANION_GROUP },
-        { kind: 'group', ...BUILD_GROUP },
-        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
-        { kind: 'flat', href: '/community', label: 'Community', icon: Users },
-        { kind: 'group', ...MARKET_GROUP },
-      ];
+  const standardNav: NavEntry[] = [
+    { kind: 'flat', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { kind: 'flat', href: '/trends', label: 'Trends', icon: Radio },
+    { kind: 'flat', href: '/tasks', label: 'Tasks', icon: ListChecks },
+    { kind: 'group', ...EARN_GROUP },
+    { kind: 'flat', href: '/referrals', label: 'Referrals', icon: Gift },
+    { kind: 'flat', href: '/profile', label: 'Settings', icon: User },
+  ];
 
-  const anonymousNav: NavEntry[] = CONTEST_MODE
-    ? [
-        { kind: 'group', ...EARN_GROUP_CORE },
-        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
-        { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
-      ]
-    : [
-        { kind: 'group', ...EARN_GROUP },
-        { kind: 'flat', href: '/manifesto', label: 'White Paper', icon: BookOpen },
-        { kind: 'flat', href: '/marketplace', label: 'Marketplace', icon: Flame },
-        { kind: 'flat', href: '/guide', label: 'Guide', icon: BookOpen },
-        { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
-      ];
+  const anonymousNav: NavEntry[] = [
+    { kind: 'flat', href: '/trends', label: 'Trends', icon: Radio },
+    { kind: 'group', ...EARN_GROUP },
+    { kind: 'flat', href: '/about', label: 'About', icon: BookOpen },
+    { kind: 'flat', href: '/pricing', label: 'Pricing', icon: Tag },
+  ];
 
-  const navEntries = session?.user ? signedInNav : anonymousNav;
+  const navEntries = session?.user ? standardNav : anonymousNav;
 
   // Guide: current page's spotlight steps; Help replays them or opens /guide.
   const pageGuide = guideForPath(pathname ?? '/');
@@ -272,15 +257,7 @@ export function Header(props?: any) {
 
           {/* User & Action Controls */}
           <div className="hidden md:flex items-center gap-2.5">
-            <Link href="/manifesto">
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-[#FFD700]/30 text-[#FFD700] hover:bg-[#FFD700]/10 bg-[#FFD700]/5 text-xs font-mono uppercase h-8 px-2.5 font-bold shadow-[0_0_10px_rgba(255,215,0,0.1)]"
-              >
-                <BookOpen className="w-3.5 h-3.5 mr-1 text-[#FFD700]" /> White Paper
-              </Button>
-            </Link>
+            <CreditBadge />
             <Button
               onClick={replayTour}
               size="sm"

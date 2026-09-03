@@ -16,6 +16,16 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: { unoptimized: true },
+  async redirects() {
+    return [
+      { source: '/manifesto', destination: '/about', permanent: true },
+      { source: '/web4/manifesto', destination: '/about', permanent: true },
+      { source: '/avatar-studio', destination: '/dashboard', permanent: true },
+      { source: '/builder', destination: '/dashboard', permanent: true },
+      { source: '/marketplace/web4', destination: '/earn/automated-assets', permanent: true },
+      { source: '/blueprints', destination: '/tasks', permanent: true },
+    ];
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.output.filename = 'static/chunks/[name]-[contenthash:8].js';

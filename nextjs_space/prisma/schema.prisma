@@ -1634,6 +1634,91 @@ model OutreachRecord {
   @@index([platform, status])
 }
 
+// =============================================================================
+// PHASE 1 FOUNDATION MODELS: COST CONTROLS, COMPLIANCE & NOVA
+// =============================================================================
+
+model UserCredit {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  tier            String   @default("FREE") // FREE | PRO | ELITE
+  creditBalance   Int      @default(100)
+  totalAllocated  Int      @default(100)
+  totalConsumed   Int      @default(0)
+  monthlySpendCap Float    @default(50.0)
+  currentSpend    Float    @default(0.0)
+  resetAt         DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    CreditTransaction[]
+
+  @@index([userId])
+}
+
+model CreditTransaction {
+  id              String   @id @default(cuid())
+  userCreditId    String
+  actionType      String   // NOVA_MESSAGE | TREND_SCOUT_QUERY | VIDEO_RENDER | VIDEO_CLIP | BUYER_DISCOVERY_BATCH | OUTREACH_DRAFT | SWARM_DEPLOYMENT
+  creditsDeducted Int
+  balanceAfter    Int
+  description     String?
+  createdAt       DateTime @default(now())
+
+  userCredit      UserCredit @relation(fields: [userCreditId], references: [id], onDelete: Cascade)
+
+  @@index([userCreditId, createdAt])
+}
+
+model ComplianceAuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  actionType  String   // OUTREACH_CONSENT | OUTREACH_SEND | BUYER_DISCOVERY | STRIPE_INVOICE | CREDIT_DEDUCT | EXPORT
+  channel     String?  // EMAIL | LINKEDIN | INSTAGRAM
+  recipient   String?
+  details     Json?    @default("{}")
+  timestamp   DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([actionType])
+}
+
+model SystemFeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  enabled     Boolean  @default(false)
+  phase       Int      @default(1)
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model NovaConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // user | assistant | system
+  content   String
+  tokens    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model NovaCustomTask {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  schedule    String
+  taskType    String   @default("RESEARCH_SUMMARY") // PRICE_MONITOR | RESEARCH_SUMMARY | REMINDER
+  status      String   @default("ACTIVE") // ACTIVE | PAUSED | COMPLETED
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
 
 
 
