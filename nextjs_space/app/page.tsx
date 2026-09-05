@@ -110,6 +110,15 @@ export default function HomePage() {
                 )
               )}
             </div>
+
+            {/* Nova positioning */}
+            <p className="text-xs sm:text-sm text-white/60 font-light max-w-md">
+              Meet{' '}
+              <Link href="/nova" className="text-white font-medium hover:underline">
+                Nova
+              </Link>
+              {' '}— your interface to the entire system. Every action, insight, and decision, in one place.
+            </p>
           </section>
 
           {/* Bottom Visionary Quote */}
