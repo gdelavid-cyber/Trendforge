@@ -25,11 +25,12 @@ export function NovaAssistant() {
       timestamp: 'Just now',
     },
   ]);
-  const [activeTab, setActiveTab] = useState<'chat' | 'tasks'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'tasks' | 'approvals'>('chat');
   const [taskTitle, setTaskTitle] = useState('');
   const [taskSchedule, setTaskSchedule] = useState('Daily at 8:00 AM UTC');
   const [customTasks, setCustomTasks] = useState<any[]>([]);
   const [briefing, setBriefing] = useState<any | null>(null);
+  const [actions, setActions] = useState<any[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Cmd + K listener
@@ -59,6 +60,7 @@ export function NovaAssistant() {
           if (data.ok) setBriefing(data.briefing);
         })
         .catch(() => {});
+      refreshActions();
     }
   }, [isOpen]);
 
@@ -125,8 +127,30 @@ export function NovaAssistant() {
     }
   };
 
-  const handleCreateTask = async () => {
-    if (!taskTitle.trim()) return;
+  const refreshActions = async () => {
+    try {
+      const res = await fetch('/api/nova/actions');
+      const data = await res.json();
+      if (data.ok) setActions(data.actions);
+    } catch (_) {}
+  };
+
+  const decideAction = async (id: string, decision: 'approve' | 'reject') => {
+    try {
+      const res = await fetch(`/api/nova/actions/${id}/${decision}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.ok || data.status) {
+        toast.success(decision === 'approve' ? `Executed — receipt recorded.` : 'Proposal rejected.');
+      } else {
+        toast.error(data.error || 'Decision failed');
+      }
+      refreshActions();
+    } catch (_) {
+      toast.error('Decision failed');
+    }
+  };
+
+  const handleCreateTask = async () => {    if (!taskTitle.trim()) return;
     try {
       const res = await fetch('/api/nova/tasks', {
         method: 'POST',
@@ -221,6 +245,14 @@ export function NovaAssistant() {
                 }`}
               >
                 Custom Tasks ({customTasks.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('approvals')}
+                className={`flex-1 py-2 text-center transition-all ${
+                  activeTab === 'approvals' ? 'text-[#38bdf8] border-b-2 border-[#38bdf8] font-bold' : 'text-[#94a3b8]'
+                }`}
+              >
+                Approvals ({actions.filter((a) => a.status === 'PROPOSED').length})
               </button>
             </div>
 
@@ -335,7 +367,7 @@ export function NovaAssistant() {
                   </Button>
                 </div>
               </>
-            ) : (
+            ) : activeTab === 'tasks' ? (
               /* Tab 2: Custom Tasks View */
               <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs font-mono">
                 <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2">
@@ -378,6 +410,49 @@ export function NovaAssistant() {
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : (
+              /* Tab 3: Approvals inbox — proposals awaiting decision + receipts */
+              <div className="flex-1 p-4 overflow-y-auto space-y-2 text-xs font-mono">
+                <span className="text-[11px] font-bold text-[#94a3b8] uppercase">
+                  Awaiting decision ({actions.filter((a) => a.status === 'PROPOSED').length})
+                </span>
+                {actions.filter((a) => a.status === 'PROPOSED').length === 0 && (
+                  <div className="text-[11px] text-[#94a3b8] p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                    Nothing waiting. When Nova proposes an action, it lands here — nothing runs until you approve it.
+                  </div>
+                )}
+                {actions.filter((a) => a.status === 'PROPOSED').map((a) => (
+                  <div key={a.id} className="p-3 rounded-xl bg-black/40 border border-[#38bdf8]/20 space-y-2">
+                    <div className="font-bold text-white">{a.tool}</div>
+                    <div className="text-[10px] text-[#94a3b8] break-all">{JSON.stringify(a.params)}</div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => decideAction(a.id, 'approve')} className="bg-[#00FF66] text-black text-[10px] font-bold uppercase h-7 px-3">
+                        Approve & run
+                      </Button>
+                      <Button size="sm" onClick={() => decideAction(a.id, 'reject')} className="bg-transparent border border-white/20 text-white text-[10px] font-bold uppercase h-7 px-3">
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <span className="text-[11px] font-bold text-[#94a3b8] uppercase pt-2">Recent decisions</span>
+                {actions.filter((a) => a.status !== 'PROPOSED').slice(0, 5).map((a) => (
+                  <div key={a.id} className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white">{a.tool}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${a.status === 'EXECUTED' ? 'text-[#00FF66] bg-[#00FF66]/10' : a.status === 'FAILED' ? 'text-red-300 bg-red-400/10' : 'text-[#94a3b8] bg-white/5'}`}>
+                        {a.status}
+                      </span>
+                    </div>
+                    {a.status === 'EXECUTED' && a.receipt && (
+                      <div className="text-[10px] text-[#94a3b8] break-all">{JSON.stringify(a.receipt)}</div>
+                    )}
+                    {a.status === 'FAILED' && a.error && (
+                      <div className="text-[10px] text-red-300 break-all">{a.error}</div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </motion.div>

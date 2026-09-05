@@ -1721,6 +1721,22 @@ model NovaCustomTask {
   @@index([userId, status])
 }
 
+// Nova OS action proposals. Nova proposes; the user approves; the tool
+// executes. Writes never happen without an APPROVED row (N2 law).
+model NovaAction {
+  id        String    @id @default(cuid())
+  userId    String
+  tool      String
+  params    Json      @default("{}")
+  status    String    @default("PROPOSED") // PROPOSED | APPROVED | REJECTED | EXECUTED | FAILED
+  receipt   Json?
+  error     String?
+  createdAt DateTime  @default(now())
+  decidedAt DateTime?
+
+  @@index([userId, status])
+}
+
 // ============================================================================
 // AI CO-PILOT / AUTO-CLOSE SALES EXECUTION LAYER
 // ============================================================================
