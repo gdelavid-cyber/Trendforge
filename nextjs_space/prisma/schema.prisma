@@ -143,6 +143,7 @@ model User {
   executionPlans        ExecutionPlan[]
   sales                 Sale[]
   leads                 Lead[]
+  coPilotSessions       CoPilotSession[]
 
   @@index([role])
   @@index([email])
@@ -1201,6 +1202,7 @@ model Lead {
 
   messages             LeadMessage[]
   sales                Sale[]
+  coPilotSessions      CoPilotSession[]
 
   @@index([taskId])
   @@index([userId])
@@ -1719,8 +1721,135 @@ model NovaCustomTask {
   @@index([userId, status])
 }
 
+// ============================================================================
+// AI CO-PILOT / AUTO-CLOSE SALES EXECUTION LAYER
+// ============================================================================
 
+model CoPilotSession {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionId  String    // links to ExecutionPlan or UserTask
+  leadId       String    // links to Lead
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  channel      String    // email | phone | reddit | in_app
+  mode         String    // co_pilot | auto_close | manual
+  status       String    @default("waiting") // waiting | engaged | in_progress | closed_won | closed_lost | escalated | opted_out
+  transcript   Json      @default("[]")     // full conversation history (AI + user + buyer)
+  priceOffer   Float?    // what we're trying to sell it for
+  priceFloor   Float     @default(0)         // absolute floor AI cannot go below in auto mode
+  alertCount   Int       @default(0)
+  lastAlertAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
+  suggestions  CopilotSuggestion[]
+  callSession  CallSession?
+  paymentLinks PaymentLinkSale[]
 
+  @@index([executionId])
+  @@index([userId, status])
+}
 
+model CopilotSuggestion {
+  id             String    @id @default(cuid())
+  sessionId      String
+  session        CoPilotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  triggerEvent   String    // buyer_email_reply | buyer_call_answered | buyer_said_x
+  buyerMessage   String?
+  aiAnalysis     Json      // {intent, objection, sentiment, urgency, keyPoints, coachingTip}
+  suggestedReply String
+  used           Boolean   @default(false)
+  editedVersion  String?   // if user edited the AI message before sending
+  createdAt      DateTime  @default(now())
+
+  @@index([sessionId])
+}
+
+model CallSession {
+  id              String    @id @default(cuid())
+  coPilotId       String    @unique
+  coPilot         CoPilotSession @relation(fields: [coPilotId], references: [id], onDelete: Cascade)
+  twilioCallSid   String?
+  status          String    @default("ringing") // ringing | live | completed
+  liveTranscript  Json      @default("[]")     // rolling chunks
+  consentGiven    Boolean   @default(false)    // two-party consent flag for call states that require it
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+}
+
+model PaymentLinkSale {
+  id            String   @id @default(cuid())
+  sessionId     String
+  session       CoPilotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  stripeLinkId  String
+  url           String
+  amount        Float
+  status        String   @default("pending") // pending | paid | expired
+  createdAt     DateTime @default(now())
+}
+
+// ============================================================================
+// AI MONEY COUNCIL — INTERNAL WITH USER EXPOSURE SWITCH
+// ============================================================================
+
+model CouncilSession {
+  id                String            @id @default(cuid())
+  status            String            @default("pending") // pending | in_debate | gatekeeper_review | admin_review | approved | rejected
+  signal            Json              // initial market opportunity signal
+  debateTranscript  Json              @default("[]")     // 5-agent debate turns
+  gatekeeperVerdict Json?             // Gatekeeper reasoning, score, decision
+  conclusion        Json?             // { title, marketVector, targetBuyer, revenueModel, mapsToMethod, isNewMethod, newMethodSpec }
+  createdAt         DateTime          @default(now())
+  completedAt       DateTime?
+
+  adminReview       AdminReview?
+  hotTrendProposal  HotTrendProposal?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AdminReview {
+  id          String         @id @default(cuid())
+  sessionId   String         @unique
+  session     CouncilSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  adminId     String
+  decision    String         // approved | rejected | needs_more_debate
+  notes       String?
+  reviewedAt  DateTime       @default(now())
+  sentToUsers Boolean        @default(false) // mark when user-facing publish happens
+
+  @@index([decision])
+}
+
+model HotTrendProposal {
+  id                   String          @id @default(cuid())
+  sessionId            String          @unique
+  session              CouncilSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title                String
+  marketVector         String
+  targetBuyer          String
+  revenueModel         String
+  mapsToMethod         String?         // one of the 9 methods OR null
+  isNewMethod          Boolean         @default(false)
+  newMethodSpec        Json?           // for dev team if truly new
+  visibleToUsers       Boolean         @default(false) // ← THIS IS THE USER EXPOSURE SWITCH
+  publishedAt          DateTime        @default(now())
+  timesExecuted        Int             @default(0)
+  timesAccessedByUsers Int             @default(0)     // track user interest
+
+  @@index([visibleToUsers, publishedAt])
+}
+
+model AdminNotification {
+  id        String   @id @default(cuid())
+  type      String   // council_discovery | system_alert
+  sessionId String?
+  title     String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([type, read])
+}
 

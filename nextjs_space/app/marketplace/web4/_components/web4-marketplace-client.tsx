@@ -119,19 +119,28 @@ export function Web4MarketplaceClient({ user }: { user: any }) {
     setPurchasingId(item.id);
 
     try {
-      // Simulate or call stripe/checkout
-      setTimeout(() => {
-        setPurchasingId(null);
-        setOwnedItemIds((prev) => new Set([...Array.from(prev), item.id]));
-        setPreviewLoadout((prev) => ({
-          ...prev,
-          [item.slot]: item.id,
-        }));
-        toast.success(`Successfully unlocked ${item.name}! Equipped in combat loadout.`);
-      }, 700);
-    } catch {
+      const res = await fetch('/api/cosmetics/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemId: item.id,
+          payFromAgentId: selectedAgentId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to unlock cosmetic');
+      }
+      setOwnedItemIds((prev) => new Set([...Array.from(prev), item.id]));
+      setPreviewLoadout((prev) => ({
+        ...prev,
+        [item.slot]: item.id,
+      }));
+      toast.success(data.message || `Successfully unlocked ${item.name}! Equipped in combat loadout.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Purchase failed.');
+    } finally {
       setPurchasingId(null);
-      toast.error('Purchase simulation failed.');
     }
   };
 

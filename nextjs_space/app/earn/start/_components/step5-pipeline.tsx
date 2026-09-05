@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import type { GuidedLead } from '@/app/api/earn/leads/route';
+
+import { SellingModeSelector } from '@/components/earn/selling-mode-selector';
+import { CoPilotLiveView } from '@/components/earn/copilot-live-view';
 
 interface Step5Props {
   selectedLeadIds: string[];
@@ -45,6 +48,7 @@ export function Step5Pipeline({ selectedLeadIds, leads, userEarnings }: Step5Pro
   const [invoiceAmount, setInvoiceAmount] = useState('450');
   const [invoiceCreated, setInvoiceCreated] = useState(false);
   const [activeReplyIndex, setActiveReplyIndex] = useState(0);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   return (
     <motion.div
@@ -55,14 +59,43 @@ export function Step5Pipeline({ selectedLeadIds, leads, userEarnings }: Step5Pro
     >
       <div className="text-center max-w-2xl mx-auto mb-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00FF66]/10 border border-[#00FF66]/20 text-xs text-[#00FF66] mb-2">
-          <CheckCircle2 className="w-3.5 h-3.5" /> PIPELINE ACTIVE · MILESTONE COMPLETED
+          <CheckCircle2 className="w-3.5 h-3.5" /> PIPELINE ACTIVE · SALES CO-PILOT ENGAGED
         </div>
         <h2 className="text-2xl md:text-4xl font-extrabold text-white mb-2 font-sans">
-          Track Deals &amp; Get Paid
+          Close Deals &amp; Get Paid
         </h2>
         <p className="text-xs md:text-sm text-[#8E9BB4]">
-          Your outreach is live. Track replies, use AI reply suggestions to close deals, and generate real invoices.
+          Your deliverable is ready. Activate Method X: AI Co-Pilot or Auto-Close to alert, advise, and close buyers.
         </p>
+      </div>
+
+      {/* AI Sales Co-Pilot Execution Layer */}
+      <div className="max-w-5xl mx-auto mb-6">
+        {activeSessionId ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-xs font-bold text-[#00F0FF] uppercase">Live Sales Session</span>
+              <button
+                onClick={() => setActiveSessionId(null)}
+                className="text-[11px] text-[#8E9BB4] hover:text-white underline"
+              >
+                Switch Session / Change Mode
+              </button>
+            </div>
+            <CoPilotLiveView sessionId={activeSessionId} />
+          </div>
+        ) : (
+          <SellingModeSelector
+            leadId={selectedLeadIds[0]}
+            leadSource={leads[0]?.contactChannel || 'email'}
+            defaultPrice={450}
+            onActivated={(data) => {
+              if (data.activeSessionId) {
+                setActiveSessionId(data.activeSessionId);
+              }
+            }}
+          />
+        )}
       </div>
 
       {/* Genuine Earnings Ledger Banner (Honest Metrics) */}

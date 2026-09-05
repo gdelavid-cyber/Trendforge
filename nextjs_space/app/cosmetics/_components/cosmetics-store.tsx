@@ -35,11 +35,23 @@ export function CosmeticsStore({ user }: { user: any }) {
 
   const handlePurchase = async (item: CatalogItem) => {
     setPurchasingId(item.id);
-    setTimeout(() => {
-      setPurchasingId(null);
+    try {
+      const res = await fetch('/api/cosmetics/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: item.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to unlock cosmetic');
+      }
       setUnlockedIds((prev) => new Set([...Array.from(prev), item.id]));
-      toast.success(`Successfully unlocked ${item.name}! Equip it in The Forge.`);
-    }, 700);
+      toast.success(data.message || `Successfully unlocked ${item.name}!`);
+    } catch (err: any) {
+      toast.error(err.message || 'Cosmetic purchase failed');
+    } finally {
+      setPurchasingId(null);
+    }
   };
 
   const slotTabs = [

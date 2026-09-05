@@ -12,10 +12,20 @@ export type LedgerType =
   | 'BATTLE_PAYOUT'
   | 'MISSION_BURN'
   | 'WITHDRAWAL'
-  | 'ADJUSTMENT';
+  | 'ADJUSTMENT'
+  | 'MARKETPLACE_BUY'
+  | 'MARKETPLACE_SALE'
+  | 'MARKETPLACE_RAKE'
+  | 'LICENSE_FEE';
 
 /** Entry types that count as REAL earnings (money that actually came in). */
-export const REAL_CREDIT_TYPES: string[] = ['DEPOSIT', 'TRADE_PROCEEDS', 'BATTLE_PAYOUT'];
+export const REAL_CREDIT_TYPES: string[] = [
+  'DEPOSIT',
+  'TRADE_PROCEEDS',
+  'BATTLE_PAYOUT',
+  'MARKETPLACE_SALE',
+  'LICENSE_FEE',
+];
 
 export interface MoveResult {
   ok: boolean;
