@@ -43,7 +43,7 @@ async function main(): Promise<void> {
     await call(`/api/nova/actions?userId=${encodeURIComponent(userId)}`);
   } else if (cmd === 'propose') {
     const tool = arg('tool');
-    const paramsRaw = arg('params') ?? '{}';
+    const paramsRaw = arg('params') ?? (arg('params-file') ? require('fs').readFileSync(arg('params-file') as string, 'utf8') : '{}');
     if (!tool) {
       console.error('Missing --tool <name>.');
       process.exit(1);
