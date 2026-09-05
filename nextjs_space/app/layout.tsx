@@ -5,7 +5,7 @@ import { Poppins, Source_Serif_4 } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
-import { CyberBackground } from '@/components/cyber-background';
+import { CyberBackground } from '@/components/backgrounds/cyber-background';
 import { NovaAssistant } from '@/components/nova/nova-assistant';
 
 const poppins = Poppins({

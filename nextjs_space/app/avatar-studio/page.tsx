@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { AvatarStudioClient } from './_components/avatar-studio-client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { ApprovalsClient } from './_components/approvals-client';
 
 export const dynamic = 'force-dynamic';

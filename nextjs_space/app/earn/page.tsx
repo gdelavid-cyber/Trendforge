@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { EarnLandingClient } from './_components/earn-landing-client';
 
 export default async function EarnLandingPage() {

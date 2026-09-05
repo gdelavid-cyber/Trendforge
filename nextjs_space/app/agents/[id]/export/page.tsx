@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { prisma } from '@/lib/core/db';
 import { exportAgentToJSON } from '@/lib/experience/export/agent-exporter';
 import { Download, FileCode, ArrowLeft, Bot, ShieldCheck } from 'lucide-react';

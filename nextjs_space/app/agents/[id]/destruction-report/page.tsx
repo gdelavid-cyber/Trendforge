@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { prisma } from '@/lib/core/db';
 import { Skull, AlertTriangle, ArrowLeft, ShieldCheck, RefreshCw } from 'lucide-react';
 import Link from 'next/link';

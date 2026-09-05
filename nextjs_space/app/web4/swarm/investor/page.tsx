@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { SwarmNav } from '../_components/swarm-nav';
 import { prisma } from '@/lib/core/db';
 import { LineChart, FileSpreadsheet } from 'lucide-react';

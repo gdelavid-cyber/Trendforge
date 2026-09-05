@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { GUIDE_PAGES } from '@/lib/experience/guide/content';
 import { GuideHubClient } from './_components/guide-hub-client';
 

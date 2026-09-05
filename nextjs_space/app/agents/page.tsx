@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Web4AgentsClient } from './web4/_components/web4-agents-client';
 
 export const dynamic = 'force-dynamic';

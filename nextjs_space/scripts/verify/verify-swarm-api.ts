@@ -1,7 +1,7 @@
-import { swarmMemory } from '../lib/swarm/revenue/memory';
-import { swarmCoordinator } from '../lib/swarm/revenue/coordinator';
-import { masterBrain } from '../lib/swarm/revenue/masterBrain';
-import { computeMerkleRoot, signAttestationPayload, verifyAttestationSignature } from '../lib/swarm/revenue/attestation';
+import { swarmMemory } from '../../lib/swarm/revenue/memory';
+import { swarmCoordinator } from '../../lib/swarm/revenue/coordinator';
+import { masterBrain } from '../../lib/swarm/revenue/masterBrain';
+import { computeMerkleRoot, signAttestationPayload, verifyAttestationSignature } from '../../lib/swarm/revenue/attestation';
 
 async function verify() {
   console.log('--- Testing Cryptographic Merkle Root & Digital Attestation ---');

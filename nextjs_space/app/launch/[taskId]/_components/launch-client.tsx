@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Terminal, Play, CheckCircle, Copy, ExternalLink, Rocket, ArrowRight, Monitor, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TrendCategoryBadge } from '@/components/trend-badge';
+import { TrendCategoryBadge } from '@/components/trends/trend-badge';
 import { AvatarRenderer } from '@/components/avatar/AvatarRenderer';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 import { toast } from 'sonner';

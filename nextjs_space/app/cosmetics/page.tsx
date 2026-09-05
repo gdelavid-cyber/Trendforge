@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { CosmeticsStore } from './_components/cosmetics-store';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';

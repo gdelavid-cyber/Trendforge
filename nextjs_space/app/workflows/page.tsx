@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { WorkflowBuilderClient } from './_components/workflow-builder-client';
 
 export const metadata = {

@@ -1,8 +1,8 @@
 import http from 'http';
 import { execSync } from 'child_process';
-import { prisma } from '../lib/core/db';
-import { redis } from '../lib/core/redis';
-import { setGlobalKillSwitch } from '../lib/swarm/gatekeeper';
+import { prisma } from '../../lib/core/db';
+import { redis } from '../../lib/core/redis';
+import { setGlobalKillSwitch } from '../../lib/swarm/gatekeeper';
 import { SpeciesStatus, JobStage } from '@prisma/client';
 
 async function makeRequest(path: string, method: string = 'GET', body: any = null): Promise<{ status: number; body: any }> {

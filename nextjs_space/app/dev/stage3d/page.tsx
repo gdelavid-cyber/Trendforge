@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { redirect } from 'next/navigation';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Stage3DQaClient } from './_components/stage3d-qa-client';
 
 export const metadata = {

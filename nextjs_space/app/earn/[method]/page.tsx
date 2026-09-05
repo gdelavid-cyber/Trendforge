@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { notFound, redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { getMethodBySlug } from '@/lib/earn/methods';
 import { MethodClient } from './_components/method-client';
 import { computeUnlockState } from '@/lib/earn/unlocks';

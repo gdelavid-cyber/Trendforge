@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { BuilderCanvas } from './_components/builder-canvas';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';

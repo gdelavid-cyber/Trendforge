@@ -3,7 +3,7 @@
  * Start a server first:  opencode serve --port 4096
  * Then run:              npx tsx scripts/probe-opencode-serve.ts
  */
-import { makeLlm } from '../lib/execution/llm';
+import { makeLlm } from '../../lib/execution/llm';
 
 async function main() {
   process.env.LLM_PROVIDER = 'opencode';

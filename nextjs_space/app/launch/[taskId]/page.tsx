@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { redirect, notFound } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { LaunchClient } from './_components/launch-client';
 
 export default async function LaunchPage({ params }: { params: { taskId: string } }) {

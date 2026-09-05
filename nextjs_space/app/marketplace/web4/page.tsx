@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Web4MarketplaceClient } from './_components/web4-marketplace-client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';

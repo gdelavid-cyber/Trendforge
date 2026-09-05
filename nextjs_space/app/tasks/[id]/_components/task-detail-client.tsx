@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RISK_CONFIG } from '@/lib/core/constants';
-import { TrendCategoryBadge } from '@/components/trend-badge';
+import { TrendCategoryBadge } from '@/components/trends/trend-badge';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { completePowerMoveAction } from '@/app/actions';

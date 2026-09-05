@@ -10,11 +10,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "prisma generate",
-    "swarm:seed": "npx tsx scripts/seed-swarm.ts",
-    "swarm:reset": "npx tsx scripts/reset-swarm-jobs.ts"
+    "swarm:seed": "npx tsx scripts/seeds/seed-swarm.ts",
+    "swarm:reset": "npx tsx scripts/resets/reset-swarm-jobs.ts"
   },
   "prisma": {
-    "seed": "tsx --require dotenv/config scripts/safe-seed.ts"
+    "seed": "tsx --require dotenv/config scripts/seeds/safe-seed.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "2.4.6",

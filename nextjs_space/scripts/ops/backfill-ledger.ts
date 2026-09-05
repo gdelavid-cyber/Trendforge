@@ -6,7 +6,7 @@
  *
  * Usage: npx tsx scripts/backfill-ledger.ts
  */
-import { prisma } from '../lib/core/db';
+import { prisma } from '../../lib/core/db';
 
 async function main() {
   const agents = await prisma.web4Agent.findMany({

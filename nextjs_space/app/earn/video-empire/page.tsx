@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { VideoEmpireFlow } from './_components/video-empire-flow';
 
 export default async function VideoEmpirePage() {

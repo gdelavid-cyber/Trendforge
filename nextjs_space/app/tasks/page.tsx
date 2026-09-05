@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { TasksContainer } from './_components/tasks-container';
 
 export default async function TasksPage() {

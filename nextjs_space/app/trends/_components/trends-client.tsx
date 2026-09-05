@@ -20,7 +20,7 @@ import {
   Bot,
   Radio,
 } from 'lucide-react';
-import { TrendCategoryBadge } from '@/components/trend-badge';
+import { TrendCategoryBadge } from '@/components/trends/trend-badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';

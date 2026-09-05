@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { COMPLIANCE_DISCLAIMERS } from '@/lib/experience/compliance/disclaimers';
 import { ShieldCheck, AlertTriangle, Scale, Lock } from 'lucide-react';
 

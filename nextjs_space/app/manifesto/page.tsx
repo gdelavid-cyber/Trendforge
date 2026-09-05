@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Button } from '@/components/ui/button';
 import {
   Shield,

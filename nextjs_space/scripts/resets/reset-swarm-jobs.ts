@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { prisma } from '../lib/core/db';
+import { prisma } from '../../lib/core/db';
 import { JobStage } from '@prisma/client';
-import { invalidateServerCatalogCache } from '../lib/experience/cosmetics/server-catalog';
+import { invalidateServerCatalogCache } from '../../lib/experience/cosmetics/server-catalog';
 
 async function resetSwarmJobs() {
   const isConfirm = process.argv.includes('--confirm');

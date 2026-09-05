@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { CheckCircle, DollarSign, Star, Flame } from 'lucide-react';
-import { TrendCategoryBadge } from '@/components/trend-badge';
+import { TrendCategoryBadge } from '@/components/trends/trend-badge';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 
 interface Props {

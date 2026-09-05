@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Web4AgentsClient } from './_components/web4-agents-client';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';

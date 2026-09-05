@@ -1,6 +1,6 @@
-import { swarmCoordinator } from '../lib/swarm/revenue/coordinator';
-import { swarmMemory } from '../lib/swarm/revenue/memory';
-import { masterBrain } from '../lib/swarm/revenue/masterBrain';
+import { swarmCoordinator } from '../../lib/swarm/revenue/coordinator';
+import { swarmMemory } from '../../lib/swarm/revenue/memory';
+import { masterBrain } from '../../lib/swarm/revenue/masterBrain';
 
 async function main() {
   console.log('⚡ Initializing Trendly Autonomous Revenue Swarm Test...');

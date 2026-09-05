@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { redirect, notFound } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { TaskDetailClient } from './_components/task-detail-client';
 
 export default async function TaskDetailPage({ params }: { params: { id: string } }) {

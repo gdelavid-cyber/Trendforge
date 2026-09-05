@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { SwarmNav } from './swarm/_components/swarm-nav';
 import { SwarmCommandCenter } from './_components/swarm-command-center';
 import { prisma } from '@/lib/core/db';

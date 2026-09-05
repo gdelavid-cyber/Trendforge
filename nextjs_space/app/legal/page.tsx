@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Shield, AlertTriangle, Scale, Lock } from 'lucide-react';
 
 export default function LegalPage() {

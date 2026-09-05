@@ -1,7 +1,7 @@
-import { prisma } from '../lib/core/db';
-import { redis } from '../lib/core/redis';
-import { ensureSpeciesSeeded, reconcileInstances } from '../lib/swarm/registry';
-import { enqueueJob } from '../lib/swarm/queue';
+import { prisma } from '../../lib/core/db';
+import { redis } from '../../lib/core/redis';
+import { ensureSpeciesSeeded, reconcileInstances } from '../../lib/swarm/registry';
+import { enqueueJob } from '../../lib/swarm/queue';
 import { JobStage } from '@prisma/client';
 
 async function seedSwarm() {

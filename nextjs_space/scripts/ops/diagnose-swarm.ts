@@ -1,7 +1,7 @@
-import { prisma } from '../lib/core/db';
-import { masterBrain } from '../lib/swarm/revenue/masterBrain';
-import { swarmCoordinator } from '../lib/swarm/revenue/coordinator';
-import { swarmMemory } from '../lib/swarm/revenue/memory';
+import { prisma } from '../../lib/core/db';
+import { masterBrain } from '../../lib/swarm/revenue/masterBrain';
+import { swarmCoordinator } from '../../lib/swarm/revenue/coordinator';
+import { swarmMemory } from '../../lib/swarm/revenue/memory';
 
 async function diagnose() {
   console.log('====================================================');

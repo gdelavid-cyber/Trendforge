@@ -1,6 +1,6 @@
 'use client';
 
-import { TaskCard } from '@/components/task-card';
+import { TaskCard } from '@/components/tasks/task-card';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
 

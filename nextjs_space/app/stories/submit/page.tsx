@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Upload, DollarSign, FileText, Loader2, CheckCircle } from 'lucide-react';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

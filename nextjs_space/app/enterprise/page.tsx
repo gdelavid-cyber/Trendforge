@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
-import { Header } from '@/components/header';
+import { Header } from '@/components/layouts/header';
 import { EnterpriseClient } from './_components/enterprise-client';
 
 export const metadata = {

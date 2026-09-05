@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TaskCard } from '@/components/task-card';
+import { TaskCard } from '@/components/tasks/task-card';
 import { Loader2, Inbox } from 'lucide-react';
 
 interface FiltersState {
