@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { calculateAgentRank } from '@/lib/marketplace/ranking';
+import { prisma } from '@/lib/core/db';
+import { calculateAgentRank } from '@/lib/money/marketplace/ranking';
 
 export async function GET() {
   try {

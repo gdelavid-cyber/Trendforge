@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CONTEST_MODE } from '@/lib/flags';
+import { CONTEST_MODE } from '@/lib/core/flags';
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {

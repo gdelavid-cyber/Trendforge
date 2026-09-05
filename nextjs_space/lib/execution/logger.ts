@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export interface LogEntryInput {
   taskId: string;

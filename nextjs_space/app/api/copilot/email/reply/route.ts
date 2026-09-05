@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { analyzeBuyerEngagement } from '@/lib/copilot/analyzer';
 import { processAutoCloseTurn } from '@/lib/copilot/auto-closer';
 import { isOptOutMessage, logComplianceEvent } from '@/lib/copilot/compliance';

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export const AGENT_CONFIGS: {
   [key: string]: {

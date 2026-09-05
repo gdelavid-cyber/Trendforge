@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { isUserAdmin } from '@/lib/council/config';
 import { notifyAdmin } from '@/lib/council/admin-notify';
 

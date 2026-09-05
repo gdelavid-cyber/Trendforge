@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { sendEmail } from '@/lib/email/sendgrid';
+import { authOptions } from '@/lib/core/auth-options';
+import { sendEmail } from '@/lib/experience/email/sendgrid';
 
 export async function POST(request: Request) {
   try {

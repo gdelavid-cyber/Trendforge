@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { executeSkill } from '@/lib/web4/executor';
+import { executeSkill } from '@/lib/intelligence/tools/executor';
 
 /**
  * Real sandbox execution for the builder DAG. Each node runs through the real

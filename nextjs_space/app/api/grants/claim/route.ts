@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { claimUserGrant } from '@/lib/grants/micro-grant';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { claimUserGrant } from '@/lib/money/grants/micro-grant';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);

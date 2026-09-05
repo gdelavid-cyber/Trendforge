@@ -31,11 +31,11 @@ import Link from 'next/link';
 import { AvatarRenderer } from '@/components/avatar/AvatarRenderer';
 import { FighterStatsBar } from '@/components/avatar/FighterStatsBar';
 import { EmotionController } from '@/components/avatar/EmotionController';
-import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/lib/cosmetics/catalog';
-import { calculateFighterStats, FighterLoadout, getLoadoutModifiers } from '@/lib/cosmetics/stats';
+import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/lib/experience/cosmetics/catalog';
+import { calculateFighterStats, FighterLoadout, getLoadoutModifiers } from '@/lib/experience/cosmetics/stats';
 import { AvatarEmotion } from '@/hooks/useAvatar';
 import { GuideTour } from '@/components/guide/GuideTour';
-import { VOICE_PRESETS, getVoicePresetById } from '@/lib/agent/voice-presets';
+import { VOICE_PRESETS, getVoicePresetById } from '@/lib/intelligence/voice/voice-presets';
 import { VoiceSelectorModal } from '@/components/avatar/VoiceSelectorModal';
 
 const BASE_MODELS = [

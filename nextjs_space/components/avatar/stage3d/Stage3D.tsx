@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 
 const DynamicStage3DCanvas = dynamic(

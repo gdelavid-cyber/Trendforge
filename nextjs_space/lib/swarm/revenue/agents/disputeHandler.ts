@@ -1,5 +1,5 @@
 import { SwarmAgent, TaskContext, AgentResult } from './agentBase';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { escrowService } from '../escrow';
 
 export class DisputeHandlerAgent extends SwarmAgent {

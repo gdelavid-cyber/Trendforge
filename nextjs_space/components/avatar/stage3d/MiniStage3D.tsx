@@ -5,7 +5,7 @@ import { Canvas } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
 import { NftMecha3D } from './NftMecha3D';
 import { useInViewport } from './useInViewport';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 
 export interface MiniStage3DProps {

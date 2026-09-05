@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { persistScrapedLeads } from '@/lib/sales/leads-scraper';
+import { prisma } from '@/lib/core/db';
+import { persistScrapedLeads } from '@/lib/money/sales/leads-scraper';
 
 export async function GET(
   req: NextRequest,

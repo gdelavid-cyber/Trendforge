@@ -1,5 +1,5 @@
 import { Header } from '@/components/header';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { Skull, AlertTriangle, ArrowLeft, ShieldCheck, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

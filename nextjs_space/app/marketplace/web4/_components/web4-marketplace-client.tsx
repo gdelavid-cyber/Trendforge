@@ -31,8 +31,8 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { AvatarRenderer } from '@/components/avatar/AvatarRenderer';
 import { FighterStatsBar } from '@/components/avatar/FighterStatsBar';
-import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/lib/cosmetics/catalog';
-import { calculateFighterStats, FighterLoadout } from '@/lib/cosmetics/stats';
+import { COSMETICS_CATALOG, CatalogItem, CombatSlot, COSMETIC_TIERS } from '@/lib/experience/cosmetics/catalog';
+import { calculateFighterStats, FighterLoadout } from '@/lib/experience/cosmetics/stats';
 
 const SLOT_FILTERS: Array<{ id: 'ALL' | CombatSlot; label: string; icon: any }> = [
   { id: 'ALL', label: 'All Gear', icon: ShoppingBag },

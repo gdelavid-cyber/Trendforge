@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/db';
-import { ModelTierKey, MODEL_TIERS, calculateCost, OpenRouterUsage } from '@/lib/openrouter/client';
+import { prisma } from '@/lib/core/db';
+import { ModelTierKey, MODEL_TIERS, calculateCost, OpenRouterUsage } from '@/lib/intelligence/openrouter/client';
 import { computeMerkleRoot, signAttestationPayload, signEIP712Attestation } from './attestation';
 import { escrowService, StripeCaptureResult } from './escrow';
 import { SWARM_TEMPLATES, SwarmTemplateSpec, TemplateType, SEED_GOLDEN_SAMPLES } from './templates';

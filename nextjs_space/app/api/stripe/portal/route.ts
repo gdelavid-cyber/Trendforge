@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { stripe } from '@/lib/stripe';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { stripe } from '@/lib/core/stripe';
 
 export async function POST(request: Request) {
   try {

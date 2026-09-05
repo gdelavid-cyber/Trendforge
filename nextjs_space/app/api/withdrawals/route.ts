@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 
 const SOL_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const MIN_WITHDRAWAL = 1;

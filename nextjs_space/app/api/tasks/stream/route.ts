@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { redis } from '@/lib/redis';
+import { prisma } from '@/lib/core/db';
+import { redis } from '@/lib/core/redis';
 
 export async function GET(request: Request) {
   try {

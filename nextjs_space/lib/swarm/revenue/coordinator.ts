@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { swarmMemory, SwarmMemory, AgentRole, AgentInstance, TaskState, TaskCheckpoint } from './memory';
 import { masterBrain, MasterBrain, BrainDecision } from './masterBrain';
 import { SWARM_TEMPLATES, TemplateType, PricingTier } from './templates';
@@ -13,7 +13,7 @@ import { CloserAgent } from './agents/closer';
 import { DelivererAgent } from './agents/deliverer';
 import { LoggerAgent } from './agents/logger';
 import { DisputeHandlerAgent } from './agents/disputeHandler';
-import { ModelTierKey } from '@/lib/openrouter/client';
+import { ModelTierKey } from '@/lib/intelligence/openrouter/client';
 
 export interface PulseResult {
   success: boolean;

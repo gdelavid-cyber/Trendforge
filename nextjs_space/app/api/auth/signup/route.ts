@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/db';
-import { sendNotificationEmail } from '@/lib/email';
+import { prisma } from '@/lib/core/db';
+import { sendNotificationEmail } from '@/lib/experience/email';
 
 export async function POST(request: Request) {
   try {

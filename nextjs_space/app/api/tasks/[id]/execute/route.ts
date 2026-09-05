@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { startOrGetExecutionPlan, advanceExecutionPlan } from '@/lib/execution/autonomous-engine';
 
 export async function POST(

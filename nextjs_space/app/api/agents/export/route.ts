@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { exportAgentToJSON } from '@/lib/export/agent-exporter';
+import { authOptions } from '@/lib/core/auth-options';
+import { exportAgentToJSON } from '@/lib/experience/export/agent-exporter';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);

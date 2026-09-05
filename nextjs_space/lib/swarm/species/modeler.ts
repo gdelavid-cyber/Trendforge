@@ -3,7 +3,7 @@ import path from 'path';
 import * as THREE from 'three';
 // @ts-ignore
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { AssetJob, JobStage } from '@prisma/client';
 import { SpeciesContext, SpeciesResult, AssetPromptSpec } from './types';
 

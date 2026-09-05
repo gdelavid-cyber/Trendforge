@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Clock, TrendingUp, AlertCircle, ArrowRight, Zap, DollarSign } from 'lucide-react';
 import Link from 'next/link';
-import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/constants';
+import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/core/constants';
 
 interface TrendingTask {
   id: string;

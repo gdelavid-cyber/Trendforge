@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { ensureReferenceCode } from '@/lib/web4/deposits';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { ensureReferenceCode } from '@/lib/money/deposits';
 
 /**
  * Deposit instructions + history for one of the caller's agents. Generates

@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
-import { generateConwayWallet } from '../lib/web4/wallet';
-import { ledgerBalance, postEntry, realEarningsUsdc } from '../lib/web4/ledger';
-import { runSurvivalCycle } from '../lib/web4/survival-engine';
-import { claimUserGrant } from '../lib/grants/micro-grant';
+import { prisma } from '../lib/core/db';
+import { generateConwayWallet } from '../lib/money/wallet';
+import { ledgerBalance, postEntry, realEarningsUsdc } from '../lib/money/ledger';
+import { runSurvivalCycle } from '../lib/swarm/survival-engine';
+import { claimUserGrant } from '../lib/money/grants/micro-grant';
 
 // Honest-money foundation: every wallet movement must be a ledger entry,
 // balances must equal the entry sum, replays must be no-ops, and agents

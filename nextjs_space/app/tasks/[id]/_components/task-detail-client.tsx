@@ -6,12 +6,12 @@ import { ArrowRight, CheckCircle, CheckCircle2, Shield, ShieldCheck, TrendingUp,
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RISK_CONFIG } from '@/lib/constants';
+import { RISK_CONFIG } from '@/lib/core/constants';
 import { TrendCategoryBadge } from '@/components/trend-badge';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { completePowerMoveAction } from '@/app/actions';
-import { parseSteps } from '@/lib/tasks/steps';
+import { parseSteps } from '@/lib/pipeline/steps';
 import { RunFeed } from './run-feed';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 import { AutonomousMilestonesTimeline } from '@/components/execution/AutonomousMilestonesTimeline';

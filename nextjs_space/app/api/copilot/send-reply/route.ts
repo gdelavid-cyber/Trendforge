@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { broadcastCopilotEvent } from '@/lib/copilot/realtime';
 import type { TranscriptMessage } from '@/lib/copilot/types';
 

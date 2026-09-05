@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { BATTLE_TIERS } from '@/lib/battles/rewards';
+import { BATTLE_TIERS } from '@/lib/money/battles/rewards';
 import { MiniStage3D } from '@/components/avatar/stage3d/MiniStage3D';
 import { normalizeArchetype } from '@/components/avatar/CompanionPortrait';
 import type { AvatarEmotion } from '@/hooks/useAvatar';

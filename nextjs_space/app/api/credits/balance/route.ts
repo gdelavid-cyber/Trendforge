@@ -1,5 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
-import { getOrCreateCreditAccount, TIER_CONFIGS } from '@/lib/credits/credit-manager';
+import { NextRequest, NextResponse } from 'next/server';
+import { getOrCreateCreditAccount, TIER_CONFIGS } from '@/lib/growth/credits/credit-manager';
 
 export async function GET(req: NextRequest) {
   try {

@@ -1,5 +1,5 @@
 import { Header } from '@/components/header';
-import { COMPLIANCE_DISCLAIMERS } from '@/lib/compliance/disclaimers';
+import { COMPLIANCE_DISCLAIMERS } from '@/lib/experience/compliance/disclaimers';
 import { ShieldCheck, AlertTriangle, Scale, Lock } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';

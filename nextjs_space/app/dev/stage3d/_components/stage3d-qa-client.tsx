@@ -22,8 +22,8 @@ import { Input } from '@/components/ui/input';
 import { Stage3D } from '@/components/avatar/stage3d/Stage3D';
 import { canRender3D } from '@/components/avatar/AvatarRenderer';
 import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 import { GuideTour } from '@/components/guide/GuideTour';
 

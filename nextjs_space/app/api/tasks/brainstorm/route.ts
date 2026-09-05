@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { parseSteps } from '@/lib/tasks/steps';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { parseSteps } from '@/lib/pipeline/steps';
 import { makeLlm } from '@/lib/execution/llm';
 import { runSquadBrainstorm } from '@/lib/execution/brainstorm';
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
           });
           if (primary?.name) companionName = primary.name;
 
-          const { getUserLlm } = await import('@/lib/llm/user-llm');
+          const { getUserLlm } = await import('@/lib/intelligence/user-llm');
           const userLlm = await getUserLlm(user.id);
           if (userLlm) llm = userLlm;
         }

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runQAInspector } from '../lib/swarm/species/qa-inspector';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
 import { AssetJob, JobStage, QAVerdict } from '@prisma/client';
 
 // QA inspector gating logic tested in dry-run mode (no DB writes).

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Sparkles, Mic, Zap, MessageSquare, X, Shield, Wallet } from 'lucide-react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MiniStage3D } from '@/components/avatar/stage3d/MiniStage3D';
-import { playCompanionSummonSfx } from '@/lib/audio/sfx';
+import { playCompanionSummonSfx } from '@/lib/experience/sfx';
 
 interface ActiveRun {
   working: boolean;

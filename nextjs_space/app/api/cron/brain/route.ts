@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { collectBrainMetrics } from '@/lib/brain/metrics';
-import { detectAnomalies } from '@/lib/brain/anomaly';
-import { generateBrainDecisions } from '@/lib/brain/decisions';
+import { collectBrainMetrics } from '@/lib/intelligence/brain/metrics';
+import { detectAnomalies } from '@/lib/intelligence/brain/anomaly';
+import { generateBrainDecisions } from '@/lib/intelligence/brain/decisions';
 
 const CRON_SECRET = process.env.PIPELINE_API_KEY;
 

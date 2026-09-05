@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { getOrCreatePrimary } from '@/lib/companion/service';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { getOrCreatePrimary } from '@/lib/intelligence/companion/service';
 
 export async function GET() {
   const session = await getServerSession(authOptions);

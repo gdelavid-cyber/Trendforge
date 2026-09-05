@@ -2,10 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { SKILLS_LIBRARY } from '@/lib/web4/skills-library';
-import { isFunded, postEntry } from '@/lib/web4/ledger';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { SKILLS_LIBRARY } from '@/lib/intelligence/tools/skills-library';
+import { isFunded, postEntry } from '@/lib/money/ledger';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const agent = await prisma.web4Agent.findUnique({

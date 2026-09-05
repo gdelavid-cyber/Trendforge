@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { SpeciesStatus } from '@prisma/client';
 import { GLOBAL_DAILY_BUDGET_CAP_USD } from './gatekeeper';
 

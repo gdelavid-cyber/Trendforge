@@ -1,7 +1,7 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { AssetJob, JobStage } from '@prisma/client';
 import { SpeciesContext, SpeciesResult } from './types';
-import { invalidateServerCatalogCache } from '@/lib/cosmetics/server-catalog';
+import { invalidateServerCatalogCache } from '@/lib/experience/cosmetics/server-catalog';
 
 export async function runPublisher(
   job: AssetJob,

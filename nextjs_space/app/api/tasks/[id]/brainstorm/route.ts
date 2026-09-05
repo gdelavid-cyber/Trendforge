@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { runSquadBrainstorm } from '@/lib/execution/brainstorm';
-import { parseSteps } from '@/lib/tasks/steps';
+import { parseSteps } from '@/lib/pipeline/steps';
 import { makeLlm } from '@/lib/execution/llm';
 
 export const dynamic = 'force-dynamic';

@@ -1,9 +1,9 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { getBlueprintForCategory } from '@/lib/execution/blueprints';
 import { logExecutionEvent } from '@/lib/execution/logger';
-import { persistScrapedLeads } from '@/lib/sales/leads-scraper';
-import { generateSalesKitForTask, sendOutreachToLead, simulateBuyerResponse, executeDealClosureAndSale } from '@/lib/sales/sales-engine';
-import { releaseEscrowPayout } from '@/lib/payments/escrow';
+import { persistScrapedLeads } from '@/lib/money/sales/leads-scraper';
+import { generateSalesKitForTask, sendOutreachToLead, simulateBuyerResponse, executeDealClosureAndSale } from '@/lib/money/sales/sales-engine';
+import { releaseEscrowPayout } from '@/lib/money/escrow';
 import crypto from 'crypto';
 
 export interface AutonomousRunResult {

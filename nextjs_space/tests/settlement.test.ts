@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
-import { generateConwayWallet } from '../lib/web4/wallet';
-import { postEntry, ledgerBalance, realEarningsUsdc } from '../lib/web4/ledger';
-import { transferFunds, executeSettlement, SettlementError } from '../lib/web4/settlement';
-import { getTreasuryAgent } from '../lib/web4/treasury';
+import { prisma } from '../lib/core/db';
+import { generateConwayWallet } from '../lib/money/wallet';
+import { postEntry, ledgerBalance, realEarningsUsdc } from '../lib/money/ledger';
+import { transferFunds, executeSettlement, SettlementError } from '../lib/money/settlement';
+import { getTreasuryAgent } from '../lib/money/treasury';
 
 const RUN = `settle-${Date.now()}`;
 

@@ -6,7 +6,7 @@
  *
  * Run once:  npx tsx scripts/reset-fake-earnings.ts
  */
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 
 async function main() {
   const updated = await prisma.user.updateMany({

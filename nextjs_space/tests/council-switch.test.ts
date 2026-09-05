@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 import { isCouncilUserModeEnabled, isUserAdmin } from '../lib/council/config';
 import { runCouncilDebate } from '../lib/council/council-runner';
 import { notifyAdminCouncilVerdict, handleProposalPublishing } from '../lib/council/admin-notify';

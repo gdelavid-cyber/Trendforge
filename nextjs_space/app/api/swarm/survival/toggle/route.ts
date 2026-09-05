@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { masterBrain } from '@/lib/swarm/revenue/masterBrain';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export const dynamic = 'force-dynamic';
 

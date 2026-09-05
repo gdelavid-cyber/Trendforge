@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { canExecute, recordSuccess, recordFailure } from '@/lib/agents/circuit-breaker';
 import { getUserQuota, consumeQuota, AGENT_CONFIGS } from '@/lib/agents/quota';
 import { getCachedAgentResult, setCachedAgentResult } from '@/lib/agents/cache';

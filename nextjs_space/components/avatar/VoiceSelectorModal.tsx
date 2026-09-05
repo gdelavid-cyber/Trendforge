@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Check, Sparkles, Play, Pause, Mic, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { VOICE_PRESETS, VoicePreset, getVoicePresetById } from '@/lib/agent/voice-presets';
+import { VOICE_PRESETS, VoicePreset, getVoicePresetById } from '@/lib/intelligence/voice/voice-presets';
 
 export interface VoiceSelectorModalProps {
   isOpen: boolean;

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { AGENT_CONFIGS, getUserQuota } from '@/lib/agents/quota';
 import { getCircuitState } from '@/lib/agents/circuit-breaker';
 

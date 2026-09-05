@@ -1,6 +1,6 @@
 import type { LlmFn } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
-import { getIntegration } from '@/lib/integrations/vault';
+import type { ParsedStep } from '@/lib/pipeline/steps';
+import { getIntegration } from '@/lib/core/vault';
 
 // Polymarket trade steps. v1 honesty boundary: the runner pulls REAL market
 // data (Gamma public API) and stages a concrete order ticket, but does not

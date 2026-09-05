@@ -3,11 +3,11 @@
  * Verifies Brain processing, Personality Prompts, TTS, STT, and Lip-Sync Viseme Generators.
  */
 
-import { buildAgentCompanionPrompt, ARCHETYPE_PERSONALITIES } from '../lib/agent/personality';
-import { generateVisemesFromText, getVisemeFromAudioFrequencies } from '../lib/agent/lipsync';
-import { generateSpeechAudio } from '../lib/agent/tts';
-import { normalizeSpeechTranscript } from '../lib/agent/stt';
-import { processAgentConversation } from '../lib/agent/brain';
+import { buildAgentCompanionPrompt, ARCHETYPE_PERSONALITIES } from '../lib/intelligence/voice/personality';
+import { generateVisemesFromText, getVisemeFromAudioFrequencies } from '../lib/intelligence/voice/lipsync';
+import { generateSpeechAudio } from '../lib/intelligence/voice/tts';
+import { normalizeSpeechTranscript } from '../lib/intelligence/voice/stt';
+import { processAgentConversation } from '../lib/intelligence/voice/brain';
 
 async function runTests() {
   console.log('🧪 Starting Visual AI Companion Unit Tests...\n');

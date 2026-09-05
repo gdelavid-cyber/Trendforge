@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { verifyAttestationSignature } from '@/lib/swarm/revenue/attestation';
 
 export const dynamic = 'force-dynamic';

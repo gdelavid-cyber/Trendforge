@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
-import { prisma } from '@/lib/db';
-import { createRedisClient } from '@/lib/redis';
+import { prisma } from '@/lib/core/db';
+import { createRedisClient } from '@/lib/core/redis';
 
 export async function GET(request: Request) {
   const subClient = createRedisClient();

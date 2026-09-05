@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
 import { Header } from '@/components/header';
 import { SwarmNav } from '../_components/swarm-nav';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { FileCheck2, ShieldCheck, Lock, Hash } from 'lucide-react';
 
 export const metadata: Metadata = {

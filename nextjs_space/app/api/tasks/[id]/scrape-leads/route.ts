@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { persistScrapedLeads } from '@/lib/sales/leads-scraper';
+import { authOptions } from '@/lib/core/auth-options';
+import { persistScrapedLeads } from '@/lib/money/sales/leads-scraper';
 
 export async function POST(
   req: NextRequest,

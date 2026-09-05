@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import {
   INTEGRATION_PROVIDERS,
   PROVIDER_KEY_FIELDS,
@@ -12,7 +12,7 @@ import {
   listIntegrations,
   saveIntegration,
   type IntegrationProvider,
-} from '@/lib/integrations/vault';
+} from '@/lib/core/vault';
 
 function isProvider(v: unknown): v is IntegrationProvider {
   return typeof v === 'string' && (INTEGRATION_PROVIDERS as readonly string[]).includes(v);

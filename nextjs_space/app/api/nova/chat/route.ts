@@ -1,6 +1,6 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
-import { verifyAndDeductCredits } from '@/lib/credits/credit-manager';
-import { getNovaQuickAnswers, NOVA_SYSTEM_PROMPT } from '@/lib/nova/nova-knowledge';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAndDeductCredits } from '@/lib/growth/credits/credit-manager';
+import { getNovaQuickAnswers, NOVA_SYSTEM_PROMPT } from '@/lib/growth/nova/nova-knowledge';
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { ARCHETYPE_PERSONALITIES } from '@/lib/agent/personality';
+import { prisma } from '@/lib/core/db';
+import { ARCHETYPE_PERSONALITIES } from '@/lib/intelligence/voice/personality';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../lib/db';
-import { encryptSecret } from '../lib/encryption';
-import { getUserLlmConfig, openAiCompatibleLlm } from '../lib/llm/user-llm';
+import { prisma } from '../lib/core/db';
+import { encryptSecret } from '../lib/core/encryption';
+import { getUserLlmConfig, openAiCompatibleLlm } from '../lib/intelligence/user-llm';
 
 // User BYOK brains: endpoint normalization, wire format, and encrypted
 // storage round-trip against ephemeral rows in the dev database.

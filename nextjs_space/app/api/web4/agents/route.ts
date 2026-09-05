@@ -2,10 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { generateConwayWallet } from '@/lib/web4/wallet';
-import { generateEIP8004Identity } from '@/lib/web4/eip8004';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { generateConwayWallet } from '@/lib/money/wallet';
+import { generateEIP8004Identity } from '@/lib/core/eip8004';
 
 export async function GET() {
   const session = await getServerSession(authOptions);

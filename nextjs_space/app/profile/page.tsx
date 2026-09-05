@@ -2,11 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/header';
 import { ProfileClient } from './_components/profile-client';
-import { userRealIncomeUsdc } from '@/lib/web4/ledger';
+import { userRealIncomeUsdc } from '@/lib/money/ledger';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);

@@ -24,7 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { SKILLS_LIBRARY, SkillDefinition } from '@/lib/web4/skills-library';
+import { SKILLS_LIBRARY, SkillDefinition } from '@/lib/intelligence/tools/skills-library';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';

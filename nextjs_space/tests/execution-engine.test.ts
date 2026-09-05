@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 import { approveGate, rejectGate, startExecution } from '../lib/execution/engine';
 
 // Execution-engine state machine, exercised against ephemeral rows in the dev
@@ -7,7 +7,7 @@ import { approveGate, rejectGate, startExecution } from '../lib/execution/engine
 // safety gate for enabling Autopilot in production.
 
 // Force the FileRunner's inline path so tests never touch S3.
-vi.mock('@/lib/aws-config', () => ({
+vi.mock('@/lib/core/aws-config', () => ({
   getBucketConfig: () => ({ bucketName: '', folderPrefix: '' }),
   createS3Client: () => {
     throw new Error('S3 must not be constructed in engine tests');

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { guideForPath } from '@/lib/guide/content';
+import { guideForPath } from '@/lib/experience/guide/content';
 
 /**
  * Wraps the guide hub: marks guideSeenAt once on load (signed-in only) and

@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { encryptSecret, decryptSecret, maskSecret } from '@/lib/encryption';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { encryptSecret, decryptSecret, maskSecret } from '@/lib/core/encryption';
 
 const PROVIDERS = new Set(['openrouter', 'custom']);
 

@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/core/utils'
 
 type Size = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 

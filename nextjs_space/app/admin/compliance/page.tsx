@@ -1,7 +1,7 @@
 import { Header } from '@/components/header';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { redirect } from 'next/navigation';
 import { ShieldCheck, UserCheck, AlertTriangle } from 'lucide-react';
 

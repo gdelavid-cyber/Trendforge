@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ParsedStep } from '../lib/tasks/steps';
+import type { ParsedStep } from '../lib/pipeline/steps';
 
 // Skill-runner registry v2. The integration vault is mocked so these tests
 // exercise gating/resolution logic without real keys; global fetch is stubbed
@@ -8,12 +8,12 @@ import type { ParsedStep } from '../lib/tasks/steps';
 // calls and zero network calls — never a faked success.
 
 const getIntegrationMock = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/integrations/vault', () => ({
+vi.mock('@/lib/core/vault', () => ({
   getIntegration: getIntegrationMock,
 }));
 
 const bucketConfigMock = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/aws-config', () => ({
+vi.mock('@/lib/core/aws-config', () => ({
   getBucketConfig: bucketConfigMock,
   createS3Client: () => {
     throw new Error('S3 client must not be constructed when no bucket is configured');
@@ -26,7 +26,7 @@ const dbMock = vi.hoisted(() => ({
     userIntegrationKey: { findUniqueOrThrow: vi.fn() },
   },
 }));
-vi.mock('@/lib/db', () => dbMock);
+vi.mock('@/lib/core/db', () => dbMock);
 
 import { createSkillRunner } from '../lib/execution/runners';
 

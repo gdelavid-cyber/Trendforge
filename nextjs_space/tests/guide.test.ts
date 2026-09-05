@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
-import { getGuideStatus, markGuideSeen, markTourDone } from '../lib/guide/status';
-import { GUIDE_PAGES, condensedGuideForPrompt, guideForPath } from '../lib/guide/content';
+import { prisma } from '../lib/core/db';
+import { getGuideStatus, markGuideSeen, markTourDone } from '../lib/experience/guide/status';
+import { GUIDE_PAGES, condensedGuideForPrompt, guideForPath } from '../lib/experience/guide/content';
 
 // T5: guide/tour state persists on OnboardingProgress (the same surface the
 // status API exposes), and the content catalog stays internally consistent.

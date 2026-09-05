@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { isGlobalKillSwitchActive, setGlobalKillSwitch } from '@/lib/swarm/gatekeeper';
 import { ensureSpeciesSeeded, reconcileInstances } from '@/lib/swarm/registry';
 import { SpeciesStatus } from '@prisma/client';

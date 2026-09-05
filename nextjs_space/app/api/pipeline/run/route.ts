@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { validatePipelineKey, callLLM } from '@/lib/pipeline';
-import { redis } from '@/lib/redis';
+import { redis } from '@/lib/core/redis';
 
 export async function POST(request: Request) {
   if (!validatePipelineKey(request)) {

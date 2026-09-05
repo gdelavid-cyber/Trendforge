@@ -24,7 +24,7 @@ import {
   Mic,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { VOICE_PRESETS, getVoicePresetById } from '@/lib/agent/voice-presets';
+import { VOICE_PRESETS, getVoicePresetById } from '@/lib/intelligence/voice/voice-presets';
 import { VoiceSelectorModal } from '@/components/avatar/VoiceSelectorModal';
 
 export interface ChatInterfaceProps {

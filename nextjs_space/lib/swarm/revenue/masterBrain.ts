@@ -1,7 +1,7 @@
-import { OpenRouterClient, openRouterClient, MODEL_TIERS } from '@/lib/openrouter/client';
+import { OpenRouterClient, openRouterClient, MODEL_TIERS } from '@/lib/intelligence/openrouter/client';
 import { SwarmMemory, swarmMemory, AgentInstance, BudgetState, StrategyState, RevenueState } from './memory';
 import { SWARM_TEMPLATES, TemplateType, PricingTier, calculateDynamicPrice } from './templates';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export interface PreFlightCheckResult {
   approved: boolean;

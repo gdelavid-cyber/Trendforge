@@ -1,4 +1,4 @@
-import { logAuditEvent } from '@/lib/compliance/audit-logger';
+import { logAuditEvent } from '@/lib/experience/compliance/audit-logger';
 import type { CopilotChannel, CopilotMode } from './types';
 
 // Hard-coded Legal Compliance Map (Non-configurable by user)

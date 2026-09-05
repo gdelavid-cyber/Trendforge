@@ -2,10 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { calculateBattleRewards } from '@/lib/battles/rewards';
-import { settleBattle, recordBattle } from '@/lib/battles/settle';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { calculateBattleRewards } from '@/lib/money/battles/rewards';
+import { settleBattle, recordBattle } from '@/lib/money/battles/settle';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);

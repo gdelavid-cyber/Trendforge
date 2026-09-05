@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { startExecution, type ExecutionMode } from '@/lib/execution/engine';
 
 const MODES: ExecutionMode[] = ['DIY', 'CO_PILOT', 'AUTOPILOT'];
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 }
 
 async function prismaUser(email: string) {
-  const { prisma } = await import('@/lib/db');
+  const { prisma } = await import('@/lib/core/db');
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   return user;
 }

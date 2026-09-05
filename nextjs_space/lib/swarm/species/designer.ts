@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/db';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
+import { prisma } from '@/lib/core/db';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
 import { AssetJob, JobStage } from '@prisma/client';
 import { AssetPromptSpec, SpeciesContext, SpeciesResult } from './types';
 

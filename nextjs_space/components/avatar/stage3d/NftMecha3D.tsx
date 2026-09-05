@@ -4,7 +4,7 @@ import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 
 export interface NftMecha3DProps {
   avatarId?: string;

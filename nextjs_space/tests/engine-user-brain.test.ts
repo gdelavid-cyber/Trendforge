@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 
 // The user's own brain must outrank the platform default whenever one is
 // connected, and an explicitly injected LLM (tests/platform ops) outranks
@@ -7,7 +7,7 @@ import { prisma } from '../lib/db';
 
 const state = vi.hoisted(() => ({ byokUserId: 'never-matches' }));
 
-vi.mock('@/lib/llm/user-llm', () => ({
+vi.mock('@/lib/intelligence/user-llm', () => ({
   getUserLlm: vi.fn(async (uid: string) =>
     uid === state.byokUserId ? async () => 'USER_BRAIN_OUTPUT' : null
   ),

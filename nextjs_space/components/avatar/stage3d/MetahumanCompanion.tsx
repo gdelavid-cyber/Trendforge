@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import type { FighterLoadout } from '@/lib/cosmetics/stats';
+import type { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 
 export interface MetahumanCompanionProps {

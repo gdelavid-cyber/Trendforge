@@ -2,11 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { collectBrainMetrics } from '@/lib/brain/metrics';
-import { detectAnomalies } from '@/lib/brain/anomaly';
-import { generateBrainDecisions } from '@/lib/brain/decisions';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { collectBrainMetrics } from '@/lib/intelligence/brain/metrics';
+import { detectAnomalies } from '@/lib/intelligence/brain/anomaly';
+import { generateBrainDecisions } from '@/lib/intelligence/brain/decisions';
 
 export async function GET() {
   try {

@@ -1,6 +1,6 @@
 import { Header } from '@/components/header';
-import { prisma } from '@/lib/db';
-import { exportAgentToJSON } from '@/lib/export/agent-exporter';
+import { prisma } from '@/lib/core/db';
+import { exportAgentToJSON } from '@/lib/experience/export/agent-exporter';
 import { Download, FileCode, ArrowLeft, Bot, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

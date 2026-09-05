@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { stripe } from '@/lib/stripe';
-import { sendNotificationEmail } from '@/lib/email';
+import { prisma } from '@/lib/core/db';
+import { stripe } from '@/lib/core/stripe';
+import { sendNotificationEmail } from '@/lib/experience/email';
 import type Stripe from 'stripe';
 
 const PLAN_MAP: Record<string, string> = {

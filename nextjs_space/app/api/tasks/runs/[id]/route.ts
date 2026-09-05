@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { parseSteps } from '@/lib/tasks/steps';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { parseSteps } from '@/lib/pipeline/steps';
 
 /**
  * Proof-of-work feed for one run: the live step log (with timing) plus the

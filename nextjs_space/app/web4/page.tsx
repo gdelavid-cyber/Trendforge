@@ -1,12 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
 import { Header } from '@/components/header';
 import { SwarmNav } from './swarm/_components/swarm-nav';
 import { SwarmCommandCenter } from './_components/swarm-command-center';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export default async function Web4SwarmPage() {
   const session = await getServerSession(authOptions);

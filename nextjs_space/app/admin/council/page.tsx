@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { isUserAdmin, isCouncilUserModeEnabled } from '@/lib/council/config';
 import { Header } from '@/components/header';
 import { CouncilDashboard } from './_components/council-dashboard';

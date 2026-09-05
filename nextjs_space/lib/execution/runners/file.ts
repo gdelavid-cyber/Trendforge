@@ -1,7 +1,7 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import type { LlmFn } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
-import { createS3Client, getBucketConfig } from '@/lib/aws-config';
+import type { ParsedStep } from '@/lib/pipeline/steps';
+import { createS3Client, getBucketConfig } from '@/lib/core/aws-config';
 
 // Real deliverable files: renders CSV/Markdown from the run's outputs and
 // uploads to S3 when bucket config exists; otherwise returns the content

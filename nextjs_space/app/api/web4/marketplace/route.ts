@@ -2,10 +2,10 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { transferFunds, SettlementError } from '@/lib/web4/settlement';
-import { loadMergedCatalog } from '@/lib/cosmetics/server-catalog';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { transferFunds, SettlementError } from '@/lib/money/settlement';
+import { loadMergedCatalog } from '@/lib/experience/cosmetics/server-catalog';
 
 export async function GET() {
   const [listings, catalog] = await Promise.all([

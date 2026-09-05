@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { AvatarConfigState, AvatarEmotion } from '@/hooks/useAvatar';
-import { COSMETICS_CATALOG, CatalogItem, CombatSlot } from '@/lib/cosmetics/catalog';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
+import { COSMETICS_CATALOG, CatalogItem, CombatSlot } from '@/lib/experience/cosmetics/catalog';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 import { Stage3D } from '@/components/avatar/stage3d/Stage3D';
 
 export function canRender3D(

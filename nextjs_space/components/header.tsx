@@ -37,8 +37,8 @@ import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { SpotlightTour } from '@/components/guide/spotlight-tour';
-import { guideForPath } from '@/lib/guide/content';
-import { CONTEST_MODE } from '@/lib/flags';
+import { guideForPath } from '@/lib/experience/guide/content';
+import { CONTEST_MODE } from '@/lib/core/flags';
 import { CreditBadge } from '@/components/credits/credit-badge';
 
 interface NavItem {

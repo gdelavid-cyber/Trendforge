@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { encryptSecret, decryptSecret, maskSecret } from '../lib/encryption';
+import { encryptSecret, decryptSecret, maskSecret } from '../lib/core/encryption';
 import { getCircuitState, recordFailure, recordSuccess, canExecute } from '../lib/agents/circuit-breaker';
-import { detectAnomalies } from '../lib/brain/anomaly';
+import { detectAnomalies } from '../lib/intelligence/brain/anomaly';
 
 describe('AI Brain & Security Unit Tests', () => {
   describe('Encryption Utility (AES-256-GCM)', () => {

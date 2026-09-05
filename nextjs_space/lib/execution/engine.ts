@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/db';
-import { parseSteps } from '@/lib/tasks/steps';
+import { prisma } from '@/lib/core/db';
+import { parseSteps } from '@/lib/pipeline/steps';
 import { makeLlm } from '@/lib/execution/llm';
 import { createSkillRunner, type LlmFn, type StepContext, type StepOutcome } from './skills';
 
@@ -22,7 +22,7 @@ export interface EngineDeps {
 
 const DEFAULT_NOTIFY = async (userId: string, subject: string, body: string) => {
   try {
-    const { sendNotificationEmail } = await import('@/lib/email');
+    const { sendNotificationEmail } = await import('@/lib/experience/email');
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
     if (user?.email) {
       await sendNotificationEmail({
@@ -45,7 +45,7 @@ function runnerFor(deps: EngineDeps) {
 async function resolveDeps(userId: string, deps: EngineDeps): Promise<EngineDeps> {
   if (deps.llm) return deps;
   try {
-    const { getUserLlm } = await import('@/lib/llm/user-llm');
+    const { getUserLlm } = await import('@/lib/intelligence/user-llm');
     const userLlm = await getUserLlm(userId);
     if (userLlm) return { ...deps, llm: userLlm };
   } catch {}
@@ -152,7 +152,7 @@ export async function startExecution(
   let companionId = opts.companionId;
   if (!companionId) {
     try {
-      const { getOrCreatePrimary } = await import('@/lib/companion/service');
+      const { getOrCreatePrimary } = await import('@/lib/intelligence/companion/service');
       const companion = await getOrCreatePrimary(userId);
       companionId = companion.id;
     } catch {
@@ -283,7 +283,7 @@ async function runAutopilot(
     try {
       const utRow = await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { companionId: true } });
       if (utRow?.companionId) {
-        const { recordTaskCompleted } = await import('@/lib/companion/service');
+        const { recordTaskCompleted } = await import('@/lib/intelligence/companion/service');
         await recordTaskCompleted(utRow.companionId);
       }
     } catch {}

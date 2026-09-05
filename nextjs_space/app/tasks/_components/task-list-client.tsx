@@ -6,7 +6,7 @@ import { Search, Filter, Zap } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/constants';
+import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/core/constants';
 
 export function TaskListClient({ tasks }: { tasks: any[] }) {
   const [search, setSearch] = useState('');

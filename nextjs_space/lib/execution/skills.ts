@@ -1,4 +1,4 @@
-import type { ParsedStep } from '@/lib/tasks/steps';
+import type { ParsedStep } from '@/lib/pipeline/steps';
 
 // Step handlers turn a step into real work. Internal actions run through the
 // LLM (grounded by earlier steps); external actions run live integrations from

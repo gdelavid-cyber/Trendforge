@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, useGLTF, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 import { NftMecha3D } from './NftMecha3D';
 import { NftStageCompanion } from './NftStageCompanion';
 import { AnimeCompanion } from './AnimeCompanion';

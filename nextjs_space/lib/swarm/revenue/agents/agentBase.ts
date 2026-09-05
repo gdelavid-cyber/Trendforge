@@ -1,4 +1,4 @@
-import { OpenRouterClient, openRouterClient, MODEL_TIERS, calculateCost, ModelTierKey } from '@/lib/openrouter/client';
+import { OpenRouterClient, openRouterClient, MODEL_TIERS, calculateCost, ModelTierKey } from '@/lib/intelligence/openrouter/client';
 import { SwarmMemory, swarmMemory, AgentInstance } from '../memory';
 
 export interface TaskContext {

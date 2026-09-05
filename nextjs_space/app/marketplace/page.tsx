@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { Header } from '@/components/header';
 import { Web4MarketplaceClient } from './web4/_components/web4-marketplace-client';
 

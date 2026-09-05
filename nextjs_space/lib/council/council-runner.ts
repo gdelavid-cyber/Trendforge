@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/db';
-import { OpenRouterClient } from '@/lib/openrouter/client';
+import { prisma } from '@/lib/core/db';
+import { OpenRouterClient } from '@/lib/intelligence/openrouter/client';
 
 const openRouter = new OpenRouterClient();
 

@@ -1,6 +1,6 @@
 import type { LlmFn } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
-import { getIntegration } from '@/lib/integrations/vault';
+import type { ParsedStep } from '@/lib/pipeline/steps';
+import { getIntegration } from '@/lib/core/vault';
 
 // Real web research: search the live web (user-connected serper/tavily/brave
 // key, DuckDuckGo fallback), fetch actual pages, and synthesize ONLY from the

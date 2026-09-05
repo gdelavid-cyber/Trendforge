@@ -2,11 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
-import { getTreasuryAgent } from '@/lib/web4/treasury';
-import { SettlementError } from '@/lib/web4/settlement';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
+import { getTreasuryAgent } from '@/lib/money/treasury';
+import { SettlementError } from '@/lib/money/settlement';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);

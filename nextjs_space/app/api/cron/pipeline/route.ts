@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { toStructuredStepsJson } from '@/lib/tasks/steps';
+import { prisma } from '@/lib/core/db';
+import { toStructuredStepsJson } from '@/lib/pipeline/steps';
 import {
   callLLM,
   scrapeHackerNewsViral,

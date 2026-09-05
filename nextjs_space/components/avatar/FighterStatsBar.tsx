@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Swords, Zap, Shield, Brain } from 'lucide-react';
-import { FighterStats } from '@/lib/cosmetics/stats';
+import { FighterStats } from '@/lib/experience/cosmetics/stats';
 
 export interface FighterStatsBarProps {
   stats: FighterStats;

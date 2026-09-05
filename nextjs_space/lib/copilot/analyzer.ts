@@ -1,4 +1,4 @@
-import { OpenRouterClient } from '@/lib/openrouter/client';
+import { OpenRouterClient } from '@/lib/intelligence/openrouter/client';
 import { OBJECTION_DATABASE } from '@/lib/earn/agents/sales-closer';
 import { enforcePriceFloor } from './compliance';
 import type { CopilotAnalysis, TranscriptMessage } from './types';

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { SpeciesRole, SpeciesStatus, InstanceStatus } from '@prisma/client';
 
 export interface SpeciesSeedConfig {

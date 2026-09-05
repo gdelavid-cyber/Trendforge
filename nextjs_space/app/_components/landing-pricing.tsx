@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Check, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { SUBSCRIPTION_TIERS } from '@/lib/constants';
+import { SUBSCRIPTION_TIERS } from '@/lib/core/constants';
 
 export function LandingPricing() {
   return (

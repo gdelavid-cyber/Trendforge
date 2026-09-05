@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { processAgentConversation } from '@/lib/agent/brain';
+import { authOptions } from '@/lib/core/auth-options';
+import { processAgentConversation } from '@/lib/intelligence/voice/brain';
 
 export const dynamic = 'force-dynamic';
 

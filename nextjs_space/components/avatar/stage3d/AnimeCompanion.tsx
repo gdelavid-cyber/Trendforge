@@ -4,8 +4,8 @@ import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sparkles, RoundedBox, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { FighterLoadout } from '@/lib/cosmetics/stats';
-import { COSMETICS_CATALOG, CatalogItem } from '@/lib/cosmetics/catalog';
+import { FighterLoadout } from '@/lib/experience/cosmetics/stats';
+import { COSMETICS_CATALOG, CatalogItem } from '@/lib/experience/cosmetics/catalog';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
 
 /* ------------------------------------------------------------------ */

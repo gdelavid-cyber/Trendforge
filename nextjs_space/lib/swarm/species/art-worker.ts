@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { AssetJob, JobStage } from '@prisma/client';
 import { SpeciesContext, SpeciesResult, AssetPromptSpec, ProviderMetadata } from './types';
 

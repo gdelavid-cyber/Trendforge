@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 import { approveGate, startExecution } from '../lib/execution/engine';
 
 // Proof-of-work trail: every executed step must land in stepResults with
@@ -7,7 +7,7 @@ import { approveGate, startExecution } from '../lib/execution/engine';
 // show users WHEN and HOW LONG each piece of real work took — and artifacts
 // must link to their step index as verifiable evidence.
 
-vi.mock('@/lib/aws-config', () => ({
+vi.mock('@/lib/core/aws-config', () => ({
   getBucketConfig: () => ({ bucketName: '', folderPrefix: '' }),
   createS3Client: () => {
     throw new Error('S3 must not be constructed in engine tests');

@@ -1,5 +1,5 @@
 import { callLLM } from '@/lib/pipeline';
-import { sendNotificationEmail } from '@/lib/email';
+import { sendNotificationEmail } from '@/lib/experience/email';
 
 export interface RedditScraperParams {
   subreddit?: string;

@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Stage3DCanvas } from '@/components/avatar/stage3d/Stage3DCanvas';
-import { VOICE_PRESETS, getVoicePresetById, VoicePreset } from '@/lib/agent/voice-presets';
+import { VOICE_PRESETS, getVoicePresetById, VoicePreset } from '@/lib/intelligence/voice/voice-presets';
 
 export interface MarketDebriefModalProps {
   isOpen: boolean;

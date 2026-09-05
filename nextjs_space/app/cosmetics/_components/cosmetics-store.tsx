@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { COSMETICS_CATALOG, COSMETIC_TIERS, CatalogItem, CombatSlot } from '@/lib/cosmetics/catalog';
+import { COSMETICS_CATALOG, COSMETIC_TIERS, CatalogItem, CombatSlot } from '@/lib/experience/cosmetics/catalog';
 import Link from 'next/link';
 
 export function CosmeticsStore({ user }: { user: any }) {

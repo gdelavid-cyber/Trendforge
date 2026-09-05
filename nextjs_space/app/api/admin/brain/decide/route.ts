@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { resolveBrainDecision } from '@/lib/brain/decisions';
+import { authOptions } from '@/lib/core/auth-options';
+import { resolveBrainDecision } from '@/lib/intelligence/brain/decisions';
 
 export async function POST(request: Request) {
   try {

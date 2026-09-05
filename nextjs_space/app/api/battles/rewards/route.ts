@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { BATTLE_TIERS } from '@/lib/battles/rewards';
+import { BATTLE_TIERS } from '@/lib/money/battles/rewards';
 
 export async function GET() {
   return NextResponse.json({

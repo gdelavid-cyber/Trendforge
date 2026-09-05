@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 import {
   deleteIntegration,
   getIntegration,
   listIntegrations,
   saveIntegration,
-} from '../lib/integrations/vault';
+} from '../lib/core/vault';
 
 // Action-integration vault: credentials encrypt at rest, decrypt in-process,
 // masked summaries never expose secrets, deletes are real.

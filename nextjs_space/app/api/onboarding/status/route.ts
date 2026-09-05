@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { getGuideStatus, markGuideSeen, markTourDone } from '@/lib/guide/status';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { getGuideStatus, markGuideSeen, markTourDone } from '@/lib/experience/guide/status';
 
 async function requireUserId(): Promise<string | null> {
   const session = await getServerSession(authOptions);

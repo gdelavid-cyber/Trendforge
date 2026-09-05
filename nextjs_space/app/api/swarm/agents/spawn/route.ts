@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { swarmMemory, AgentRole } from '@/lib/swarm/revenue/memory';
-import { ModelTierKey } from '@/lib/openrouter/client';
+import { ModelTierKey } from '@/lib/intelligence/openrouter/client';
 
 export const dynamic = 'force-dynamic';
 

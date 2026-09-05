@@ -1,8 +1,8 @@
 import { Header } from '@/components/header';
 import { AvatarStudioClient } from './_components/avatar-studio-client';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { loadMergedCatalog } from '@/lib/cosmetics/server-catalog';
+import { authOptions } from '@/lib/core/auth-options';
+import { loadMergedCatalog } from '@/lib/experience/cosmetics/server-catalog';
 
 export const dynamic = 'force-dynamic';
 

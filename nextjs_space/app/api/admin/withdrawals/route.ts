@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { postEntry } from '@/lib/web4/ledger';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { postEntry } from '@/lib/money/ledger';
 
 /**
  * Admin review of withdrawal requests. Approval debits the agent's ledger

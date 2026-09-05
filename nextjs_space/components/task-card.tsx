@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Zap, Clock, Shield, Bookmark, DollarSign } from 'lucide-react';
 import { useState } from 'react';
-import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/constants';
+import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/core/constants';
 import { toast } from 'sonner';
 
 interface TaskCardProps {

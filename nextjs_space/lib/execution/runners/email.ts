@@ -1,7 +1,7 @@
 import type { LlmFn } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
-import { getIntegration } from '@/lib/integrations/vault';
-import { prisma } from '@/lib/db';
+import type { ParsedStep } from '@/lib/pipeline/steps';
+import { getIntegration } from '@/lib/core/vault';
+import { prisma } from '@/lib/core/db';
 
 // Real email delivery through the user's connected SendGrid or Resend key.
 // Recipient: first address found in the step text, else the account email.

@@ -15,7 +15,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { guideForPath, PageGuide } from '@/lib/guide/content';
+import { guideForPath, PageGuide } from '@/lib/experience/guide/content';
 import Link from 'next/link';
 
 interface Props {

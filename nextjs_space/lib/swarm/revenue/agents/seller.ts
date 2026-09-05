@@ -1,5 +1,5 @@
 import { SwarmAgent, TaskContext, AgentResult } from './agentBase';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export class SellerAgent extends SwarmAgent {
   async execute(ctx: TaskContext): Promise<AgentResult> {

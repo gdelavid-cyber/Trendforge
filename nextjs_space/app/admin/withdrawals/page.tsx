@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/header';
 import { WithdrawalsAdminClient } from './_components/withdrawals-admin-client';
 

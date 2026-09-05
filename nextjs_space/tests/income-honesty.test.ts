@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
-import { generateConwayWallet } from '../lib/web4/wallet';
-import { postEntry, userRealIncomeUsdc } from '../lib/web4/ledger';
+import { prisma } from '../lib/core/db';
+import { generateConwayWallet } from '../lib/money/wallet';
+import { postEntry, userRealIncomeUsdc } from '../lib/money/ledger';
 import { getBadges, getLevelInfo, getWealthPoints } from '../app/gamification';
 
 // Income-honesty invariants: the only "$ earned" number the platform may show

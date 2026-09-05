@@ -1,6 +1,6 @@
 import type { LlmFn, StepContext, StepOutcome } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
-import { getIntegration } from '@/lib/integrations/vault';
+import type { ParsedStep } from '@/lib/pipeline/steps';
+import { getIntegration } from '@/lib/core/vault';
 import { runResearchStep } from './research';
 import { runEmailStep, hasEmailProvider } from './email';
 import { draftTweetText, postTweet } from './social';

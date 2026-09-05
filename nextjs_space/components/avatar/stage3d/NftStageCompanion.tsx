@@ -6,7 +6,7 @@ import { Sparkles, Html, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { ARCHETYPE_REGISTRY, normalizeArchetype, PortraitArchetype } from '@/components/avatar/CompanionPortrait';
 import type { AvatarEmotion } from '@/hooks/useAvatar';
-import type { FighterLoadout } from '@/lib/cosmetics/stats';
+import type { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 
 export interface NftStageCompanionProps {
   avatarId?: string;

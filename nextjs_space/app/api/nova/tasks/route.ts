@@ -1,5 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
-import { verifyAndDeductCredits } from '@/lib/credits/credit-manager';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAndDeductCredits } from '@/lib/growth/credits/credit-manager';
 
 interface CustomTask {
   id: string;

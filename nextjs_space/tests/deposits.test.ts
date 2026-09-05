@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { prisma } from '../lib/db';
-import { generateConwayWallet } from '../lib/web4/wallet';
-import { ledgerBalance } from '../lib/web4/ledger';
+import { prisma } from '../lib/core/db';
+import { generateConwayWallet } from '../lib/money/wallet';
+import { ledgerBalance } from '../lib/money/ledger';
 import {
   ensureReferenceCode,
   generateReferenceCode,
   parseDepositTx,
   verifyDeposits,
-} from '../lib/web4/deposits';
-import { settleBattle } from '../lib/battles/settle';
+} from '../lib/money/deposits';
+import { settleBattle } from '../lib/money/battles/settle';
 
 // T4: on-chain USDC deposits (memo-matched), the verifier cursor, and the
 // battle ledger flow. RPC is stubbed with fixtures; ledger/deposit rows are

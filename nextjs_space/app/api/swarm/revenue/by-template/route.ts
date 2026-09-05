@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { SWARM_TEMPLATES } from '@/lib/swarm/revenue/templates';
 
 export const dynamic = 'force-dynamic';

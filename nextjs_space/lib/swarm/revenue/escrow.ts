@@ -1,5 +1,5 @@
-import { stripe } from '@/lib/stripe';
-import { prisma } from '@/lib/db';
+import { stripe } from '@/lib/core/stripe';
+import { prisma } from '@/lib/core/db';
 
 export interface StripeCaptureResult {
   status: 'succeeded' | 'failed' | 'simulated';

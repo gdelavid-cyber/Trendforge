@@ -1,4 +1,4 @@
-import { encryptSecret, maskSecret } from '@/lib/encryption';
+import { encryptSecret, maskSecret } from '@/lib/core/encryption';
 
 export interface OpenClawDeployerParams {
   serverIp?: string;

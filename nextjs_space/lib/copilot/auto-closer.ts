@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { analyzeBuyerEngagement } from './analyzer';
 import { isOptOutMessage, enforcePriceFloor, logComplianceEvent, prependAiDisclosure } from './compliance';
 import { broadcastCopilotEvent } from './realtime';

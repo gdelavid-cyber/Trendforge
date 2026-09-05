@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
 import { Header } from '@/components/header';
 import { SwarmCommandCenter } from '@/app/web4/_components/swarm-command-center';
 import { SwarmNav } from './_components/swarm-nav';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 
 export const metadata: Metadata = {
   title: 'Trendly Autonomous Swarm v2 | Command Center',

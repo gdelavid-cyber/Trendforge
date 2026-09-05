@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { normalizeSpeechTranscript } from '@/lib/agent/stt';
+import { normalizeSpeechTranscript } from '@/lib/intelligence/voice/stt';
 import { toast } from 'sonner';
 
 export interface VoiceInputProps {

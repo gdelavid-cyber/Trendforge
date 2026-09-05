@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/header';
 import { StoriesClient } from './_components/stories-client';
 

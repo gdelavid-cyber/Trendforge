@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 import {
   validateChannelMode,
   isOptOutMessage,

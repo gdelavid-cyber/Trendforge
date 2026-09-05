@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateSpeechAudio } from '@/lib/agent/tts';
-import { generateVisemesFromText } from '@/lib/agent/lipsync';
+import { generateSpeechAudio } from '@/lib/intelligence/voice/tts';
+import { generateVisemesFromText } from '@/lib/intelligence/voice/lipsync';
 
 export const dynamic = 'force-dynamic';
 

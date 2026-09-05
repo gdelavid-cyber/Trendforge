@@ -1,5 +1,5 @@
 import type { LlmFn } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
+import type { ParsedStep } from '@/lib/pipeline/steps';
 
 // Real X/Twitter posting through the user's connected OAuth user-context
 // token. Never posts without one.

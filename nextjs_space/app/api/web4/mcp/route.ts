@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getMCPToolManifest, executeMCPTool } from '@/lib/web4/mcp';
+import { getMCPToolManifest, executeMCPTool } from '@/lib/intelligence/tools/mcp';
 
 // Model Context Protocol (MCP) JSON-RPC Discovery & Tool Gateway
 export async function GET() {

@@ -3,10 +3,10 @@
 import React, { useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
-import type { FighterLoadout } from '@/lib/cosmetics/stats';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
+import type { FighterLoadout } from '@/lib/experience/cosmetics/stats';
 import { computeNextPosition, createMoveState, type MoveState } from './movement';
-import type { CompanionAppearanceConfig } from '@/lib/companion/appearance';
+import type { CompanionAppearanceConfig } from '@/lib/intelligence/companion/appearance';
 import { useWorldControls } from './useWorldControls';
 import { CompanionAvatar } from './CompanionAvatar';
 

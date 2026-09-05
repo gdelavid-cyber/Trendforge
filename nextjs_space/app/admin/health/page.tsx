@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { redirect } from 'next/navigation';
 import { HealthDashboard } from './_components/health-dashboard';
 

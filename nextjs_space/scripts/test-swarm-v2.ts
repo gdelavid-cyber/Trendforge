@@ -2,7 +2,7 @@ import { masterBrain } from '../lib/swarm/revenue/masterBrain';
 import { swarmCoordinator } from '../lib/swarm/revenue/coordinator';
 import { swarmMemory } from '../lib/swarm/revenue/memory';
 import { signEIP712Attestation, verifyEIP712Attestation, generateMerkleProof, verifyMerkleProof, computeMerkleRoot } from '../lib/swarm/revenue/attestation';
-import { prisma } from '../lib/db';
+import { prisma } from '../lib/core/db';
 
 async function main() {
   console.log('====================================================');

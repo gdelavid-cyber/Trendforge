@@ -4,9 +4,9 @@ import React, { Suspense, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
-import type { FighterLoadout } from '@/lib/cosmetics/stats';
-import { resolveRig, type CompanionAppearanceConfig } from '@/lib/companion/appearance';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
+import type { FighterLoadout } from '@/lib/experience/cosmetics/stats';
+import { resolveRig, type CompanionAppearanceConfig } from '@/lib/intelligence/companion/appearance';
 
 // The walking companion rig. Config-driven variants (humanoid/animal/abstract),
 // body proportions and skin materials. Cosmetics attach at anchors when their

@@ -1,9 +1,9 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
 import { notFound, redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/header';
 import { getMethodBySlug } from '@/lib/earn/methods';
 import { MethodClient } from './_components/method-client';

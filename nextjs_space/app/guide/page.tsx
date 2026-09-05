@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions } from '@/lib/core/auth-options';
 import { Header } from '@/components/header';
-import { GUIDE_PAGES } from '@/lib/guide/content';
+import { GUIDE_PAGES } from '@/lib/experience/guide/content';
 import { GuideHubClient } from './_components/guide-hub-client';
 
 export default async function GuidePage() {

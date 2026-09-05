@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyAction, parseSteps, toStructuredStepsJson } from '../lib/tasks/steps';
+import { classifyAction, parseSteps, toStructuredStepsJson } from '../lib/pipeline/steps';
 
 describe('task steps parser', () => {
   it('returns an empty list for null/undefined/empty input', () => {

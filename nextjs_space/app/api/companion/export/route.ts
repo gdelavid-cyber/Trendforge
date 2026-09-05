@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { getOrCreatePrimary } from '@/lib/companion/service';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { getOrCreatePrimary } from '@/lib/intelligence/companion/service';
 
 // .trendly bundle v1 — an open, documented JSON manifest of everything the
 // user owns. Binary ZIP packaging (GLB files inline) is planned; the schema

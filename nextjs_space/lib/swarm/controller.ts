@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { JobStage, SpeciesRole, InstanceStatus } from '@prisma/client';
 import { ensureSpeciesSeeded, reconcileInstances } from './registry';
 import { checkGate, isGlobalKillSwitchActive, recordSpeciesSuccess, recordSpeciesFailure } from './gatekeeper';

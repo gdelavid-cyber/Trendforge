@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, CheckCircle, AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { COMPLIANCE_DISCLAIMERS, TERMS_AND_CONDITIONS } from '@/lib/compliance/disclaimers';
+import { COMPLIANCE_DISCLAIMERS, TERMS_AND_CONDITIONS } from '@/lib/experience/compliance/disclaimers';
 
 export function AgreementModal({
   isOpen,

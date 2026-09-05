@@ -1,8 +1,8 @@
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { notFound } from 'next/navigation';
-import { generateSalesKitForTask } from '@/lib/sales/sales-engine';
+import { generateSalesKitForTask } from '@/lib/money/sales/sales-engine';
 import { SalesKitClient } from './_components/sales-kit-client';
 
 interface Props {

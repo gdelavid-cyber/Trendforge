@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/core/db';
 import { AgentSpecies, SpeciesStatus } from '@prisma/client';
 import { canExecute, recordFailure, recordSuccess } from '@/lib/agents/circuit-breaker';
 

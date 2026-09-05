@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { prisma } from '@/lib/db';
-import { COSMETICS_CATALOG } from '@/lib/cosmetics/catalog';
+import { prisma } from '@/lib/core/db';
+import { COSMETICS_CATALOG } from '@/lib/experience/cosmetics/catalog';
 import { AssetJob, JobStage, QAVerdict } from '@prisma/client';
 import { SpeciesContext, SpeciesResult } from './types';
 

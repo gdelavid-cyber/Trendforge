@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { releaseEscrowPayout } from '@/lib/payments/escrow';
+import { releaseEscrowPayout } from '@/lib/money/escrow';
 
 export async function POST(
   req: NextRequest,

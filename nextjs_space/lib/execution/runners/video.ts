@@ -1,5 +1,5 @@
 import type { LlmFn } from '../skills';
-import type { ParsedStep } from '@/lib/tasks/steps';
+import type { ParsedStep } from '@/lib/pipeline/steps';
 
 export interface VideoStepParams {
   step: ParsedStep;

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { verifyDeposits } from '@/lib/web4/deposits';
+import { verifyDeposits } from '@/lib/money/deposits';
 
 // Accepts either platform key (manual triggers send x-api-key) or Vercel's
 // CRON_SECRET (sent automatically as Bearer when the schedule fires).

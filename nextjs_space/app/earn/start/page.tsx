@@ -1,8 +1,8 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/header';
 import { GuidedEarnFlow } from './_components/guided-earn-flow';
 import type { VettedOpportunity } from '@/app/api/earn/opportunities/route';

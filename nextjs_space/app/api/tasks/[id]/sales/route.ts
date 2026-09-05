@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
-import { prisma } from '@/lib/db';
-import { executeDealClosureAndSale } from '@/lib/sales/sales-engine';
+import { authOptions } from '@/lib/core/auth-options';
+import { prisma } from '@/lib/core/db';
+import { executeDealClosureAndSale } from '@/lib/money/sales/sales-engine';
 
 export async function GET(
   req: NextRequest,

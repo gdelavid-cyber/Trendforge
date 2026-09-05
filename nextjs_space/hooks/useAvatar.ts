@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { VisemeKeyframe, getVisemeFromAudioFrequencies } from '@/lib/agent/lipsync';
-import { getVoicePresetById } from '@/lib/agent/voice-presets';
+import { VisemeKeyframe, getVisemeFromAudioFrequencies } from '@/lib/intelligence/voice/lipsync';
+import { getVoicePresetById } from '@/lib/intelligence/voice/voice-presets';
 
 export type AvatarEmotion = 'neutral' | 'happy' | 'surprised' | 'thinking' | 'confident' | 'battle';
 export type AvatarPose = 'idle' | 'talking' | 'thinking' | 'battle' | 'celebrating';

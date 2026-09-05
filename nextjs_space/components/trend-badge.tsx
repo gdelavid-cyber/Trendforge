@@ -1,6 +1,6 @@
 'use client';
 
-import { TREND_CATEGORIES } from '@/lib/constants';
+import { TREND_CATEGORIES } from '@/lib/core/constants';
 
 export function TrendCategoryBadge({ category }: { category: string }) {
   const cat = TREND_CATEGORIES.find((c) => c.value === category) ?? { label: category, color: '#6B7280' };
