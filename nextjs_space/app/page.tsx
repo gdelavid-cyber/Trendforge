@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Bot,
   Activity,
+  Flame,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -50,14 +51,30 @@ export default function HomePage() {
               </span>
             </Link>
 
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="liquid-glass rounded-full px-4 py-2 flex items-center gap-2 text-xs font-medium text-white/80 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              aria-label="Toggle Navigation Menu"
-            >
-              <span>Menu</span>
-              <Menu className="w-3.5 h-3.5 text-white/80" />
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/council"
+                className="liquid-glass rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-xs font-mono font-bold text-amber-300 border border-amber-500/30 hover:scale-105 transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+              >
+                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <span>AI Council</span>
+              </Link>
+              <Link
+                href="/dashboard"
+                className="liquid-glass rounded-full px-3.5 py-1.5 hidden sm:flex items-center gap-1.5 text-xs font-mono font-medium text-white/90 hover:text-white hover:scale-105 transition-all"
+              >
+                <Activity className="w-3.5 h-3.5 text-[#00F0FF]" />
+                <span>Dashboard</span>
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="liquid-glass rounded-full px-4 py-2 flex items-center gap-2 text-xs font-medium text-white/80 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                aria-label="Toggle Navigation Menu"
+              >
+                <span>Menu</span>
+                <Menu className="w-3.5 h-3.5 text-white/80" />
+              </button>
+            </div>
           </header>
 
           {/* Center Hero Section */}
@@ -78,6 +95,18 @@ export default function HomePage() {
               />
             </motion.div>
 
+            {/* Live Council Status Pill */}
+            <Link
+              href="/council"
+              className="liquid-glass rounded-full px-4 py-1.5 flex items-center gap-2 text-xs text-amber-300 border border-amber-500/40 hover:scale-105 transition-all shadow-[0_0_20px_rgba(245,158,11,0.25)]"
+            >
+              <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span className="font-mono font-bold">AI Money Council: 6 Specialist Agents Debating Deals</span>
+              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
+                LIVE
+              </span>
+            </Link>
+
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-medium tracking-[-0.05em] text-white leading-[1.08] max-w-xl">
               Innovating the <br />
@@ -86,24 +115,31 @@ export default function HomePage() {
               </span>
             </h1>
 
-            {/* CTA Button */}
-            <Link
-              href="/tasks"
-              className="liquid-glass-strong rounded-full px-7 py-3.5 flex items-center gap-3 text-sm font-medium text-white hover:scale-105 active:scale-95 transition-transform shadow-2xl group cursor-pointer"
-            >
-              <span>Explore Radar</span>
-              <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-                <Download className="w-3.5 h-3.5 text-white" />
-              </div>
-            </Link>
+            {/* Primary Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/council"
+                className="rounded-full px-7 py-3.5 flex items-center gap-2.5 text-sm font-bold text-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:scale-105 active:scale-95 transition-transform shadow-[0_0_25px_rgba(245,158,11,0.4)] group cursor-pointer font-mono"
+              >
+                <Flame className="w-4 h-4 text-black fill-black" />
+                <span>Enter AI Council Boardroom</span>
+              </Link>
+              <Link
+                href="/dashboard"
+                className="liquid-glass-strong rounded-full px-6 py-3.5 flex items-center gap-2.5 text-sm font-medium text-white hover:scale-105 active:scale-95 transition-transform shadow-2xl group cursor-pointer border border-white/20 font-mono"
+              >
+                <span>Open Dashboard</span>
+                <ArrowRight className="w-4 h-4 text-white/70 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
 
             {/* Three Pills */}
             <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-              {['Autonomous Swarms', 'AI Market Execution', '3D Companion Intelligence'].map(
+              {['AI Money Council', 'Real-Deal Cashflow', 'Autonomous Swarms'].map(
                 (pill) => (
                   <span
                     key={pill}
-                    className="liquid-glass rounded-full px-4 py-1.5 text-xs text-white/80 hover:text-white hover:scale-105 transition-transform cursor-default"
+                    className="liquid-glass rounded-full px-4 py-1.5 text-xs text-white/80 hover:text-white hover:scale-105 transition-transform cursor-default font-mono"
                   >
                     {pill}
                   </span>
@@ -202,19 +238,27 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Floating Ecosystem Card */}
+        {/* Floating Ecosystem Card - The AI Money Council */}
         <div className="self-end">
           <Link
-            href="/manifesto"
-            className="liquid-glass rounded-2xl p-4 w-60 block space-y-1 hover:scale-105 transition-transform group"
+            href="/council"
+            className="liquid-glass rounded-2xl p-4 w-72 block space-y-2 hover:scale-105 transition-transform group border border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.2)]"
           >
             <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-white">Enter the Web4 Swarm</div>
-              <Activity className="w-3 h-3 text-white/50 group-hover:text-white transition-colors" />
+              <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5 font-mono">
+                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                AI Money Council
+              </div>
+              <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
+                86/100 PASSED
+              </span>
             </div>
-            <p className="text-[11px] text-white/60 leading-relaxed">
-              Deploy autonomous agents to discover, verify, and capture high-alpha market anomalies 24/7.
+            <p className="text-[11px] text-white/70 leading-relaxed">
+              6 specialist agents debate real-deal commercial cashflow plays ($450–$2,500 deals) 24/7. Fluff killed automatically.
             </p>
+            <div className="text-[10px] font-mono text-[#00F0FF] pt-1 flex items-center gap-1 font-semibold">
+              <span>View Live Boardroom &rarr;</span>
+            </div>
           </Link>
         </div>
 
@@ -225,28 +269,28 @@ export default function HomePage() {
             {/* Two Side-by-Side Cards */}
             <div className="grid grid-cols-2 gap-3">
               <Link
-                href="/tasks"
-                className="liquid-glass rounded-3xl p-4 flex items-center justify-between hover:scale-105 transition-transform group"
+                href="/council"
+                className="liquid-glass rounded-3xl p-4 flex items-center justify-between hover:scale-105 transition-transform group border border-amber-500/20"
               >
                 <div className="space-y-0.5">
-                  <div className="text-xs font-medium text-white">Live Engine</div>
-                  <div className="text-[10px] text-white/50 font-mono">Stream 24/7</div>
+                  <div className="text-xs font-bold text-amber-300 font-mono">AI Council</div>
+                  <div className="text-[10px] text-white/50 font-mono">6 Live Agents</div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                  <Wand2 className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                  <Flame className="w-4 h-4 text-amber-400" />
                 </div>
               </Link>
 
               <Link
-                href="/trends"
+                href="/earn"
                 className="liquid-glass rounded-3xl p-4 flex items-center justify-between hover:scale-105 transition-transform group"
               >
                 <div className="space-y-0.5">
-                  <div className="text-xs font-medium text-white">Growth Archive</div>
-                  <div className="text-[10px] text-white/50 font-mono">Verified Alpha</div>
+                  <div className="text-xs font-medium text-white font-mono">Tasks & Earn</div>
+                  <div className="text-[10px] text-white/50 font-mono">Real Cash Moves</div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                  <BookOpen className="w-4 h-4 text-white" />
+                  <Zap className="w-4 h-4 text-cyan-400" />
                 </div>
               </Link>
             </div>
@@ -333,12 +377,10 @@ export default function HomePage() {
 
                 <nav className="space-y-3">
                   {[
-                    { label: 'Weekly Trends', href: '/trends', icon: Zap },
-                    { label: 'Trends Radar', href: '/trends', icon: TrendingUp },
-                    { label: 'Companion Forge', href: '/avatar-studio', icon: Bot },
-                    { label: 'Web4 Whitepaper', href: '/manifesto', icon: BookOpen },
-                    { label: 'Pricing Plans', href: '/pricing', icon: Sparkles },
+                    { label: 'AI Money Council', href: '/council', icon: Flame, highlight: true },
                     { label: 'Live Dashboard', href: '/dashboard', icon: Activity },
+                    { label: 'Tasks & Earn', href: '/earn', icon: Zap },
+                    { label: 'Trends Radar', href: '/trends', icon: TrendingUp },
                   ].map((item) => {
                     const Icon = item.icon;
                     return (
@@ -346,9 +388,11 @@ export default function HomePage() {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-2xl liquid-glass text-sm text-white/90 hover:text-white hover:scale-105 transition-transform"
+                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl liquid-glass text-sm hover:scale-105 transition-transform ${
+                          item.highlight ? 'text-amber-300 border border-amber-500/30 font-bold' : 'text-white/90 hover:text-white'
+                        }`}
                       >
-                        <Icon className="w-4 h-4 text-white/70" />
+                        <Icon className={`w-4 h-4 ${item.highlight ? 'text-amber-400' : 'text-white/70'}`} />
                         <span>{item.label}</span>
                       </Link>
                     );

@@ -1,14 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
 import { Header } from '@/components/layouts/header';
 import { CouncilBoardroom } from '@/components/council/council-boardroom';
 
 export default async function CouncilPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect('/auth/signin');
 
   return (
     <div className="min-h-screen bg-transparent text-white pb-16">

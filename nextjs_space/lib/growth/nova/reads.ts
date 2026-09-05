@@ -43,7 +43,9 @@ export async function getNovaBriefing(userId: string, userRole = 'FREE'): Promis
     }),
     section(async () => {
       const row = await prisma.userCredit.findUnique({ where: { userId } });
-      return { balance: row?.creditBalance ?? 0, allocation: row?.totalAllocated ?? 100 };
+      // No row yet = never billed = full FREE allocation waiting (matches deductCreditsDb provisioning).
+      if (!row) return { balance: 100, allocation: 100 };
+      return { balance: row.creditBalance, allocation: row.totalAllocated };
     }),
     section(async () => {
       const [brain, killSwitch] = await Promise.all([

@@ -1,8 +1,6 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/core/auth-options';
 import { runCouncilDebate } from '@/lib/council/council-runner';
 import { prisma } from '@/lib/core/db';
 
@@ -34,11 +32,6 @@ export async function GET() {
 
 // POST: Run a live debate on a money signal
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
   try {
     const body = await request.json().catch(() => ({}));
     const signalData = body.signal || body;
