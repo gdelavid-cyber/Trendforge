@@ -134,11 +134,11 @@ export function SwarmCommandCenter() {
         await Promise.all([
           fetch('/api/swarm/status').then(r => r.json()),
           fetch('/api/swarm/tasks/active').then(r => r.json()),
-          fetch('/api/swarm/brain/decisions').then(r => r.json()),
+          fetch('/api/swarm/intel/brain/decisions').then(r => r.json()),
           fetch('/api/swarm/revenue/by-template').then(r => r.json()),
-          fetch('/api/swarm/learning/agent-perf').then(r => r.json()),
-          fetch('/api/swarm/learning/patterns').then(r => r.json()),
-          fetch('/api/swarm/brain/strategy-history').then(r => r.json()),
+          fetch('/api/swarm/intel/learning/agent-perf').then(r => r.json()),
+          fetch('/api/swarm/intel/learning/patterns').then(r => r.json()),
+          fetch('/api/swarm/intel/brain/strategy-history').then(r => r.json()),
           fetch('/api/swarm/revenue/timeseries').then(r => r.json()),
           fetch('/api/swarm/dry-run').then(r => r.json()).catch(() => ({ dryRun: false })),
         ]);
@@ -240,7 +240,7 @@ export function SwarmCommandCenter() {
   const handleForceStrategy = async () => {
     try {
       toast.info('Master Brain is analyzing performance patterns...');
-      const res = await fetch('/api/swarm/brain/force-strategy', { method: 'POST' });
+      const res = await fetch('/api/swarm/intel/brain/force-strategy', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         toast.success('Strategy Review Complete! Updated strategy state.');
@@ -310,7 +310,7 @@ export function SwarmCommandCenter() {
   // Verify Attestation
   const inspectAttestation = async (taskId: string) => {
     try {
-      const res = await fetch(`/api/swarm/attestation/${taskId}`);
+      const res = await fetch(`/api/swarm/intel/attestation/${taskId}`);
       const data = await res.json();
       if (data.success) {
         setSelectedAttestationTask(data.attestation);

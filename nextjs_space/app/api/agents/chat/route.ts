@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       durationEstimate: result.durationEstimate,
     });
   } catch (error: any) {
-    console.error('[API /api/agent/chat] Error:', error);
+    console.error('[API /api/agents/chat] Error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to process conversation with agent brain' },
       { status: 500 }

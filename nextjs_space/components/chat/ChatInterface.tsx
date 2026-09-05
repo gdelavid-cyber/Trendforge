@@ -151,7 +151,7 @@ export function ChatInterface({
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const res = await fetch('/api/agent/chat', {
+      const res = await fetch('/api/agents/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -209,7 +209,7 @@ export function ChatInterface({
     }
 
     try {
-      const res = await fetch('/api/agent/avatar', {
+      const res = await fetch('/api/agents/avatar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

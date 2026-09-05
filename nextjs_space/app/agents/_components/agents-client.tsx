@@ -233,7 +233,7 @@ export function AgentsClient({ user }: { user: any }) {
     }
 
     try {
-      const res = await fetch('/api/agent/run', {
+      const res = await fetch('/api/agents/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

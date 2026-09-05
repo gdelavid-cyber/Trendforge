@@ -67,7 +67,7 @@ export function BattlesClient({ user }: { user: any }) {
     try {
       const [agentsRes, battlesRes] = await Promise.all([
         fetch('/api/web4/agents'),
-        fetch('/api/web4/battles'),
+        fetch('/api/battles/history'),
       ]);
 
       const agentsData = await agentsRes.json();

@@ -61,7 +61,7 @@ export function AgentStatusClient({ runId }: { runId: string }) {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch(`/api/agent/status/${runId}`);
+      const res = await fetch(`/api/agents/status/${runId}`);
       const data = await res.json();
       if (data.success && data.run) {
         setRun(data.run);
@@ -92,7 +92,7 @@ export function AgentStatusClient({ runId }: { runId: string }) {
   const handleCancel = async () => {
     setCancelling(true);
     try {
-      const res = await fetch(`/api/agent/cancel/${runId}`, { method: 'POST' });
+      const res = await fetch(`/api/agents/cancel/${runId}`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         toast.success('Agent execution cancelled.');
@@ -110,7 +110,7 @@ export function AgentStatusClient({ runId }: { runId: string }) {
   const handleFeedbackSubmit = async () => {
     setSubmittingFeedback(true);
     try {
-      const res = await fetch('/api/agent/feedback', {
+      const res = await fetch('/api/agents/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

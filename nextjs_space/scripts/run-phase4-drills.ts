@@ -68,9 +68,9 @@ async function runAllDrills() {
   });
   console.log('Recent QAReviews:', JSON.stringify(qaReviews, null, 2));
 
-  // STEP 5: Prove Merge Seam via /api/web4/marketplace
-  console.log('\n--- STEP 5: PROVE MERGE SEAM VIA /api/web4/marketplace ---');
-  const marketRes = await makeRequest('/api/web4/marketplace', 'GET');
+  // STEP 5: Prove Merge Seam via /api/marketplace
+  console.log('\n--- STEP 5: PROVE MERGE SEAM VIA /api/marketplace ---');
+  const marketRes = await makeRequest('/api/marketplace', 'GET');
   const catalog = marketRes.body.catalog || [];
   const publishedItem = catalog.find((i: any) => i.id === 'head_diamond_crown');
   const untouchedItem = catalog.find((i: any) => i.id === 'head_cyber_visor' || i.id === 'skin_neon_cyber');
