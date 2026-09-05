@@ -122,8 +122,10 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
         </motion.div>
       </div>
 
-      {/* 2. LIVE AI MONEY COUNCIL BOARDROOM */}
-      <CouncilBoardroom embedded={true} />
+      {/* 2. LIVE AI MONEY COUNCIL BOARDROOM (Admin Exclusive) */}
+      {user?.role === 'ADMIN' && (
+        <CouncilBoardroom embedded={true} />
+      )}
 
       {/* 3. Today's High-Margin Money Tasks */}
       <div className="space-y-4">

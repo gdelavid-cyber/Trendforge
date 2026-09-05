@@ -53,18 +53,18 @@ export default function HomePage() {
 
             <div className="flex items-center gap-2">
               <Link
-                href="/council"
-                className="liquid-glass rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-xs font-mono font-bold text-amber-300 border border-amber-500/30 hover:scale-105 transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-              >
-                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span>AI Council</span>
-              </Link>
-              <Link
                 href="/dashboard"
-                className="liquid-glass rounded-full px-3.5 py-1.5 hidden sm:flex items-center gap-1.5 text-xs font-mono font-medium text-white/90 hover:text-white hover:scale-105 transition-all"
+                className="liquid-glass rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-xs font-mono font-medium text-white/90 hover:text-white hover:scale-105 transition-all"
               >
                 <Activity className="w-3.5 h-3.5 text-[#00F0FF]" />
                 <span>Dashboard</span>
+              </Link>
+              <Link
+                href="/earn"
+                className="liquid-glass rounded-full px-3.5 py-1.5 hidden sm:flex items-center gap-1.5 text-xs font-mono font-bold text-cyan-300 border border-cyan-500/30 hover:scale-105 transition-all"
+              >
+                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Hot Tasks</span>
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(true)}
@@ -95,17 +95,14 @@ export default function HomePage() {
               />
             </motion.div>
 
-            {/* Live Council Status Pill */}
-            <Link
-              href="/council"
-              className="liquid-glass rounded-full px-4 py-1.5 flex items-center gap-2 text-xs text-amber-300 border border-amber-500/40 hover:scale-105 transition-all shadow-[0_0_20px_rgba(245,158,11,0.25)]"
-            >
-              <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
-              <span className="font-mono font-bold">AI Money Council: 6 Specialist Agents Debating Deals</span>
+            {/* Live Status Pill */}
+            <div className="liquid-glass rounded-full px-4 py-1.5 flex items-center gap-2 text-xs text-cyan-300 border border-cyan-500/30 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
+              <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="font-mono font-semibold">Autonomous Cashflow Engine: Scraped Opportunities & Live Moves</span>
               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
                 LIVE
               </span>
-            </Link>
+            </div>
 
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-medium tracking-[-0.05em] text-white leading-[1.08] max-w-xl">
@@ -118,11 +115,11 @@ export default function HomePage() {
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/council"
-                className="rounded-full px-7 py-3.5 flex items-center gap-2.5 text-sm font-bold text-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:scale-105 active:scale-95 transition-transform shadow-[0_0_25px_rgba(245,158,11,0.4)] group cursor-pointer font-mono"
+                href="/earn"
+                className="rounded-full px-7 py-3.5 flex items-center gap-2.5 text-sm font-bold text-black cyan-gradient hover:scale-105 active:scale-95 transition-transform shadow-[0_0_25px_rgba(0,240,255,0.4)] group cursor-pointer font-mono"
               >
-                <Flame className="w-4 h-4 text-black fill-black" />
-                <span>Enter AI Council Boardroom</span>
+                <Zap className="w-4 h-4 text-black fill-black" />
+                <span>Explore Hot Tasks & Earn</span>
               </Link>
               <Link
                 href="/dashboard"
@@ -135,7 +132,7 @@ export default function HomePage() {
 
             {/* Three Pills */}
             <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-              {['AI Money Council', 'Real-Deal Cashflow', 'Autonomous Swarms'].map(
+              {['Hot Scraped Tasks', 'Real-Deal Cashflow', 'Trends Radar'].map(
                 (pill) => (
                   <span
                     key={pill}
@@ -238,26 +235,26 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Floating Ecosystem Card - The AI Money Council */}
+        {/* Floating Ecosystem Card - Hot Tasks & Earn */}
         <div className="self-end">
           <Link
-            href="/council"
-            className="liquid-glass rounded-2xl p-4 w-72 block space-y-2 hover:scale-105 transition-transform group border border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.2)]"
+            href="/earn"
+            className="liquid-glass rounded-2xl p-4 w-72 block space-y-2 hover:scale-105 transition-transform group border border-cyan-500/30 shadow-[0_0_25px_rgba(0,240,255,0.15)]"
           >
             <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5 font-mono">
-                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                AI Money Council
+              <div className="text-xs font-bold text-cyan-300 flex items-center gap-1.5 font-mono">
+                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                Hot Tasks & Earn
               </div>
               <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                86/100 PASSED
+                HIGH MARGIN
               </span>
             </div>
-            <p className="text-[11px] text-white/70 leading-relaxed">
-              6 specialist agents debate real-deal commercial cashflow plays ($450–$2,500 deals) 24/7. Fluff killed automatically.
+            <p className="text-[11px] text-white/70 leading-relaxed font-sans">
+              Continuously scraped commercial opportunities vetted for high cash margins ($450–$2,500 deals).
             </p>
             <div className="text-[10px] font-mono text-[#00F0FF] pt-1 flex items-center gap-1 font-semibold">
-              <span>View Live Boardroom &rarr;</span>
+              <span>Explore Hot Money Moves &rarr;</span>
             </div>
           </Link>
         </div>
@@ -269,28 +266,28 @@ export default function HomePage() {
             {/* Two Side-by-Side Cards */}
             <div className="grid grid-cols-2 gap-3">
               <Link
-                href="/council"
-                className="liquid-glass rounded-3xl p-4 flex items-center justify-between hover:scale-105 transition-transform group border border-amber-500/20"
+                href="/earn"
+                className="liquid-glass rounded-3xl p-4 flex items-center justify-between hover:scale-105 transition-transform group border border-cyan-500/20"
               >
                 <div className="space-y-0.5">
-                  <div className="text-xs font-bold text-amber-300 font-mono">AI Council</div>
-                  <div className="text-[10px] text-white/50 font-mono">6 Live Agents</div>
+                  <div className="text-xs font-bold text-cyan-300 font-mono">Hot Tasks</div>
+                  <div className="text-[10px] text-white/50 font-mono">Verified Moves</div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                  <Flame className="w-4 h-4 text-amber-400" />
+                <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                  <Zap className="w-4 h-4 text-cyan-400" />
                 </div>
               </Link>
 
               <Link
-                href="/earn"
+                href="/trends"
                 className="liquid-glass rounded-3xl p-4 flex items-center justify-between hover:scale-105 transition-transform group"
               >
                 <div className="space-y-0.5">
-                  <div className="text-xs font-medium text-white font-mono">Tasks & Earn</div>
-                  <div className="text-[10px] text-white/50 font-mono">Real Cash Moves</div>
+                  <div className="text-xs font-medium text-white font-mono">Trends Radar</div>
+                  <div className="text-[10px] text-white/50 font-mono">Market Signals</div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                  <Zap className="w-4 h-4 text-cyan-400" />
+                  <TrendingUp className="w-4 h-4 text-amber-400" />
                 </div>
               </Link>
             </div>
@@ -377,8 +374,7 @@ export default function HomePage() {
 
                 <nav className="space-y-3">
                   {[
-                    { label: 'AI Money Council', href: '/council', icon: Flame, highlight: true },
-                    { label: 'Live Dashboard', href: '/dashboard', icon: Activity },
+                    { label: 'Live Dashboard', href: '/dashboard', icon: Activity, highlight: true },
                     { label: 'Tasks & Earn', href: '/earn', icon: Zap },
                     { label: 'Trends Radar', href: '/trends', icon: TrendingUp },
                   ].map((item) => {
@@ -389,10 +385,10 @@ export default function HomePage() {
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl liquid-glass text-sm hover:scale-105 transition-transform ${
-                          item.highlight ? 'text-amber-300 border border-amber-500/30 font-bold' : 'text-white/90 hover:text-white'
+                          item.highlight ? 'text-cyan-300 border border-cyan-500/30 font-bold' : 'text-white/90 hover:text-white'
                         }`}
                       >
-                        <Icon className={`w-4 h-4 ${item.highlight ? 'text-amber-400' : 'text-white/70'}`} />
+                        <Icon className={`w-4 h-4 ${item.highlight ? 'text-cyan-400' : 'text-white/70'}`} />
                         <span>{item.label}</span>
                       </Link>
                     );

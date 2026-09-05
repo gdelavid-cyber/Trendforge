@@ -281,6 +281,41 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [deliberating, setDeliberating] = useState(false);
   const [signalIndex, setSignalIndex] = useState(0);
+  const [movingToHotTasks, setMovingToHotTasks] = useState(false);
+  const [hotTaskSuccess, setHotTaskSuccess] = useState<string | null>(null);
+
+  const handleApproveAndMoveToHotTasks = async () => {
+    setMovingToHotTasks(true);
+    setHotTaskSuccess(null);
+    try {
+      const res = await fetch('/api/council/approve-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: activeSession.id,
+          title: activeSession.signal?.title || 'Autonomous Commercial B2B Cashflow Move',
+          description: activeSession.signal?.rawInsight || 'High-alpha autonomous money move approved by AI Money Council Gatekeeper.',
+          estimatedEarningsLow: 450,
+          estimatedEarningsHigh: 2500,
+          startupCost: 50,
+          timeToFirstDollar: activeSession.signal?.estimatedVelocity || '24-48 hours',
+          category: 'AGENT_ECONOMY',
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setHotTaskSuccess(data.taskId || 'approved');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error('Approve task failed:', errData);
+      }
+    } catch (e) {
+      console.error('Failed to move to hot tasks:', e);
+    } finally {
+      setMovingToHotTasks(false);
+    }
+  };
 
   const fetchLatestSessions = async () => {
     try {
@@ -493,11 +528,37 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
           </p>
         </div>
 
-        <Link href="/earn">
-          <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-5 font-mono shadow-md">
-            <Play className="w-3.5 h-3.5 mr-1.5 fill-black" /> Launch This Money Move &rarr;
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {hotTaskSuccess ? (
+            <Link href="/tasks?tab=trending">
+              <Button className="bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold uppercase text-xs h-10 px-5 font-mono shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                <CheckCircle2 className="w-4 h-4 mr-1.5 text-black" /> ✅ Moved to Hot Tasks! View Now &rarr;
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              onClick={handleApproveAndMoveToHotTasks}
+              disabled={movingToHotTasks}
+              className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:scale-105 active:scale-95 text-black font-extrabold uppercase text-xs h-10 px-5 font-mono shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all"
+            >
+              {movingToHotTasks ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Moving to Hot Tasks...
+                </>
+              ) : (
+                <>
+                  <Flame className="w-3.5 h-3.5 mr-1.5 fill-black" /> 🚀 Approve & Move to Hot Tasks
+                </>
+              )}
+            </Button>
+          )}
+
+          <Link href="/earn">
+            <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-4 font-mono shadow-md">
+              <Play className="w-3.5 h-3.5 mr-1.5 fill-black" /> Run Play &rarr;
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );
