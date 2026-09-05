@@ -6,6 +6,7 @@ import { deductCreditsDb } from '@/lib/growth/credits/credit-manager';
 import { getNovaQuickAnswers } from '@/lib/growth/nova/nova-knowledge';
 import { getNovaBriefing, renderBriefingText } from '@/lib/growth/nova/reads';
 import { recentTraces, renderTraceText, type TraceKind } from '@/lib/growth/nova/traces';
+import { answerWithOpenCodeBrain } from '@/lib/growth/nova/brain';
 
 const BRIEFING_INTENT = /how am i|how('| a)m i doing|my status|briefing|my balance|quota left|credit balance|what'?s (happening|going on)|status report/i;
 const WHY_INTENT = /\bwhy\b|explain|how come|what happened|why (was|is|did|didn)/i;
@@ -56,6 +57,25 @@ export async function POST(req: NextRequest) {
     if (quickAnswer) {
       reply = quickAnswer;
       grounded = { source: 'knowledge-base' };
+    } else if (process.env.NOVA_BRAIN === 'opencode') {
+      // Direction A: think via OpenCode on grounded state; any transport
+      // failure falls through to the deterministic pipeline below.
+      try {
+        const history = await prisma.novaConversation.findMany({
+          where: { userId: user.id },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: { role: true, content: true },
+        });
+        const brain = await answerWithOpenCodeBrain(user.id, String(user.role ?? 'FREE'), message, [...history].reverse());
+        reply = brain.reply;
+        grounded = brain.grounded;
+      } catch (e: any) {
+        console.warn('[NOVA] opencode brain failed, deterministic fallback:', e?.message ?? e);
+        const briefing = await getNovaBriefing(user.id, String(user.role ?? 'FREE'));
+        reply = `My reasoning engine is unreachable right now, so here's your live position instead of guesses. ${renderBriefingText(briefing)}`;
+        grounded = { source: 'briefing-fallback', generatedAt: briefing.generatedAt };
+      }
     } else if (BRIEFING_INTENT.test(message)) {
       // N1: live-read intent — answer from the briefing, never from memory.
       const briefing = await getNovaBriefing(user.id, String(user.role ?? 'FREE'));

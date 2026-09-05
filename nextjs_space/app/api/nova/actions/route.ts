@@ -3,16 +3,24 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { executeTool, getTool, listTools } from '@/lib/growth/nova/tools';
+import { serviceUserId } from '@/lib/growth/nova/service-auth';
 
-async function requireUser() {
+async function requireUser(req?: Request) {
+  // Direction B: service key + ?userId= may read and propose — never approve.
+  if (req) {
+    const svcUserId = serviceUserId(req, new URL(req.url));
+    if (svcUserId) {
+      return prisma.user.findUnique({ where: { id: svcUserId } });
+    }
+  }
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return null;
   return prisma.user.findUnique({ where: { email: session.user.email } });
 }
 
 // List my actions (proposals, receipts) + the tool catalog.
-export async function GET() {
-  const user = await requireUser();
+export async function GET(req: NextRequest) {
+  const user = await requireUser(req);
   if (!user) return NextResponse.json({ ok: false, error: 'Sign in to view actions.' }, { status: 401 });
   const actions = await prisma.novaAction.findMany({
     where: { userId: user.id },
@@ -26,7 +34,7 @@ export async function GET() {
 // immediate tools execute at once and return a receipt.
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await requireUser(req);
     if (!user) return NextResponse.json({ ok: false, error: 'Sign in to use Nova actions.' }, { status: 401 });
 
     const { tool: toolName, params } = await req.json();

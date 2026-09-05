@@ -33,6 +33,7 @@ export function Header({ userStats }: { userStats?: any } = {}) {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/council', label: 'AI Council', icon: Flame },
     { href: '/earn', label: 'Tasks & Earn', icon: Zap },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
   ];

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
+import { CouncilBoardroom } from '@/components/council/council-boardroom';
 
 interface DashboardClientProps {
   user: {
@@ -121,7 +122,10 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
         </motion.div>
       </div>
 
-      {/* 2. Middle Section: Today's High-Margin Money Tasks */}
+      {/* 2. LIVE AI MONEY COUNCIL BOARDROOM */}
+      <CouncilBoardroom embedded={true} />
+
+      {/* 3. Today's High-Margin Money Tasks */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>

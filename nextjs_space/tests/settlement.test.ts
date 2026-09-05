@@ -66,22 +66,28 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Clean up all test fixtures
-  await prisma.ledgerEntry.deleteMany({
-    where: {
-      agentId: { in: [buyerAgentId, sellerAgentId, treasuryAgentId] },
-      ref: { startsWith: RUN },
-    },
-  });
-  await prisma.marketplaceListing.deleteMany({
-    where: { sellerId: { in: [buyerUserId, sellerUserId] } },
-  });
-  await prisma.web4Agent.deleteMany({
-    where: { id: { in: [buyerAgentId, sellerAgentId] } },
-  });
-  await prisma.user.deleteMany({
-    where: { id: { in: [buyerUserId, sellerUserId] } },
-  });
+  // Clean up all test fixtures safely
+  const validAgentIds = [buyerAgentId, sellerAgentId, treasuryAgentId].filter(Boolean) as string[];
+  if (validAgentIds.length > 0) {
+    await prisma.ledgerEntry.deleteMany({
+      where: {
+        agentId: { in: validAgentIds },
+        ref: { startsWith: RUN },
+      },
+    });
+  }
+  const validUserIds = [buyerUserId, sellerUserId].filter(Boolean) as string[];
+  if (validUserIds.length > 0) {
+    await prisma.marketplaceListing.deleteMany({
+      where: { sellerId: { in: validUserIds } },
+    });
+    await prisma.web4Agent.deleteMany({
+      where: { id: { in: validAgentIds } },
+    });
+    await prisma.user.deleteMany({
+      where: { id: { in: validUserIds } },
+    });
+  }
   await prisma.$disconnect();
 });
 
