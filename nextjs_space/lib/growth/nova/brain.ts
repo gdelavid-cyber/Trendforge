@@ -1,4 +1,5 @@
 import { makeLlm } from '@/lib/execution/llm';
+import { callLLM } from '@/lib/pipeline';
 import { getNovaBriefing, renderBriefingText, type NovaBriefing } from '@/lib/growth/nova/reads';
 import { listTools } from '@/lib/growth/nova/tools';
 import { recentTraces, renderTraceText } from '@/lib/growth/nova/traces';
@@ -36,6 +37,22 @@ export function buildNovaSystemPrompt(
     .join('\n');
 }
 
+// Provider-neutral brain routing: direct API first (fast, stateless),
+// opencode chain second (local dev, free models), deterministic pipeline
+// last (the chat route's fallback). callLLM fabricates procedural content
+// when no API key is set, so it is only trusted when a key exists.
+async function novaBrainLlm(messages: { role: string; content: string }[]): Promise<string> {
+  if (process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY) {
+    try {
+      const direct = await callLLM(messages);
+      if (direct && direct.trim().length > 0) return direct;
+    } catch (e: any) {
+      console.warn('[NOVA] direct LLM failed, trying opencode chain:', e?.message ?? e);
+    }
+  }
+  return makeLlm()(messages);
+}
+
 export async function answerWithOpenCodeBrain(
   userId: string,
   userRole: string,
@@ -51,8 +68,7 @@ export async function answerWithOpenCodeBrain(
     traces.map(renderTraceText),
     history.slice(-10).map((h) => `${h.role === 'user' ? 'User' : 'Nova'}: ${h.content.slice(0, 500)}`)
   );
-  const llm = makeLlm();
-  const raw = await llm([
+  const raw = await novaBrainLlm([
     { role: 'system', content: system },
     { role: 'user', content: message.slice(0, 2000) },
   ]);
