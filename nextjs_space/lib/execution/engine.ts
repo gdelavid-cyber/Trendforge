@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/core/db';
+import { recordTrace } from '@/lib/growth/nova/traces';
 import { parseSteps } from '@/lib/pipeline/steps';
 import { makeLlm } from '@/lib/execution/llm';
 import { createSkillRunner, type LlmFn, type StepContext, type StepOutcome } from './skills';
@@ -91,6 +92,16 @@ async function recordOutcome(
     finishedAt: timing.finishedAt,
     durationMs: timing.durationMs,
   });
+  // N3: blocked steps emit a why-trace (one owner lookup, blocked-only).
+  if (outcome.blocked) {
+    void recordTrace({
+      userId: (await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { userId: true } }).catch(() => null))?.userId ?? null,
+      kind: 'STEP',
+      subject: step.title,
+      summary: `Step blocked, reported honestly instead of marked done.`,
+      reasons: [String(outcome.output ?? 'blocked by runner').slice(0, 500)],
+    });
+  }
   if (outcome.artifact) {
     await prisma.taskArtifact.create({
       data: {
@@ -274,6 +285,7 @@ async function runAutopilot(
       } catch (err: any) {
         const now = new Date().toISOString();
         await appendStepResult(userTaskId, i, { title: step.title, action: step.action, status: 'failed', output: err.message, startedAt: now, finishedAt: now, durationMs: 0 });
+        void recordTrace({ userId, kind: 'STEP', subject: step.title, summary: 'Step threw and was skipped; the run continued.', reasons: [String(err?.message ?? 'unknown error').slice(0, 500)] });
         continue; // adapt: skip failed step, keep moving
       }
       await recordOutcome(userTaskId, i, step, outcome, timing);
@@ -288,8 +300,23 @@ async function runAutopilot(
       }
     } catch {}
 
+    // N3: terminal why-trace — COMPLETED names its blocked/failed steps.
+    try {
+      const final = await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { stepResults: true } });
+      const raw = final?.stepResults;
+      const log = Array.isArray(raw) ? raw as any[] : [];
+      const bad = log.filter((e) => e.status === 'blocked' || e.status === 'failed');
+      void recordTrace({
+        userId,
+        kind: 'STEP',
+        subject: task?.title ?? 'task',
+        summary: bad.length === 0 ? 'Run finished: every step done.' : `Run finished with ${bad.length} non-done step(s).`,
+        reasons: bad.slice(0, 5).map((e) => `${e.title ?? 'step'}: ${e.status}${e.output ? ` — ${String(e.output).slice(0, 200)}` : ''}`),
+      });
+    } catch {}
     await prisma.userTask.update({ where: { id: userTaskId }, data: { status: 'COMPLETED', completedAt: new Date() } });
   } catch (err: any) {
+    void recordTrace({ userId, kind: 'STEP', subject: 'run', summary: 'Run failed outright.', reasons: [String(err?.message ?? 'unknown').slice(0, 500)] });
     await prisma.userTask.update({ where: { id: userTaskId }, data: { status: 'FAILED' } });
     console.error('[EXECUTION_ENGINE] run failed:', err.message);
   }

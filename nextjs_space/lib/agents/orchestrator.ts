@@ -7,6 +7,7 @@ import { executePredictionArbitrage } from '@/lib/agents/prediction-arbitrage';
 import { executeOpenClawDeployer } from '@/lib/agents/openclaw-deployer';
 import { executeAIVideoMaker } from '@/lib/agents/ai-video-maker';
 import { executeMicroSaaSBuilder } from '@/lib/agents/micro-saas-builder';
+import { recordTrace } from '@/lib/growth/nova/traces';
 
 export interface StartAgentOptions {
   userId: string;
@@ -29,15 +30,17 @@ export async function launchAgentRun(options: StartAgentOptions): Promise<{ runI
   // 2. Circuit breaker check
   const circuit = canExecute(agentType);
   if (!circuit.allowed) {
-    throw new Error(circuit.reason || 'Agent is currently disabled by circuit breaker');
+    const reason = circuit.reason || 'Agent is currently disabled by circuit breaker';
+    void recordTrace({ userId, kind: 'RUN_REJECTED', subject: agentType, summary: `Run refused by circuit breaker.`, reasons: [reason] });
+    throw new Error(reason);
   }
 
   // 3. Quota check
   const quota = await getUserQuota(userId, agentType, userRole);
   if (!quota.hasQuota) {
-    throw new Error(
-      `Weekly quota reached for ${config.name} (${quota.runsUsed}/${quota.runsLimit} runs used). Upgrade to Pro for unlimited runs.`
-    );
+    const reason = `Weekly quota reached for ${config.name} (${quota.runsUsed}/${quota.runsLimit} runs used). Upgrade to Pro for unlimited runs.`;
+    void recordTrace({ userId, kind: 'RUN_REJECTED', subject: agentType, summary: 'Run refused: quota exhausted.', reasons: [reason] });
+    throw new Error(reason);
   }
 
   // 4. Create initial AgentRun database entry

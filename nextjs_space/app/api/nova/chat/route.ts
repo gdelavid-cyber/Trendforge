@@ -5,8 +5,20 @@ import { prisma } from '@/lib/core/db';
 import { deductCreditsDb } from '@/lib/growth/credits/credit-manager';
 import { getNovaQuickAnswers } from '@/lib/growth/nova/nova-knowledge';
 import { getNovaBriefing, renderBriefingText } from '@/lib/growth/nova/reads';
+import { recentTraces, renderTraceText, type TraceKind } from '@/lib/growth/nova/traces';
 
 const BRIEFING_INTENT = /how am i|how('| a)m i doing|my status|briefing|my balance|quota left|credit balance|what'?s (happening|going on)|status report/i;
+const WHY_INTENT = /\bwhy\b|explain|how come|what happened|why (was|is|did|didn)/i;
+
+function kindsForWhy(message: string): TraceKind[] | undefined {
+  const m = message.toLowerCase();
+  if (/run|quota|launch|deploy|worker/.test(m)) return ['RUN_REJECTED'];
+  if (/battle|fight|arena|pot|wager/.test(m)) return ['BATTLE'];
+  if (/score|trend|rank|featured/.test(m)) return ['TREND'];
+  if (/gate|swarm|throttl|kill/.test(m)) return ['GATE'];
+  if (/block|stuck|fail|step|reject/.test(m)) return ['STEP', 'RUN_REJECTED'];
+  return undefined; // all kinds, most recent first
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,6 +61,16 @@ export async function POST(req: NextRequest) {
       const briefing = await getNovaBriefing(user.id, String(user.role ?? 'FREE'));
       reply = `Here's your live position. ${renderBriefingText(briefing)}`;
       grounded = { source: 'briefing', generatedAt: briefing.generatedAt };
+    } else if (WHY_INTENT.test(message)) {
+      // N3: why-intent — replay the most recent decision traces.
+      const traces = await recentTraces(user.id, { kinds: kindsForWhy(message), limit: 3 });
+      if (traces.length === 0) {
+        reply = 'Nothing has been decided, blocked, or scored on your account recently enough to explain — no traces yet. Ask me after your next run, battle, or approval.';
+        grounded = { source: 'traces', count: 0 };
+      } else {
+        reply = `Here's what actually happened, most recent first. ${traces.map(renderTraceText).join(' ')}`;
+        grounded = { source: 'traces', count: traces.length };
+      }
     } else {
       // Honest fallback: grounded in real account state, never fake monitoring.
       const [credit, tasks, agents] = await Promise.all([

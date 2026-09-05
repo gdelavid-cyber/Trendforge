@@ -1737,6 +1737,22 @@ model NovaAction {
   @@index([userId, status])
 }
 
+// Nova OS decision traces (N3). Every score, gate, block, and settlement
+// writes a why-record Nova can replay. Writers are fire-and-forget:
+// tracing never blocks, never throws, never changes the decision.
+model NovaTrace {
+  id        String   @id @default(cuid())
+  userId    String?  // null = platform-wide event (trend scores, species gates)
+  kind      String   // RUN_REJECTED | STEP | BATTLE | TREND | GATE
+  subject   String   // run id, task title, battle ref, species name...
+  summary   String
+  reasons   Json     @default("[]")
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([kind, createdAt])
+}
+
 // ============================================================================
 // AI CO-PILOT / AUTO-CLOSE SALES EXECUTION LAYER
 // ============================================================================

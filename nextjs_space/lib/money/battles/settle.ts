@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/core/db';
 import { postEntry } from '@/lib/money/ledger';
+import { recordTrace } from '@/lib/growth/nova/traces';
 
 // Battle settlement on the real-money ledger. The challenger's entry fee is
 // debited up front; the winner is credited the pot. No money is created —
@@ -37,9 +38,11 @@ export async function settleBattle(input: SettleInput): Promise<SettleResult> {
   const pot = Math.round(tierConfig.entryFeeUsdc * 1e6) / 1e6;
 
   if (challenger.walletBalance < pot) {
+    const reason = `Challenger requires at least $${pot.toFixed(2)} USDC in Conway wallet to enter ${tierConfig.name}.`;
+    void recordTrace({ userId: challenger.userId, kind: 'BATTLE', subject: `${tierConfig.name} entry`, summary: 'Battle refused: insufficient funds.', reasons: [reason] });
     return {
       ok: false,
-      error: `Challenger requires at least $${pot.toFixed(2)} USDC in Conway wallet to enter ${tierConfig.name}.`,
+      error: reason,
       code: 'INSUFFICIENT_FUNDS',
     };
   }
@@ -71,6 +74,14 @@ export async function settleBattle(input: SettleInput): Promise<SettleResult> {
     prisma.web4Agent.findUniqueOrThrow({ where: { id: challenger.id }, select: { walletBalance: true } }),
     prisma.web4Agent.findUniqueOrThrow({ where: { id: defender.id }, select: { walletBalance: true } }),
   ]);
+
+  // N3: settlement why-trace for both owners (challenger always pays entry; winner takes pot).
+  const winnerUserId = winnerId === challenger.id ? challenger.userId : defender.userId;
+  const summary = `Entry $${pot.toFixed(2)} debited from challenger; pot credited to winner.`;
+  void recordTrace({ userId: challenger.userId, kind: 'BATTLE', subject: `${tierConfig.name} settlement`, summary, reasons: [`Battle ref ${battleRef}.`] });
+  if (winnerUserId !== challenger.userId) {
+    void recordTrace({ userId: winnerUserId, kind: 'BATTLE', subject: `${tierConfig.name} settlement`, summary, reasons: [`Battle ref ${battleRef}.`] });
+  }
 
   return {
     ok: true,

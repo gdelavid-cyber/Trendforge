@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
 import { validatePipelineKey, callLLM } from '@/lib/pipeline';
 import { redis } from '@/lib/core/redis';
+import { recordTrace } from '@/lib/growth/nova/traces';
 
 export async function POST(request: Request) {
   if (!validatePipelineKey(request)) {
@@ -84,6 +85,21 @@ export async function POST(request: Request) {
             isFeatured: isTrending,
             requiresOptIn: t?.risk_level === 'HIGH',
           },
+        });
+
+        // N3: score why-trace — the four components, so Nova can explain any ranking.
+        void recordTrace({
+          userId: null,
+          kind: 'TREND',
+          subject: newTask.title,
+          summary: `Scored ${trendScore.toFixed(2)}${isTrending ? ' — featured.' : '.'}`,
+          reasons: [
+            `confidence ${confidence} × 0.4`,
+            `velocity ${velocity} × 0.3`,
+            `sentiment ${sentiment} × 0.2`,
+            `recency 1/${hours || 1}h × 0.1`,
+            `featured threshold 0.8`,
+          ],
         });
 
         if (isTrending) {

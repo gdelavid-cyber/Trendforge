@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/core/db';
+import { recordTrace } from '@/lib/growth/nova/traces';
 import { AgentSpecies, SpeciesStatus } from '@prisma/client';
 import { canExecute, recordFailure, recordSuccess } from '@/lib/agents/circuit-breaker';
 
@@ -60,13 +61,15 @@ export async function checkDailySpendReset(species: AgentSpecies): Promise<Agent
 export async function checkGate(
   species: AgentSpecies
 ): Promise<{ allowed: boolean; reason?: string }> {
+  // N3: every denial emits a platform why-trace (no user context at this layer).
+  const deny = (reason: string) => {
+    void recordTrace({ userId: null, kind: 'GATE', subject: species.name ?? 'species', summary: 'Swarm gate denied execution.', reasons: [reason] });
+    return { allowed: false, reason };
+  };
   // 1. Global Kill-Switch Check
   const killSwitchActive = await isGlobalKillSwitchActive();
   if (killSwitchActive) {
-    return {
-      allowed: false,
-      reason: 'Global swarm kill-switch is active. All worker executions halted.',
-    };
+    return deny('Global swarm kill-switch is active. All worker executions halted.');
   }
 
   // 2. Daily Spend Reset Check
@@ -74,10 +77,7 @@ export async function checkGate(
 
   // 3. Species Status Check
   if (currentSpecies.status !== SpeciesStatus.ACTIVE) {
-    return {
-      allowed: false,
-      reason: `Species ${currentSpecies.name} status is ${currentSpecies.status}. Execution blocked.`,
-    };
+    return deny(`Species ${currentSpecies.name} status is ${currentSpecies.status}. Execution blocked.`);
   }
 
   // 4. Per-Species Daily Budget Ceiling Check
@@ -87,10 +87,7 @@ export async function checkGate(
       where: { id: currentSpecies.id },
       data: { status: SpeciesStatus.THROTTLED },
     });
-    return {
-      allowed: false,
-      reason: `Species ${currentSpecies.name} exceeded daily budget ($${currentSpecies.currentSpendUsd.toFixed(2)} / $${currentSpecies.dailyBudgetUsd.toFixed(2)}). Auto-throttled.`,
-    };
+    return deny(`Species ${currentSpecies.name} exceeded daily budget ($${currentSpecies.currentSpendUsd.toFixed(2)} / $${currentSpecies.dailyBudgetUsd.toFixed(2)}). Auto-throttled.`);
   }
 
   // 5. Global Swarm Daily Budget Cap Check ($15.00/day)
@@ -99,19 +96,13 @@ export async function checkGate(
   });
   const totalSpendToday = allSpecies.reduce((acc, s) => acc + (s.currentSpendUsd || 0), 0);
   if (totalSpendToday >= GLOBAL_DAILY_BUDGET_CAP_USD) {
-    return {
-      allowed: false,
-      reason: `Global swarm daily spend cap reached ($${totalSpendToday.toFixed(2)} / $${GLOBAL_DAILY_BUDGET_CAP_USD.toFixed(2)}).`,
-    };
+    return deny(`Global swarm daily spend cap reached ($${totalSpendToday.toFixed(2)} / $${GLOBAL_DAILY_BUDGET_CAP_USD.toFixed(2)}).`);
   }
 
   // 6. Parameterized Circuit Breaker Check per Species Role
   const circuit = canExecute(`species_${currentSpecies.role.toLowerCase()}`);
   if (!circuit.allowed) {
-    return {
-      allowed: false,
-      reason: circuit.reason || `Circuit breaker OPEN for ${currentSpecies.name}.`,
-    };
+    return deny(circuit.reason || `Circuit breaker OPEN for ${currentSpecies.name}.`);
   }
 
   return { allowed: true };
