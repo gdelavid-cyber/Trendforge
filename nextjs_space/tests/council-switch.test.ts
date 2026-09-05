@@ -89,11 +89,12 @@ describe('AI Money Council — Two-Path Architecture & Gatekeeper Gating', () =>
     expect(session.status).toBe('admin_review');
     expect(session.gatekeeperScore).toBeGreaterThanOrEqual(80);
 
-    // Check all 5 personas contributed
+    // Check all 6 personas contributed
     const transcript = session.debateTranscript as any[];
-    expect(transcript).toHaveLength(5);
+    expect(transcript).toHaveLength(6);
 
     const agentNames = transcript.map((t) => t.agentName);
+    expect(agentNames).toContain('Deal Finder');
     expect(agentNames).toContain('Trend Hunter');
     expect(agentNames).toContain('Unit Economist');
     expect(agentNames).toContain('Operator');

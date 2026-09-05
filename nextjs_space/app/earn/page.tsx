@@ -19,10 +19,32 @@ export default async function EarnLandingPage() {
     if (user) totalEarnings = user.totalEarnings;
   }
 
+  let tasks: any[] = [];
+  try {
+    tasks = await prisma.task.findMany({
+      orderBy: { trendScore: 'desc' },
+      take: 6,
+    });
+  } catch (e) {
+    console.error('Failed to load tasks for earn page:', e);
+  }
+
   return (
     <div className="min-h-screen bg-transparent text-white">
       <Header />
-      <EarnLandingClient userEarnings={totalEarnings} />
+      <EarnLandingClient 
+        userEarnings={totalEarnings} 
+        tasks={tasks.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description,
+          category: t.category,
+          estimatedEarningsLow: t.estimatedEarningsLow,
+          estimatedEarningsHigh: t.estimatedEarningsHigh,
+          timeToFirstDollar: t.timeToFirstDollar,
+          trendScore: t.trendScore,
+        }))} 
+      />
     </div>
   );
 }

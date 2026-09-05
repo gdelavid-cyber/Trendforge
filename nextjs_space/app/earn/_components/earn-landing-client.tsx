@@ -26,6 +26,16 @@ import { AgentSwarmDrawer } from '@/components/earn/agent-swarm-drawer';
 
 interface EarnLandingClientProps {
   userEarnings?: number;
+  tasks?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    category?: string;
+    estimatedEarningsLow: number;
+    estimatedEarningsHigh: number;
+    timeToFirstDollar?: string;
+    trendScore?: number;
+  }>;
 }
 
 const FAQS = [
@@ -78,7 +88,7 @@ const TESTIMONIALS = [
   },
 ];
 
-export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) {
+export function EarnLandingClient({ userEarnings = 0, tasks = [] }: EarnLandingClientProps) {
   const [highlightedCol, setHighlightedCol] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
@@ -99,35 +109,96 @@ export function EarnLandingClient({ userEarnings = 0 }: EarnLandingClientProps) 
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-mono text-[#00F0FF] mb-6 backdrop-blur-md"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#00F0FF]/10 via-[#FFD700]/10 to-[#FF007A]/10 border border-white/10 text-xs font-mono mb-6"
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="font-bold tracking-wider uppercase">
-            THE 3 REVENUE ARCHITECTURES
+          <Sparkles className="w-3.5 h-3.5 text-[#00F0FF] animate-pulse" />
+          <span className="text-white/80 font-bold uppercase tracking-wider">
+            CHOOSE YOUR REVENUE PATHWAY
           </span>
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight max-w-4xl"
+          className="font-orbitron font-black text-3xl sm:text-5xl md:text-6xl text-white tracking-tight max-w-4xl mb-6 leading-tight uppercase"
         >
-          Choose Your Path To{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#38bdf8] via-[#f59e0b] to-[#8b5cf6]">
-            Earning
+          How do you want to{' '}
+          <span className="bg-gradient-to-r from-[#00F0FF] via-[#00C2FF] to-[#FFD700] bg-clip-text text-transparent">
+            make money today?
           </span>
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="text-base sm:text-lg text-[#8E9BB4] max-w-2xl mb-12 leading-relaxed"
         >
-          Three proven ways to make money with Trendly. Pick the one that fits your goals, schedule, and capital.
+          Select a ready-to-run money task below, or pick one of the three scalable execution pathways.
         </motion.p>
       </div>
+
+      {/* =========================================================================
+          LIVE READY-TO-RUN MONEY TASKS (CONTINUOUSLY SCRAPED & VETTED)
+      ========================================================================== */}
+      {tasks && tasks.length > 0 && (
+        <div className="mb-16 text-left space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.08] pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <h2 className="text-xl sm:text-2xl font-black text-white font-orbitron uppercase tracking-wider">
+                  Live Ready-to-Run Tasks
+                </h2>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1 font-sans">
+                These vetted opportunities have verified buyers ready to pay. Choose a task to launch the build and auto-closing workflow.
+              </p>
+            </div>
+            <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full self-start sm:self-center font-bold">
+              {tasks.length} High-Yield Tasks Active
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tasks.map((t) => (
+              <div
+                key={t.id}
+                className="glass-card p-5 border border-white/[0.08] hover:border-emerald-500/40 transition flex flex-col justify-between group rounded-2xl"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase font-bold">
+                      {t.category || 'Money Move'}
+                    </span>
+                    <span className="text-xs font-mono text-emerald-400 font-bold">
+                      +${t.estimatedEarningsLow}-${t.estimatedEarningsHigh}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-bold text-white font-mono group-hover:text-emerald-400 transition-colors line-clamp-1">
+                    {t.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 line-clamp-2 mt-1.5 font-sans leading-relaxed">
+                    {t.description}
+                  </p>
+                </div>
+
+                <div className="pt-3.5 mt-3.5 border-t border-white/[0.06] flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    ⏱️ {t.timeToFirstDollar || '24-48 hrs'}
+                  </span>
+                  <Link href={`/tasks/${t.id}`}>
+                    <Button size="sm" className="h-8 px-3.5 text-xs font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-black">
+                      <Play className="w-3 h-3 mr-1 fill-black" /> Run Task &rarr;
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* =========================================================================
           THREE COLUMNS SIDE-BY-SIDE

@@ -146,6 +146,8 @@ export function CouncilDashboard({ userModeEnabled }: { userModeEnabled: boolean
 
   const getAgentBadge = (name: string) => {
     switch (name) {
+      case 'Deal Finder':
+        return { icon: <Sparkles className="w-3.5 h-3.5" />, color: 'bg-amber-500/10 text-amber-300 border-amber-500/30' };
       case 'Trend Hunter':
         return { icon: <TrendingUp className="w-3.5 h-3.5" />, color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' };
       case 'Unit Economist':

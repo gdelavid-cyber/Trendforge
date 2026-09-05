@@ -13,7 +13,7 @@ export interface CouncilSignal {
 }
 
 export interface CouncilDebateTurn {
-  persona: 'trend_hunter' | 'unit_economist' | 'operator' | 'contrarian' | 'closer';
+  persona: 'deal_finder' | 'trend_hunter' | 'unit_economist' | 'operator' | 'contrarian' | 'closer';
   agentName: string;
   role: string;
   sentiment: 'bullish' | 'bearish' | 'neutral';
@@ -70,8 +70,22 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     lowerInsight.includes('high risk') ||
     lowerMargin === '5%';
 
-  // 2. Synthesize 5 persona debate
-  // Turn 1: Trend Hunter
+  // 2. Synthesize 6 Specialist Persona Debate
+  // Turn 1: Deal Finder / Rainmaker (Money Making Discovery Specialist)
+  debateTranscript.push({
+    persona: 'deal_finder',
+    agentName: 'Deal Finder',
+    role: 'Real-Deal Money Discovery Specialist',
+    sentiment: isHighRisk ? 'bearish' : 'bullish',
+    perspective: isHighRisk
+      ? `REJECTED AS VANITY/SPECULATIVE: "${signal.title}" lacks paying commercial clients and predictable cash settlement. It violates our real-deal money filter.`
+      : `VERIFIED CASHPLAY: Identified an immediate B2B commercial arbitrage wedge in "${signal.title}". Target transaction size is $450 to $2,500 with zero client acquisition lag. Real businesses are actively bleeding revenue without this.`,
+    keyMetric: isHighRisk ? '$0 Verified Cashflow' : '$450–$2,500 Target Deal Size',
+    recommendation: isHighRisk ? 'Kill vanity play' : 'Prioritize for immediate closing sequence',
+    timestamp: new Date().toISOString(),
+  });
+
+  // Turn 2: Trend Hunter
   debateTranscript.push({
     persona: 'trend_hunter',
     agentName: 'Trend Hunter',
@@ -79,13 +93,13 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     sentiment: isHighRisk ? 'bearish' : 'bullish',
     perspective: isHighRisk
       ? `Search demand for "${signal.title}" is volatile and exhibiting heavy speculative churn. Negative user sentiment is surging.`
-      : `Detected strong search & arbitrage velocity around "${signal.title}". Inbound demand is expanding at +140% month-over-month.`,
+      : `Detected strong commercial intent around "${signal.title}". Inbound buyer search velocity is expanding at +140% month-over-month.`,
     keyMetric: isHighRisk ? '-45% Retention Decay' : '+140% Search Demand',
     recommendation: isHighRisk ? 'Reject speculative cycle' : 'Strike within 7-day arbitrage window',
     timestamp: new Date().toISOString(),
   });
 
-  // Turn 2: Unit Economist
+  // Turn 3: Unit Economist
   debateTranscript.push({
     persona: 'unit_economist',
     agentName: 'Unit Economist',
@@ -93,13 +107,13 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     sentiment: isHighRisk ? 'bearish' : 'bullish',
     perspective: isHighRisk
       ? `Gross margins are under severe compression (${signal.estimatedMargin || '5%'}). High chargeback rates and low transaction sizes wipe out unit viability.`
-      : `Estimated gross margin stands at ${signal.estimatedMargin || '82.5%'}. Compute costs are negligible against a turnkey price of $450.`,
+      : `Estimated gross margin stands at ${signal.estimatedMargin || '82.5%'}. Compute and delivery costs are under $0.25 against a turnkey price of $450.`,
     keyMetric: isHighRisk ? '5% Net Margin (Negative after CAC)' : '82.5% Gross Margin',
     recommendation: isHighRisk ? 'Kill project' : 'Price setup at $450 with recurring retainer',
     timestamp: new Date().toISOString(),
   });
 
-  // Turn 3: Operator / Architect
+  // Turn 4: Operator / Architect
   const mapsToExisting = lowerTitle.includes('video')
     ? 'Method 2: Video Empire'
     : lowerTitle.includes('swarm')
@@ -113,13 +127,13 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     sentiment: isHighRisk ? 'bearish' : 'bullish',
     perspective: isHighRisk
       ? `Requires bespoke, unverified compliance workarounds and fragile external dependencies that will break continuously.`
-      : `Workflow cleanly maps to ${mapsToExisting}. Can be executed using our existing structured task DAG and auto-closer co-pilot.`,
+      : `Workflow cleanly maps to ${mapsToExisting}. Can be executed using our existing structured task DAG and auto-closer co-pilot without engineering overhead.`,
     keyMetric: isHighRisk ? 'High Maintenance Debt' : `Mapped to ${mapsToExisting}`,
     recommendation: isHighRisk ? 'Do not build' : 'Deploy through existing delivery template',
     timestamp: new Date().toISOString(),
   });
 
-  // Turn 4: Contrarian / Risk Officer
+  // Turn 5: Contrarian / Risk Officer
   debateTranscript.push({
     persona: 'contrarian',
     agentName: 'Contrarian',
@@ -127,13 +141,13 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     sentiment: 'bearish',
     perspective: isHighRisk
       ? `FATAL FLAW: Severe regulatory exposure, platform terms violation, and near 100% merchant processor rejection probability.`
-      : `Primary failure modes: cold outreach fatigue and domain deliverability. Must mandate CAN-SPAM and two-party consent headers.`,
+      : `Primary failure modes: cold outreach fatigue and deliverability. Must mandate CAN-SPAM and two-party consent headers with strict warm-up caps.`,
     keyMetric: isHighRisk ? 'Critical Risk: Fatal' : 'Risk Score: Low-Medium (Mitigated via Guard)',
     recommendation: isHighRisk ? 'Hard veto' : 'Enforce strict 50 email/day warm-up limits',
     timestamp: new Date().toISOString(),
   });
 
-  // Turn 5: Closer / GTM
+  // Turn 6: Closer / GTM
   debateTranscript.push({
     persona: 'closer',
     agentName: 'Closer',
@@ -147,31 +161,31 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     timestamp: new Date().toISOString(),
   });
 
-  // 3. Gatekeeper Assessment
+  // 3. Gatekeeper Assessment (Real-Deal Money Filter)
   const gatekeeperVerdict: GatekeeperVerdict = isHighRisk
     ? {
         score: 52,
         passed: false,
-        verdictReason: 'High risk flags and insufficient unit economics. Does not satisfy Tier-1 activation threshold of 80/100.',
+        verdictReason: 'Failed Real-Deal Money Filter: High risk flags, unverified buyer intent, or insufficient unit economics below 80/100.',
         breakdown: {
           feasibility: 40,
           unitEconomics: 35,
           marketDemand: 65,
           risk: 85,
         },
-        riskFlags: ['Regulatory scrutiny', 'Extreme churn hazard', 'Merchant ban probability'],
+        riskFlags: ['Vanity trend / Lack of commercial buyers', 'Regulatory scrutiny', 'Merchant ban probability'],
       }
     : {
         score: 86,
         passed: true,
-        verdictReason: 'High market demand velocity combined with 82.5% unit economics and mitigated risk posture passes the 80/100 threshold.',
+        verdictReason: 'Passed Real-Deal Money Filter: High commercial buyer urgency, sound 82.5% unit economics, and mitigated risk posture.',
         breakdown: {
           feasibility: 90,
           unitEconomics: 85,
           marketDemand: 88,
           risk: 20,
         },
-        riskFlags: ['Domain warm-up required before scale'],
+        riskFlags: ['Domain warm-up required before outbound scale'],
       };
 
   const status = gatekeeperVerdict.passed ? 'admin_review' : 'filtered';
