@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { deductCreditsDb } from '@/lib/growth/credits/credit-manager';
 import { getNovaQuickAnswers } from '@/lib/growth/nova/nova-knowledge';
+import { getNovaBriefing, renderBriefingText } from '@/lib/growth/nova/reads';
+
+const BRIEFING_INTENT = /how am i|how('| a)m i doing|my status|briefing|my balance|quota left|credit balance|what'?s (happening|going on)|status report/i;
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,6 +44,11 @@ export async function POST(req: NextRequest) {
     if (quickAnswer) {
       reply = quickAnswer;
       grounded = { source: 'knowledge-base' };
+    } else if (BRIEFING_INTENT.test(message)) {
+      // N1: live-read intent — answer from the briefing, never from memory.
+      const briefing = await getNovaBriefing(user.id, String(user.role ?? 'FREE'));
+      reply = `Here's your live position. ${renderBriefingText(briefing)}`;
+      grounded = { source: 'briefing', generatedAt: briefing.generatedAt };
     } else {
       // Honest fallback: grounded in real account state, never fake monitoring.
       const [credit, tasks, agents] = await Promise.all([

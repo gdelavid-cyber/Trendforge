@@ -29,6 +29,7 @@ export function NovaAssistant() {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskSchedule, setTaskSchedule] = useState('Daily at 8:00 AM UTC');
   const [customTasks, setCustomTasks] = useState<any[]>([]);
+  const [briefing, setBriefing] = useState<any | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Cmd + K listener
@@ -43,13 +44,19 @@ export function NovaAssistant() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Fetch custom tasks
+  // Fetch custom tasks + live briefing
   useEffect(() => {
     if (isOpen) {
       fetch('/api/nova/tasks')
         .then((r) => r.json())
         .then((data) => {
           if (data.ok) setCustomTasks(data.tasks);
+        })
+        .catch(() => {});
+      fetch('/api/nova/briefing')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.ok) setBriefing(data.briefing);
         })
         .catch(() => {});
     }
@@ -220,6 +227,45 @@ export function NovaAssistant() {
             {/* Tab 1: Chat View */}
             {activeTab === 'chat' ? (
               <>
+                {/* Live Pulse strip — read-only, refreshed on open */}
+                {briefing && (
+                  <div className="px-4 pt-3">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-xl bg-white/[0.03] border border-white/10 py-2">
+                        <div className="text-sm font-bold text-white font-mono">
+                          ${briefing.wallet.available ? Number(briefing.wallet.realIncomeUsdc ?? 0).toFixed(2) : '—'}
+                        </div>
+                        <div className="text-[9px] text-[#94a3b8] font-mono uppercase">Ledger income</div>
+                      </div>
+                      <div className="rounded-xl bg-white/[0.03] border border-white/10 py-2">
+                        <div className="text-sm font-bold text-white font-mono">
+                          {briefing.credits.available ? briefing.credits.balance : '—'}
+                        </div>
+                        <div className="text-[9px] text-[#94a3b8] font-mono uppercase">Credits</div>
+                      </div>
+                      <div className="rounded-xl bg-white/[0.03] border border-white/10 py-2">
+                        <div className="text-sm font-bold text-white font-mono">
+                          {briefing.swarm.available ? briefing.swarm.status : '—'}
+                        </div>
+                        <div className="text-[9px] text-[#94a3b8] font-mono uppercase">Swarm</div>
+                      </div>
+                    </div>
+                    {briefing.insights?.slice(0, 2).map((ins: any, i: number) => (
+                      <div
+                        key={i}
+                        className={`mt-2 text-[11px] font-mono px-3 py-1.5 rounded-xl border ${
+                          ins.level === 'alert'
+                            ? 'text-red-300 border-red-400/30 bg-red-400/5'
+                            : ins.level === 'warning'
+                              ? 'text-amber-200 border-amber-400/30 bg-amber-400/5'
+                              : 'text-[#38bdf8] border-[#38bdf8]/20 bg-[#38bdf8]/5'
+                        }`}
+                      >
+                        {ins.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
                   {messages.map((m) => (
                     <div
