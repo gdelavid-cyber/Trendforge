@@ -198,3 +198,80 @@ export function setEmergencyKillswitch(locked: boolean) {
     account.emergencyLock = locked;
   }
 }
+
+// ============================================================================
+// DB-backed billing (N0 Nova OS foundation).
+// Server-authoritative: atomic guarded decrement + audit row + monthly reset.
+// The in-memory API above is legacy (used by credits/* routes); new code
+// must use deductCreditsDb with a session-derived userId.
+// ============================================================================
+
+import { prisma } from '@/lib/core/db';
+
+const DB_TIER_CREDITS: Record<string, number> = {
+  FREE: 100,
+  PRO: 5000,
+  ELITE: 25000,
+};
+
+export async function deductCreditsDb(
+  userId: string,
+  action: CreditAction,
+  description?: string
+): Promise<{ success: boolean; remainingBalance: number; cost: number; error?: string; warning?: string }> {
+  const cost = ACTION_COSTS[action] || 1;
+
+  let account = await prisma.userCredit.findUnique({ where: { userId } });
+  if (!account) {
+    account = await prisma.userCredit.create({
+      data: { userId, tier: 'FREE', creditBalance: 100, totalAllocated: 100 },
+    });
+  }
+
+  // Monthly reset: fresh allocation when the window has elapsed.
+  if (account.resetAt && account.resetAt.getTime() <= Date.now()) {
+    const allocation = DB_TIER_CREDITS[account.tier] ?? 100;
+    account = await prisma.userCredit.update({
+      where: { userId },
+      data: {
+        creditBalance: allocation,
+        totalAllocated: allocation,
+        resetAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
+      },
+    });
+  }
+
+  // Atomic guarded decrement — concurrent requests cannot overdraw.
+  const claimed = await prisma.userCredit.updateMany({
+    where: { userId, creditBalance: { gte: cost } },
+    data: { creditBalance: { decrement: cost }, totalConsumed: { increment: cost } },
+  });
+  if (claimed.count === 0) {
+    const fresh = await prisma.userCredit.findUnique({ where: { userId } });
+    return {
+      success: false,
+      remainingBalance: fresh?.creditBalance ?? 0,
+      cost,
+      error: `Insufficient credits. This action requires ${cost} credits.`,
+    };
+  }
+
+  const after = await prisma.userCredit.findUnique({ where: { userId } });
+  await prisma.creditTransaction.create({
+    data: {
+      userCreditId: account.id,
+      actionType: action,
+      creditsDeducted: cost,
+      balanceAfter: after?.creditBalance ?? 0,
+      description: description ?? `Executed ${action} (-${cost} credits)`,
+    },
+  });
+
+  const remaining = after?.creditBalance ?? 0;
+  const allocation = after?.totalAllocated ?? 100;
+  let warning: string | undefined;
+  if (allocation > 0 && remaining / allocation <= 0.2 && remaining > 0) {
+    warning = `You've used ${Math.round((1 - remaining / allocation) * 100)}% of your monthly credits (${remaining} remaining).`;
+  }
+  return { success: true, remainingBalance: remaining, cost, warning };
+}

@@ -21,7 +21,7 @@ export function NovaAssistant() {
     {
       id: 'm-welcome',
       sender: 'nova',
-      text: "Hey there! I'm Nova, your 24/7 AI companion on Trendly. I can guide you through Video Empire Play 1, answer any question about our agents, or help you draft outreach messages. How can I help today?",
+      text: "I'm Nova — your interface to the entire Trendly system. Ask me about your credits, agents, and trends, set up background monitors, or get walked through Video Empire Play 1. What should we do first?",
       timestamp: 'Just now',
     },
   ]);
@@ -81,6 +81,19 @@ export function NovaAssistant() {
         body: JSON.stringify({ message: textToSend }),
       });
       const data = await res.json();
+
+      if (res.status === 401) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `n-${Date.now()}`,
+            sender: 'nova',
+            text: 'You need to be signed in for me to reach your account. Sign in and I’ll pick up right here.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+        return;
+      }
 
       if (data.ok) {
         setMessages((prev) => [
@@ -165,9 +178,9 @@ export function NovaAssistant() {
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white flex items-center gap-1.5 font-mono">
-                    <span>NOVA AI COMPANION</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/20 font-bold">
-                      24/7 LIVE
+                    <span>NOVA · TRENDLY OS</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/20 font-bold">
+                      BETA
                     </span>
                   </div>
                   <div className="text-[10px] text-[#94a3b8] font-mono">2 Credits / Msg · Cmd+K</div>
