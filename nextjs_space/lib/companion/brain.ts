@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db';
 import { buildAgentCompanionPrompt, ARCHETYPE_PERSONALITIES } from './personality';
 import { generateSpeechAudio } from './tts';
 import { generateVisemesFromText, VisemeKeyframe } from './lipsync';
-import { launchAgentRun } from '@/lib/automation/orchestrator';
+import { launchAgentRun } from '@/lib/agents/orchestrator';
 import { makeLlm } from '@/lib/execution/llm';
 import { startExecution } from '@/lib/execution/engine';
 import { parseSteps } from '@/lib/tasks/steps';
