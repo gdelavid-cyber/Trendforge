@@ -74,5 +74,17 @@ export async function answerWithOpenCodeBrain(
   ]);
   const reply = raw.trim().slice(0, 2000);
   if (!reply) throw new Error('Brain returned an empty reply.');
+  // Transport artifacts (error JSON, status echoes) are not prose — reject
+  // them so the route falls back to the honest briefing instead of billing
+  // the user for garbage.
+  if (reply.startsWith('{')) {
+    try {
+      JSON.parse(reply);
+      throw new Error('Brain returned transport JSON instead of prose.');
+    } catch (e: any) {
+      if (e?.message === 'Brain returned transport JSON instead of prose.') throw e;
+      // Not JSON after all — a prose reply that happens to open with {. Keep it.
+    }
+  }
   return { reply, grounded: { source: 'opencode-brain', generatedAt: briefing.generatedAt } };
 }
