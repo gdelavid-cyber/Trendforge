@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { checkServiceKey, serviceUserId } from '../lib/growth/nova/service-auth';
-import { buildNovaSystemPrompt } from '../lib/growth/nova/brain';
+import { buildNovaSystemPrompt, isTransportArtifact } from '../lib/growth/nova/brain';
 import type { NovaBriefing } from '../lib/growth/nova/reads';
 
 // Bidirectional Nova x OpenCode: service trust boundary + grounded brain prompt.
@@ -67,5 +67,19 @@ describe('buildNovaSystemPrompt', () => {
   it('names missing sections instead of filling them', () => {
     const prompt = buildNovaSystemPrompt(briefing, [], []);
     expect(prompt).toMatch(/couldn't reach: quota, swarm, trends/);
+  });
+});
+
+describe('isTransportArtifact', () => {
+  it('rejects error and fabrication JSON', () => {
+    expect(isTransportArtifact('{"success":true}')).toBe(true);
+    expect(isTransportArtifact('{"trends":[]}')).toBe(true);
+    expect(isTransportArtifact('{"title":"Monetize X","earnings_low":300}')).toBe(true);
+  });
+
+  it('keeps prose, including prose that opens with a brace', () => {
+    expect(isTransportArtifact('Ledger income: $0.00 across 0 agents.')).toBe(false);
+    expect(isTransportArtifact('{brackets} are just punctuation here')).toBe(false);
+    expect(isTransportArtifact('')).toBe(false);
   });
 });

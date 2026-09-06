@@ -4,10 +4,24 @@ import { getNovaBriefing, renderBriefingText, type NovaBriefing } from '@/lib/gr
 import { listTools } from '@/lib/growth/nova/tools';
 import { recentTraces, renderTraceText } from '@/lib/growth/nova/traces';
 
-// Direction A — Nova thinks via OpenCode. The brain is READ-ONLY by
-// construction: it produces text. Tool execution stays behind Approval
-// rows (N2 law); the prompt below states this explicitly so the model
-// can propose but never claim to have acted.
+// Direction A — Nova thinks via a provider-neutral brain. The brain is
+// READ-ONLY by construction: it produces text. Tool execution stays behind
+// Approval rows (N2 law); the prompt below states this explicitly so the
+// model can propose but never claim to have acted.
+
+// Transport artifacts (error JSON, status echoes, procedural-fallback JSON)
+// are not prose. callLLM's every fabrication path returns JSON.stringify,
+// so a reply that parses as JSON is never a real answer — reject it so the
+// route falls back to the honest briefing instead of billing for garbage.
+export function isTransportArtifact(reply: string): boolean {
+  if (!reply.startsWith('{')) return false;
+  try {
+    JSON.parse(reply);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function buildNovaSystemPrompt(
   briefing: NovaBriefing,
@@ -74,17 +88,6 @@ export async function answerWithOpenCodeBrain(
   ]);
   const reply = raw.trim().slice(0, 2000);
   if (!reply) throw new Error('Brain returned an empty reply.');
-  // Transport artifacts (error JSON, status echoes) are not prose — reject
-  // them so the route falls back to the honest briefing instead of billing
-  // the user for garbage.
-  if (reply.startsWith('{')) {
-    try {
-      JSON.parse(reply);
-      throw new Error('Brain returned transport JSON instead of prose.');
-    } catch (e: any) {
-      if (e?.message === 'Brain returned transport JSON instead of prose.') throw e;
-      // Not JSON after all — a prose reply that happens to open with {. Keep it.
-    }
-  }
+  if (isTransportArtifact(reply)) throw new Error('Brain returned transport JSON instead of prose.');
   return { reply, grounded: { source: 'opencode-brain', generatedAt: briefing.generatedAt } };
 }

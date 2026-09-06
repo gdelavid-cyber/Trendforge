@@ -8,6 +8,8 @@
  *   npx tsx scripts/nova/nova.ts propose --user <id> --tool worker.run --params '{"agentType":"reddit_scraper"}'
  */
 
+import { readFileSync } from 'fs';
+
 const base = (process.env.NOVA_BASE_URL || 'http://localhost:3100').replace(/\/+$/, '');
 const key = process.env.NOVA_SERVICE_KEY;
 if (!key) {
@@ -43,7 +45,7 @@ async function main(): Promise<void> {
     await call(`/api/nova/actions?userId=${encodeURIComponent(userId)}`);
   } else if (cmd === 'propose') {
     const tool = arg('tool');
-    const paramsRaw = arg('params') ?? (arg('params-file') ? require('fs').readFileSync(arg('params-file') as string, 'utf8') : '{}');
+    const paramsRaw = arg('params') ?? (arg('params-file') ? readFileSync(arg('params-file') as string, 'utf8') : '{}');
     if (!tool) {
       console.error('Missing --tool <name>.');
       process.exit(1);
