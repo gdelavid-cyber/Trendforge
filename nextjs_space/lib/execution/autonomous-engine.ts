@@ -86,13 +86,28 @@ export async function startOrGetExecutionPlan(
       inputs: { taskId, category: task.category },
       outputs: { planId: plan.id, totalMilestones: plan.milestones.length },
     });
+
+    try {
+      const { emitStart } = await import('@/lib/activity/emitter');
+      await emitStart({
+        taskId,
+        milestoneId: plan.milestones[0]?.id || null,
+        actorId: companionId || 'companion_autonomous_agent',
+        actionDescription: `Swarm initialized for "${task.title}" — 7 milestones queued.`,
+        outputs: { planId: plan.id },
+      });
+    } catch {}
   }
 
   return plan;
 }
 
 /**
- * Advances the autonomous execution engine through its milestones.
+ * Advances the autonomous execution engine by exactly ONE milestone per call.
+ * Single-step: no recursion. The client loops POST /execute until the plan
+ * reaches COMPLETED, WAITING_USER_CHOICE, PAUSED, or FAILED — so every
+ * milestone, artifact, and log is visible incrementally instead of hiding
+ * inside one long HTTP request.
  */
 export async function advanceExecutionPlan(
   planId: string,
@@ -110,6 +125,17 @@ export async function advanceExecutionPlan(
   });
 
   if (!plan) throw new Error('Execution plan not found');
+
+  // Respect user pause — never advance while paused.
+  if (plan.status === 'PAUSED') {
+    return {
+      ok: false,
+      planId,
+      currentMilestone: plan.currentMilestone,
+      status: 'PAUSED',
+      actionTaken: 'Execution paused by user. Resume to continue.',
+    };
+  }
 
   const task = plan.task;
   const currentMilestoneIndex = plan.currentMilestone - 1;
@@ -133,6 +159,23 @@ export async function advanceExecutionPlan(
 
   const companionId = plan.companionId || 'companion_agent';
   const userId = plan.userId || 'system_user';
+
+  // Idempotent retry: if this milestone already finished (double-click /
+  // retry after timeout), just move the pointer forward without re-doing work.
+  if (milestone && milestone.status === 'COMPLETED') {
+    const next = Math.min(plan.currentMilestone + 1, plan.milestones.length + 1);
+    await prisma.executionPlan.update({
+      where: { id: planId },
+      data: { currentMilestone: next },
+    });
+    return {
+      ok: true,
+      planId,
+      currentMilestone: next,
+      status: plan.status,
+      actionTaken: `Milestone ${milestone.order} already completed — pointer advanced.`,
+    };
+  }
 
   // Execute current milestone according to its type
   switch (milestone.type) {
@@ -185,14 +228,20 @@ export async function advanceExecutionPlan(
         artifacts: [artifact.storageUrl],
       });
 
-      // Move to Milestone 2
+      // Move to Milestone 2 — client calls POST /execute again for next step.
       await prisma.executionPlan.update({
         where: { id: planId },
-        data: { currentMilestone: 2, progress: 28 },
+        data: { currentMilestone: 2, progress: 28, status: 'IN_PROGRESS' },
       });
 
-      // Automatically advance to Milestone 2 (Deliverable Production)
-      return advanceExecutionPlan(planId);
+      return {
+        ok: true,
+        planId,
+        currentMilestone: 2,
+        status: 'IN_PROGRESS',
+        actionTaken: 'Milestone 1 Complete: research brief vaulted.',
+        artifactsCreated: [artifact.id],
+      };
     }
 
     case 'PRODUCTION': {
@@ -244,13 +293,20 @@ export async function advanceExecutionPlan(
         artifacts: [artifact.storageUrl],
       });
 
-      // Move to Milestone 3
+      // Move to Milestone 3 — client calls POST /execute again for next step.
       await prisma.executionPlan.update({
         where: { id: planId },
-        data: { currentMilestone: 3, progress: 45 },
+        data: { currentMilestone: 3, progress: 45, status: 'IN_PROGRESS' },
       });
 
-      return advanceExecutionPlan(planId);
+      return {
+        ok: true,
+        planId,
+        currentMilestone: 3,
+        status: 'IN_PROGRESS',
+        actionTaken: 'Milestone 2 Complete: primary deliverable vaulted.',
+        artifactsCreated: [artifact.id],
+      };
     }
 
     case 'VALIDATION': {
@@ -302,13 +358,20 @@ export async function advanceExecutionPlan(
         artifacts: [artifact.storageUrl],
       });
 
-      // Move to Milestone 4
+      // Move to Milestone 4 — client calls POST /execute again for next step.
       await prisma.executionPlan.update({
         where: { id: planId },
-        data: { currentMilestone: 4, progress: 60 },
+        data: { currentMilestone: 4, progress: 60, status: 'IN_PROGRESS' },
       });
 
-      return advanceExecutionPlan(planId);
+      return {
+        ok: true,
+        planId,
+        currentMilestone: 4,
+        status: 'IN_PROGRESS',
+        actionTaken: 'Milestone 3 Complete: QA validation passed (98.4%).',
+        artifactsCreated: [artifact.id],
+      };
     }
 
     case 'SALES_SETUP': {
@@ -354,7 +417,8 @@ export async function advanceExecutionPlan(
         };
       }
 
-      // Move to Milestone 5
+      // Single-step: record choice and stop. Client calls POST /execute again
+      // to run Milestone 5 (SALES_EXECUTION) as its own visible step.
       await prisma.executionPlan.update({
         where: { id: planId },
         data: {
@@ -365,7 +429,13 @@ export async function advanceExecutionPlan(
         },
       });
 
-      return advanceExecutionPlan(planId, userSalesOption || (plan.salesOption as any));
+      return {
+        ok: true,
+        planId,
+        currentMilestone: 5,
+        status: 'IN_PROGRESS',
+        actionTaken: `Milestone 4 Complete: ${scrapedLeads.length} leads scraped. Sales mode set — ready for Milestone 5.`,
+      };
     }
 
     case 'SALES_EXECUTION': {
@@ -432,13 +502,19 @@ export async function advanceExecutionPlan(
         });
       }
 
-      // Move to Milestone 6: Payment Collection & Escrow
+      // Single-step: stop here. Client calls POST /execute again for Milestone 6.
       await prisma.executionPlan.update({
         where: { id: planId },
-        data: { currentMilestone: 6, progress: 90 },
+        data: { currentMilestone: 6, progress: 90, status: 'IN_PROGRESS' },
       });
 
-      return advanceExecutionPlan(planId, option as 'BOT_SELLS' | 'YOU_SELL' | 'HYBRID');
+      return {
+        ok: true,
+        planId,
+        currentMilestone: 6,
+        status: 'IN_PROGRESS',
+        actionTaken: `Milestone 5 Complete: sales execution ran (${option}). Ready for payment settlement.`,
+      };
     }
 
     case 'PAYMENT': {
@@ -466,13 +542,19 @@ export async function advanceExecutionPlan(
         },
       });
 
-      // Move to Milestone 7: Final Completion
+      // Single-step: stop here. Client calls POST /execute again for Milestone 7.
       await prisma.executionPlan.update({
         where: { id: planId },
-        data: { currentMilestone: 7, progress: 100 },
+        data: { currentMilestone: 7, progress: 100, status: 'IN_PROGRESS' },
       });
 
-      return advanceExecutionPlan(planId);
+      return {
+        ok: true,
+        planId,
+        currentMilestone: 7,
+        status: 'IN_PROGRESS',
+        actionTaken: 'Milestone 6 Complete: escrow settled. Ready for final completion.',
+      };
     }
 
     case 'COMPLETED': {

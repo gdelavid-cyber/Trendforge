@@ -93,15 +93,31 @@ async function recordOutcome(
     durationMs: timing.durationMs,
   });
   // N3: blocked steps emit a why-trace (one owner lookup, blocked-only).
+  const ownerId = (await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { userId: true, taskId: true } }).catch(() => null));
   if (outcome.blocked) {
     void recordTrace({
-      userId: (await prisma.userTask.findUnique({ where: { id: userTaskId }, select: { userId: true } }).catch(() => null))?.userId ?? null,
+      userId: ownerId?.userId ?? null,
       kind: 'STEP',
       subject: step.title,
       summary: `Step blocked, reported honestly instead of marked done.`,
       reasons: [String(outcome.output ?? 'blocked by runner').slice(0, 500)],
     });
   }
+  // Team feed: every step outcome talks back so the human stays in the loop.
+  try {
+    const { emitDone, emitBlocked } = await import('@/lib/activity/emitter');
+    const teamInput = {
+      taskId: ownerId?.taskId ?? '',
+      actorId: userTaskId,
+      actionDescription: outcome.blocked
+        ? `${step.title} — blocked: ${String(outcome.output ?? 'blocked').slice(0, 300)}`
+        : `${step.title} — done.`,
+    };
+    if (teamInput.taskId) {
+      if (outcome.blocked) await emitBlocked(teamInput);
+      else await emitDone(teamInput);
+    }
+  } catch {}
   if (outcome.artifact) {
     await prisma.taskArtifact.create({
       data: {

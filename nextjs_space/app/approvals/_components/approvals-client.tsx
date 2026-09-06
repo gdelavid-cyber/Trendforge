@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Inbox, RefreshCw, XCircle } from 'lucide-react';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
+import { AckGate } from '@/components/activity/AckGate';
 
 interface ApprovalRow {
   id: string;
@@ -138,6 +139,9 @@ export function ApprovalsClient() {
                   >
                     <XCircle className="w-3.5 h-3.5 inline mr-1" /> Reject
                   </button>
+                </div>
+                <div className="mt-3">
+                  <AckGate approvalId={a.id} title={a.action.title ?? 'step'} onDecided={load} />
                 </div>
               </div>
             </motion.div>

@@ -20,6 +20,7 @@ import { SalesPipelineCard } from '@/components/execution/SalesPipelineCard';
 import { LiveLogTerminal } from '@/components/execution/LiveLogTerminal';
 import { LogSaleModal } from '@/components/execution/LogSaleModal';
 import { BrainstormModal } from '@/components/earn/brainstorm-modal';
+import { useTeamActivity } from '@/hooks/useTeamActivity';
 
 interface Props {
   task: any;
@@ -238,6 +239,7 @@ function getStepExecutionDirections(step: any, task: any, index: number) {
 }
 
 export function TaskDetailClient({ task, userTask: initialUserTask, stories, artifacts = [] }: Props) {
+  const team = useTeamActivity(task?.id ?? '');
   const [userTask, setUserTask] = useState(initialUserTask);
   const [expandedStep, setExpandedStep] = useState<number | null>(0);
   const [optedIn, setOptedIn] = useState(initialUserTask?.hasOptedInRisk ?? false);
@@ -441,25 +443,57 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
     fetchAutonomousData();
   }, [fetchAutonomousData]);
 
+  // Poll plan/artifacts/leads while the swarm is actively running so progress,
+  // milestones, vault and sales pipeline stay transparent mid-execution.
+  useEffect(() => {
+    const active =
+      planLoading ||
+      autonomousPlan?.status === 'IN_PROGRESS' ||
+      autonomousPlan?.status === 'RUNNING' ||
+      autonomousPlan?.status === 'WAITING_USER_CHOICE';
+    if (!active) return;
+    const t = setInterval(fetchAutonomousData, 4000);
+    return () => clearInterval(t);
+  }, [planLoading, autonomousPlan?.status, fetchAutonomousData]);
+
   const handleAutonomousExecute = async () => {
     setPlanLoading(true);
     try {
-      const res = await fetch(`/api/tasks/${task.id}/execute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success('Autonomous swarm running milestones!');
+      // Single-step engine: advance one milestone per POST so each step,
+      // artifact, and log lands visibly before the next begins.
+      for (let step = 0; step < 10; step++) {
+        const res = await fetch(`/api/tasks/${task.id}/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
         await fetchAutonomousData();
-      } else {
-        toast.error(data.error || 'Execution failed');
+        if (!data.success) {
+          toast.error(data.error || 'Execution failed');
+          break;
+        }
+        const status = data.result?.status ?? data.plan?.status;
+        if (status === 'WAITING_USER_CHOICE') {
+          toast.info('Swarm paused — pick a sales mode to continue.');
+          break;
+        }
+        if (status === 'COMPLETED') {
+          toast.success('Autonomous swarm completed all milestones!');
+          break;
+        }
+        if (status === 'PAUSED') {
+          toast.info('Autonomous execution paused.');
+          break;
+        }
+        if (step === 0) toast.success('Autonomous swarm running milestones!');
+        // IN_PROGRESS → loop for the next milestone as its own request.
       }
     } catch (e) {
       toast.error('Network error starting autonomous execution');
     } finally {
       setPlanLoading(false);
+      await fetchAutonomousData();
     }
   };
 
@@ -483,13 +517,29 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
     try {
       const res = await fetch(`/api/tasks/${task.id}/resume`, { method: 'POST' });
       const data = await res.json();
-      if (data.success) {
-        toast.success('Autonomous swarm resumed.');
+      if (!data.success) {
+        toast.error(data.error || 'Resume failed');
+        return;
+      }
+      toast.success('Autonomous swarm resumed.');
+      await fetchAutonomousData();
+      // Resume only advances one milestone — keep stepping until settlement.
+      for (let step = 0; step < 10; step++) {
+        const r = await fetch(`/api/tasks/${task.id}/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const d = await r.json();
         await fetchAutonomousData();
+        if (!d.success) break;
+        const status = d.result?.status ?? d.plan?.status;
+        if (status !== 'IN_PROGRESS') break;
       }
     } catch (e) {
     } finally {
       setPlanLoading(false);
+      await fetchAutonomousData();
     }
   };
 
@@ -502,14 +552,37 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
         body: JSON.stringify({ option }),
       });
       const data = await res.json();
-      if (data.success) {
-        toast.success(`Sales execution mode set to ${option.replace('_', ' ')}!`);
+      if (!data.success) {
+        toast.error(data.error || 'Failed to set sales option');
+        return;
+      }
+      toast.success(`Sales execution mode set to ${option.replace('_', ' ')}!`);
+      await fetchAutonomousData();
+      // Sales choice only completes Milestone 4 — keep stepping 5→6→7 visibly.
+      for (let step = 0; step < 10; step++) {
+        const r = await fetch(`/api/tasks/${task.id}/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const d = await r.json();
         await fetchAutonomousData();
+        if (!d.success) {
+          toast.error(d.error || 'Execution failed');
+          break;
+        }
+        const status = d.result?.status ?? d.plan?.status;
+        if (status === 'COMPLETED') {
+          toast.success('Autonomous swarm completed all milestones!');
+          break;
+        }
+        if (status !== 'IN_PROGRESS') break;
       }
     } catch (e) {
       toast.error('Failed to set sales option');
     } finally {
       setPlanLoading(false);
+      await fetchAutonomousData();
     }
   };
 
