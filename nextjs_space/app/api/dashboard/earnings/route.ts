@@ -1,41 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
+import { userRealIncomeUsdc } from '@/lib/money/ledger';
+import { getSessionUser, unauthorized } from '@/lib/core/route-auth';
 
+// Ledger-backed earnings. Sale rows are claims until escrow release posts
+// TRADE_PROCEEDS, so the headline number comes from the ledger; the
+// unverified pipeline is reported separately and labeled as such.
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user ? (session.user as any).id : null;
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
 
-    const sales = await prisma.sale.findMany({
-      where: userId ? { userId } : {},
-    });
+    const [realIncomeUsdc, sales] = await Promise.all([
+      userRealIncomeUsdc(user.id),
+      prisma.sale.findMany({ where: { userId: user.id } }),
+    ]);
 
-    const totalSalesGross = sales.reduce((acc, s) => acc + s.saleAmountCents, 0);
-    const totalPlatformFees = sales.reduce((acc, s) => acc + s.platformFeeCents, 0);
-    const totalNetPayouts = sales
-      .filter((s) => s.escrowStatus === 'RELEASED')
-      .reduce((acc, s) => acc + s.userPayoutCents, 0);
-    const totalHeldInEscrow = sales
+    const unverifiedCents = sales
       .filter((s) => s.escrowStatus === 'HELD' || s.escrowStatus === 'PENDING')
       .reduce((acc, s) => acc + s.userPayoutCents, 0);
-
     const completedSalesCount = sales.filter((s) => s.escrowStatus === 'RELEASED').length;
     const pendingSalesCount = sales.filter((s) => s.escrowStatus === 'HELD' || s.escrowStatus === 'PENDING').length;
 
     return NextResponse.json({
       success: true,
       earnings: {
-        totalSalesGrossCents: totalSalesGross,
-        totalPlatformFeesCents: totalPlatformFees,
-        totalNetPayoutsCents: totalNetPayouts,
-        totalHeldInEscrowCents: totalHeldInEscrow,
+        realIncomeUsdc,
+        unverifiedPipelineCents: unverifiedCents,
         completedSalesCount,
         pendingSalesCount,
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Earnings lookup failed.' }, { status: 500 });
   }
 }

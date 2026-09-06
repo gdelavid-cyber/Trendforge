@@ -272,7 +272,8 @@ export async function executeDealClosureAndSale(
   userId: string,
   leadId: string,
   agreedAmountCents: number,
-  loggedBy: 'bot' | 'user' = 'bot'
+  loggedBy: 'bot' | 'user' = 'bot',
+  stripePaymentIntentId?: string
 ) {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   const task = await prisma.task.findUnique({ where: { id: taskId } });
@@ -283,21 +284,23 @@ export async function executeDealClosureAndSale(
   const platformFeeCents = Math.round(agreedAmountCents * platformFeePercentage);
   const userPayoutCents = agreedAmountCents - platformFeeCents;
 
-  // Create Sale record in escrow
+  // Create Sale record in escrow. No payment is verified here, so nothing
+  // is credited: income posts to the ledger only on escrow release
+  // (TRADE_PROCEEDS). Never invent a payment reference.
   const sale = await prisma.sale.create({
     data: {
       taskId,
       userId,
       leadId,
-      buyerName: lead.buyerName || 'Verified Buyer',
-      buyerEmail: lead.buyerEmail || 'buyer@verifiedclient.io',
+      buyerName: lead.buyerName || 'Unverified buyer',
+      buyerEmail: lead.buyerEmail || 'unverified@local',
       buyerPlatform: lead.source,
       productDelivered: task.title,
       saleAmountCents: agreedAmountCents,
       platformFeeCents,
       userPayoutCents,
       paymentMethod: 'stripe',
-      stripePaymentIntentId: `pi_mock_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      stripePaymentIntentId: stripePaymentIntentId ?? null,
       escrowStatus: 'HELD', // Held in escrow until delivery confirmation
       proofArtifacts: [`https://trendly.io/artifacts/delivery_${taskId}.pdf`],
       loggedBy,
@@ -310,23 +313,13 @@ export async function executeDealClosureAndSale(
     data: { status: 'WON' },
   });
 
-  // Update user earnings
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      totalEarnings: {
-        increment: userPayoutCents / 100,
-      },
-    },
-  });
-
   // Log sale in immutable audit log
   await logExecutionEvent({
     taskId,
     logType: 'sale_completed',
     actor: loggedBy === 'bot' ? 'companion' : 'user',
     actorId: userId,
-    actionDescription: `Completed sale of ${task.title} to ${lead.buyerName} for $${(agreedAmountCents / 100).toFixed(2)}. Escrow funded; net payout: $${(userPayoutCents / 100).toFixed(2)}.`,
+    actionDescription: `Logged sale of ${task.title} to ${lead.buyerName} for $${(agreedAmountCents / 100).toFixed(2)}. Unverified claim — no income credited until escrow release posts TRADE_PROCEEDS.`,
     inputs: { taskId, leadId, agreedAmountCents },
     outputs: { saleId: sale.id, userPayoutCents, escrowStatus: sale.escrowStatus },
   });

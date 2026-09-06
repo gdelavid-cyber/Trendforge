@@ -329,10 +329,10 @@ export function SwarmCommandCenter() {
   const isRunning = statusData?.isRunning ?? true;
   const activeAgents = statusData?.agents?.active || [];
   const deadCount = statusData?.agents?.deadCount ?? 0;
-  const todayGross = statusData?.revenue?.todayGross ?? 1245.0;
-  const todayCost = statusData?.revenue?.todayCost ?? 112.4;
-  const todayNet = statusData?.revenue?.todayNet ?? 1132.6;
-  const budget = statusData?.budget || { dailyCap: 200, remaining: 187.6, spentToday: 12.4 };
+  const todayGross = statusData?.revenue?.todayGross ?? 0;
+  const todayCost = statusData?.revenue?.todayCost ?? 0;
+  const todayNet = statusData?.revenue?.todayNet ?? 0;
+  const budget = statusData?.budget || { dailyCap: 0, remaining: 0, spentToday: 0 };
 
   const PIPELINE_STAGES = [
     'DISCOVERY',

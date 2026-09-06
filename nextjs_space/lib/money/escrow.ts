@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/core/db';
 import { logExecutionEvent } from '@/lib/execution/logger';
+import { postEntry } from '@/lib/money/ledger';
 
 export interface EscrowReleaseResult {
   ok: boolean;
@@ -107,7 +108,42 @@ export async function releaseEscrowPayout(
     }
   }
 
-  // Release escrow funds
+  // Release escrow funds: post the seller payout to the ledger FIRST
+  // (idempotent on sale-{id}-proceeds), then flip the flag. Income exists
+  // only as a ledger row — never as a status flag.
+  let sellerAgent = await prisma.web4Agent.findFirst({
+    where: { userId: sale.userId, status: 'ACTIVE' },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (!sellerAgent) {
+    sellerAgent = await prisma.web4Agent.create({
+      data: {
+        userId: sale.userId,
+        name: 'Seller Reserve Vault',
+        archetype: 'GENERALIST',
+        walletAddress: `SELLER_${sale.userId.slice(-6)}_${Date.now()}`,
+        walletBalance: 0,
+        skills: [],
+        status: 'ACTIVE',
+      },
+    });
+  }
+  try {
+    await postEntry({
+      agentId: sellerAgent.id,
+      userId: sale.userId,
+      type: 'TRADE_PROCEEDS',
+      amountUsdc: sale.userPayoutCents / 100,
+      ref: `sale-${saleId}-proceeds`,
+      note: `Escrow release for sale ${saleId} (fee $${(sale.platformFeeCents / 100).toFixed(2)})`,
+    });
+  } catch (e: any) {
+    // Unique-violation = proceeds already posted by an earlier release
+    // attempt. Fall through to the idempotent status flip below.
+    const msg = String(e?.message ?? e);
+    if (!/unique|Unique|P2002|duplicate/i.test(msg)) throw e;
+  }
+
   const updatedSale = await prisma.sale.update({
     where: { id: saleId },
     data: {
@@ -123,7 +159,7 @@ export async function releaseEscrowPayout(
     logType: 'payment_event',
     actor: 'system',
     actorId: 'escrow_service',
-    actionDescription: `Escrow released. Transferred $${(sale.userPayoutCents / 100).toFixed(2)} to user account (Platform fee: $${(sale.platformFeeCents / 100).toFixed(2)}).`,
+    actionDescription: `Escrow released. Posted $${(sale.userPayoutCents / 100).toFixed(2)} TRADE_PROCEEDS to seller ledger (Platform fee: $${(sale.platformFeeCents / 100).toFixed(2)}).`,
     inputs: { saleId, userPayoutCents: sale.userPayoutCents },
     outputs: { escrowStatus: 'RELEASED' },
   });

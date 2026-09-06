@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { executeDealClosureAndSale } from '@/lib/money/sales/sales-engine';
+import { getSessionUser, unauthorized } from '@/lib/core/route-auth';
 
 export async function GET(
   req: NextRequest,
@@ -27,12 +26,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user ? (session.user as any).id : null;
-
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
+    const userId = user.id;
 
     const taskId = params.id;
     const body = await req.json();
@@ -44,7 +40,9 @@ export async function POST(
       return NextResponse.json({ success: true, sale });
     }
 
-    // Manual custom sale logging
+    // Manual custom sale logging. Self-reported claims are NEVER income:
+    // they enter as PENDING and credit nothing until escrow release posts
+    // TRADE_PROCEEDS to the ledger.
     const platformFeePercentage = 0.10;
     const amount = saleAmountCents || 15000;
     const platformFeeCents = Math.round(amount * platformFeePercentage);
@@ -56,27 +54,17 @@ export async function POST(
       data: {
         taskId,
         userId,
-        buyerName: buyerName || 'Direct Client',
-        buyerEmail: buyerEmail || 'client@directclose.com',
+        buyerName: buyerName || 'Unverified buyer',
+        buyerEmail: buyerEmail || 'unverified@local',
         buyerPlatform: buyerPlatform || 'Direct',
         productDelivered: task?.title || 'Deliverable Package',
         saleAmountCents: amount,
         platformFeeCents,
         userPayoutCents,
         paymentMethod: 'stripe',
-        escrowStatus: 'RELEASED', // Direct manual sales are immediately credited
-        deliveredAt: new Date(),
-        releasedAt: new Date(),
+        escrowStatus: 'PENDING',
         proofArtifacts: proofArtifacts || [],
         loggedBy: 'user',
-      },
-    });
-
-    // Increment user earnings
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        totalEarnings: { increment: userPayoutCents / 100 },
       },
     });
 

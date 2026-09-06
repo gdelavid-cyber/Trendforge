@@ -12,24 +12,24 @@ export async function GET() {
       take: 90,
     });
 
-    const totalGross = summaries.reduce((acc, s) => acc + s.grossRevenue, 0) + (brainState?.todayGross ?? 1245);
-    const totalCost = summaries.reduce((acc, s) => acc + s.totalCost, 0) + (brainState?.todayCost ?? 112.4);
+    const totalGross = summaries.reduce((acc, s) => acc + s.grossRevenue, 0) + (brainState?.todayGross ?? 0);
+    const totalCost = summaries.reduce((acc, s) => acc + s.totalCost, 0) + (brainState?.todayCost ?? 0);
     const totalNet = totalGross - totalCost;
     const totalTasks = summaries.reduce((acc, s) => acc + s.tasksCompleted, 0);
 
     return NextResponse.json({
       success: true,
       today: {
-        gross: brainState?.todayGross ?? 1245.0,
-        cost: brainState?.todayCost ?? 112.4,
-        net: brainState?.todayNet ?? 1132.6,
+        gross: brainState?.todayGross ?? 0,
+        cost: brainState?.todayCost ?? 0,
+        net: brainState?.todayNet ?? 0,
       },
       allTime: {
         gross: totalGross,
         cost: totalCost,
         net: totalNet,
         tasksCompleted: totalTasks,
-        roiMultiplier: totalCost > 0 ? (totalGross / totalCost).toFixed(2) : '11.08',
+        roiMultiplier: totalCost > 0 ? (totalGross / totalCost).toFixed(2) : null,
       },
       survivalMode: brainState?.survivalMode ?? false,
     });
