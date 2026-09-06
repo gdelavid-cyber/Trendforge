@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { approveErrorMessage, isFallbackSessionId } from '@/lib/council/approve-feedback';
 
 interface AgentDialogue {
   agentName: string;
@@ -293,7 +295,7 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: activeSession.id,
+          ...(isFallbackSessionId(activeSession.id) ? {} : { sessionId: activeSession.id }),
           title: activeSession.signal?.title || 'Autonomous Commercial B2B Cashflow Move',
           description: activeSession.signal?.rawInsight || 'High-alpha autonomous money move approved by AI Money Council Gatekeeper.',
           estimatedEarningsLow: 450,
@@ -307,12 +309,13 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
       if (res.ok) {
         const data = await res.json();
         setHotTaskSuccess(data.taskId || 'approved');
+        toast.success('Council approved — moved to Hot Tasks!');
       } else {
         const errData = await res.json().catch(() => ({}));
-        console.error('Approve task failed:', errData);
+        toast.error(approveErrorMessage(res.status, errData.error));
       }
     } catch (e) {
-      console.error('Failed to move to hot tasks:', e);
+      toast.error('Network error moving to Hot Tasks. Check team feed.');
     } finally {
       setMovingToHotTasks(false);
     }

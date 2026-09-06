@@ -98,6 +98,17 @@ export async function POST(request: Request) {
       }).catch(() => null);
     }
 
+    // 5. Team feed: council approvals talk back instead of going silent.
+    try {
+      const { emitDone } = await import('@/lib/activity/emitter');
+      await emitDone({
+        taskId: task.id,
+        actorId: 'council',
+        actionDescription: `Council approved "${task.title}" → Hot Tasks.`,
+        outputs: { taskId: task.id, sessionId: sessionId ?? null },
+      });
+    } catch {}
+
     return NextResponse.json({
       success: true,
       taskId: task.id,
