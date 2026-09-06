@@ -2,24 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { executeSwarmPulse } from '@/lib/swarm/controller';
-
-const CRON_SECRET = process.env.PIPELINE_API_KEY;
-
-function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
-  if (!CRON_SECRET) {
-    return { authorized: false, error: 'CRON auth not configured', status: 500 };
-  }
-
-  const authHeader = request.headers.get('authorization')?.replace('Bearer ', '');
-  const apiKeyHeader = request.headers.get('x-api-key');
-
-  const providedKey = authHeader || apiKeyHeader;
-  if (providedKey !== CRON_SECRET) {
-    return { authorized: false, error: 'Unauthorized', status: 401 };
-  }
-
-  return { authorized: true };
-}
+import { checkCronAuth } from '@/lib/core/route-auth';
 
 
 export async function GET(request: Request) {

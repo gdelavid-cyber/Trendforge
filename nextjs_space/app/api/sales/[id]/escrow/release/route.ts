@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { releaseEscrowPayout } from '@/lib/money/escrow';
+import { forbidden, getSessionUser, isAdminRole, unauthorized } from '@/lib/core/route-auth';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
     const saleId = params.id;
-    const result = await releaseEscrowPayout(saleId);
+    const result = await releaseEscrowPayout(saleId, {
+      userId: user.id,
+      isAdmin: isAdminRole((user as { role?: unknown }).role),
+    });
 
     if (!result.ok) {
+      if (result.error === 'Not your sale.') return forbidden(result.error);
       return NextResponse.json(
         {
           success: false,
@@ -22,6 +29,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    if ((error as { status?: number })?.status === 403) return forbidden(error.message);
+    return NextResponse.json({ success: false, error: 'Release failed.' }, { status: 500 });
   }
 }

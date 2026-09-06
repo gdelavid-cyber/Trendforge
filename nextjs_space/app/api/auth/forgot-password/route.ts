@@ -17,9 +17,17 @@ export async function POST(request: Request) {
     });
 
     if (user) {
-      // Generate secure reset token
+      // Generate secure reset token; store only its hash with a 1h expiry.
       const resetToken = crypto.randomBytes(32).toString('hex');
-      
+      const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetToken: tokenHash,
+          passwordResetExpires: new Date(Date.now() + 3600 * 1000),
+        },
+      });
+
       // Dispatch password reset email via SendGrid
       await sendPasswordResetEmail(user.email, resetToken);
     }

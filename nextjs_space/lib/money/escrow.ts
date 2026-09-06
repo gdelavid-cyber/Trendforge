@@ -11,17 +11,35 @@ export interface EscrowReleaseResult {
 }
 
 /**
+ * Ownership gate shared by all escrow mutations. The seller
+ * (sale.userId) or an ADMIN may act; everyone else gets a 403-style error.
+ */
+export function assertSaleAccess(
+  sale: { userId: string },
+  caller: { userId: string; isAdmin: boolean }
+): void {
+  if (caller.isAdmin) return;
+  if (sale.userId !== caller.userId) {
+    const err = new Error('Not your sale.') as Error & { status?: number };
+    err.status = 403;
+    throw err;
+  }
+}
+
+/**
  * Creates an escrow transaction record for a sale.
  */
 export async function createEscrowForSale(
   saleId: string,
-  stripePaymentIntentId?: string
+  stripePaymentIntentId?: string,
+  caller?: { userId: string; isAdmin: boolean }
 ) {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
   });
 
   if (!sale) throw new Error('Sale not found');
+  if (caller) assertSaleAccess(sale, caller);
 
   const updated = await prisma.sale.update({
     where: { id: saleId },
@@ -48,13 +66,23 @@ export async function createEscrowForSale(
  * Releases funds held in escrow to the user after delivery confirmation.
  * Enforces KYC verification if the payout exceeds $500.00 (50,000 cents).
  */
-export async function releaseEscrowPayout(saleId: string): Promise<EscrowReleaseResult> {
+export async function releaseEscrowPayout(
+  saleId: string,
+  caller?: { userId: string; isAdmin: boolean }
+): Promise<EscrowReleaseResult> {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
     include: { user: true },
   });
 
   if (!sale) return { ok: false, saleId, userPayoutCents: 0, platformFeeCents: 0, error: 'Sale not found' };
+  if (caller) {
+    try {
+      assertSaleAccess(sale, caller);
+    } catch (e: any) {
+      return { ok: false, saleId, userPayoutCents: 0, platformFeeCents: 0, error: e?.message ?? 'Not permitted' };
+    }
+  }
 
   if (sale.escrowStatus === 'RELEASED') {
     return { ok: true, saleId, userPayoutCents: sale.userPayoutCents, platformFeeCents: sale.platformFeeCents };
@@ -111,12 +139,17 @@ export async function releaseEscrowPayout(saleId: string): Promise<EscrowRelease
 /**
  * Refunds buyer and marks escrow as refunded.
  */
-export async function refundEscrowToBuyer(saleId: string, reason: string) {
+export async function refundEscrowToBuyer(
+  saleId: string,
+  reason: string,
+  caller?: { userId: string; isAdmin: boolean }
+) {
   const sale = await prisma.sale.findUnique({
     where: { id: saleId },
   });
 
   if (!sale) throw new Error('Sale not found');
+  if (caller) assertSaleAccess(sale, caller);
 
   const updated = await prisma.sale.update({
     where: { id: saleId },

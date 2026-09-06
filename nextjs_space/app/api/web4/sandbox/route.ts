@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { executeSkill } from '@/lib/intelligence/tools/executor';
+import { billCompute, getSessionUser, unauthorized } from '@/lib/core/route-auth';
 
 /**
  * Real sandbox execution for the builder DAG. Each node runs through the real
@@ -10,8 +11,15 @@ import { executeSkill } from '@/lib/intelligence/tools/executor';
  */
 export async function POST(request: Request) {
   try {
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
+    const billed = await billCompute(user.id, 'Sandbox skill DAG run');
+    if (billed) return billed;
     const body = await request.json();
     const { nodes, edges } = body;
+    if (Array.isArray(nodes) && nodes.length > 20) {
+      return NextResponse.json({ error: 'Too many skill nodes (max 20 per run).' }, { status: 400 });
+    }
 
     if (!Array.isArray(nodes) || nodes.length === 0) {
       return NextResponse.json({ error: 'No skill nodes provided in workflow DAG.' }, { status: 400 });

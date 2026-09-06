@@ -4,24 +4,7 @@ import { NextResponse } from 'next/server';
 import { collectBrainMetrics } from '@/lib/intelligence/brain/metrics';
 import { detectAnomalies } from '@/lib/intelligence/brain/anomaly';
 import { generateBrainDecisions } from '@/lib/intelligence/brain/decisions';
-
-const CRON_SECRET = process.env.PIPELINE_API_KEY;
-
-function checkCronAuth(request: Request): { authorized: boolean; error?: string; status?: number } {
-  if (!CRON_SECRET) {
-    return { authorized: false, error: 'CRON auth not configured', status: 500 };
-  }
-
-  const authHeader = request.headers.get('authorization')?.replace('Bearer ', '');
-  const apiKeyHeader = request.headers.get('x-api-key');
-
-  const providedKey = authHeader || apiKeyHeader;
-  if (providedKey !== CRON_SECRET) {
-    return { authorized: false, error: 'Unauthorized', status: 401 };
-  }
-
-  return { authorized: true };
-}
+import { checkCronAuth } from '@/lib/core/route-auth';
 
 
 async function runBrainCycle() {

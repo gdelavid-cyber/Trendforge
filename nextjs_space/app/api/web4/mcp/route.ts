@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getMCPToolManifest, executeMCPTool } from '@/lib/intelligence/tools/mcp';
+import { billCompute, getSessionUser, unauthorized } from '@/lib/core/route-auth';
 
 // Model Context Protocol (MCP) JSON-RPC Discovery & Tool Gateway
 export async function GET() {
@@ -19,6 +20,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
+    const billed = await billCompute(user.id, 'MCP tool invocation');
+    if (billed) return billed;
     const body = await request.json();
     const { tool, arguments: args } = body;
 

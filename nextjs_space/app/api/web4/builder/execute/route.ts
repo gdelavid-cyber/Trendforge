@@ -2,10 +2,18 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { executeSkill } from '@/lib/intelligence/tools/executor';
+import { billCompute, getSessionUser, unauthorized } from '@/lib/core/route-auth';
 
 export async function POST(request: Request) {
   try {
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
+    const billed = await billCompute(user.id, 'Builder skill DAG run');
+    if (billed) return billed;
     const body = await request.json();
+    if (Array.isArray((body as { nodes?: unknown }).nodes) && (body as { nodes: unknown[] }).nodes.length > 20) {
+      return NextResponse.json({ error: 'Too many skill nodes (max 20 per run).' }, { status: 400 });
+    }
     const { nodes, edges } = body;
 
     if (!Array.isArray(nodes) || nodes.length === 0) {

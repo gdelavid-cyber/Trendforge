@@ -1,14 +1,26 @@
 // Enhanced Autonomous Viral Intelligence & Multi-Source Scraper Engine
+import { timingSafeEqual } from 'crypto';
 
 export * from './classifier';
 
 export function validatePipelineKey(request: Request): boolean {
   const valid = process.env.PIPELINE_API_KEY;
   if (!valid) return false;
-  const key = request.headers.get('x-api-key') || request.headers.get('authorization')?.replace('Bearer ', '');
-  const url = new URL(request.url);
-  const queryKey = url.searchParams.get('key');
-  return key === valid || queryKey === valid;
+  // Headers only — ?key= query secrets leak into logs, history, Referers.
+  const presented = [
+    request.headers.get('x-api-key'),
+    request.headers.get('authorization')?.replace(/^Bearer\s+/i, ''),
+  ].filter((v): v is string => Boolean(v));
+  return presented.some((k) => {
+    const a = Buffer.from(k);
+    const b = Buffer.from(valid);
+    if (a.length !== b.length) return false;
+    try {
+      return timingSafeEqual(a, b);
+    } catch {
+      return false;
+    }
+  });
 }
 
 // Comprehensive catalog of 30+ money-making niches & viral vectors

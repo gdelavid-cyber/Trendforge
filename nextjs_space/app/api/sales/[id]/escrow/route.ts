@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
+import { forbidden, getSessionUser, isAdminRole, unauthorized } from '@/lib/core/route-auth';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getSessionUser();
+    if (!user) return unauthorized();
     const saleId = params.id;
     const sale = await prisma.sale.findUnique({
       where: { id: saleId },
@@ -17,6 +20,8 @@ export async function GET(
     });
 
     if (!sale) return NextResponse.json({ success: false, error: 'Sale not found' }, { status: 404 });
+    const admin = isAdminRole((user as { role?: unknown }).role);
+    if (!admin && sale.userId !== user.id) return forbidden();
 
     return NextResponse.json({
       success: true,
@@ -34,6 +39,6 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Escrow lookup failed.' }, { status: 500 });
   }
 }
