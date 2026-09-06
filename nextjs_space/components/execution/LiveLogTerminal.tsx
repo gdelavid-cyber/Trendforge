@@ -30,13 +30,13 @@ export function LiveLogTerminal({ taskId, initialLogs = [] }: Props) {
   const [isLive, setIsLive] = useState(true);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Poll / SSE stream
+  // Poll / SSE stream — paused when user toggles Live off
   useEffect(() => {
     let isMounted = true;
 
     const fetchLogs = async () => {
       try {
-        const res = await fetch(`/api/tasks/${taskId}/logs`);
+        const res = await fetch(`/api/tasks/${taskId}/logs`, { cache: 'no-store' });
         const data = await res.json();
         if (data.success && isMounted) {
           setLogs(data.logs);
@@ -45,13 +45,19 @@ export function LiveLogTerminal({ taskId, initialLogs = [] }: Props) {
     };
 
     fetchLogs();
+    if (!isLive) return () => { isMounted = false; };
     const interval = setInterval(fetchLogs, 3500);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [taskId]);
+  }, [taskId, isLive]);
+
+  // Keep the terminal pinned to the newest entry while live
+  useEffect(() => {
+    if (isLive) terminalEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [logs.length, isLive]);
 
   const filteredLogs = logs.filter((log) => {
     if (filter === 'ALL') return true;
@@ -89,6 +95,18 @@ export function LiveLogTerminal({ taskId, initialLogs = [] }: Props) {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+          <button
+            onClick={() => setIsLive((v) => !v)}
+            title={isLive ? 'Pause live polling' : 'Resume live polling'}
+            className={`px-2.5 py-1 rounded-full transition-all flex items-center gap-1 ${
+              isLive
+                ? 'bg-green-500/15 text-green-300 border border-green-500/30 font-bold'
+                : 'bg-white/5 text-white/50 hover:text-white border border-white/10'
+            }`}
+          >
+            <RefreshCw className={`w-3 h-3 ${isLive ? 'animate-spin' : ''}`} />
+            {isLive ? 'LIVE' : 'PAUSED'}
+          </button>
           {['ALL', 'MILESTONES', 'LEADS', 'OUTREACH', 'SALES', 'VALIDATION'].map((f) => (
             <button
               key={f}
