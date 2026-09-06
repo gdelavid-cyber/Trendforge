@@ -22,7 +22,6 @@ const nextConfig = {
       { source: '/web4/manifesto', destination: '/about', permanent: true },
       { source: '/avatar-studio', destination: '/dashboard', permanent: true },
       { source: '/builder', destination: '/dashboard', permanent: true },
-      { source: '/marketplace/web4', destination: '/earn/automated-assets', permanent: true },
       { source: '/blueprints', destination: '/tasks', permanent: true },
     ];
   },

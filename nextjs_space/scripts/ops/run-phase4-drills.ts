@@ -68,14 +68,7 @@ async function runAllDrills() {
   });
   console.log('Recent QAReviews:', JSON.stringify(qaReviews, null, 2));
 
-  // STEP 5: Prove Merge Seam via /api/marketplace
-  console.log('\n--- STEP 5: PROVE MERGE SEAM VIA /api/marketplace ---');
-  const marketRes = await makeRequest('/api/marketplace', 'GET');
-  const catalog = marketRes.body.catalog || [];
-  const publishedItem = catalog.find((i: any) => i.id === 'head_diamond_crown');
-  const untouchedItem = catalog.find((i: any) => i.id === 'head_cyber_visor' || i.id === 'skin_neon_cyber');
-  console.log('Swarm Published Item (with render model3d):', JSON.stringify(publishedItem, null, 2));
-  console.log('Untouched Item (byte-identical fallback):', JSON.stringify(untouchedItem, null, 2));
+  // STEP 5: retired with the marketplace (no merge seam left to prove).
 
   // STEP 6: Kill-Switch Drill (DB-backed state must halt the server-side pulse)
   console.log('\n--- STEP 6: KILL-SWITCH DRILL ---');
@@ -173,7 +166,7 @@ async function runAllDrills() {
 
   // STEP 8: Regression HTTP Checks & Git Diff Check
   console.log('\n--- STEP 8: REGRESSION HTTP PINGS & GIT DIFF CHECK ---');
-  const endpoints = ['/arena', '/avatar-studio', '/marketplace', '/cosmetics', '/dev/stage3d'];
+  const endpoints = ['/arena', '/avatar-studio', '/dev/stage3d'];
   for (const ep of endpoints) {
     const res = await makeRequest(ep, 'GET');
     console.log(`${ep} -> HTTP ${res.status}`);

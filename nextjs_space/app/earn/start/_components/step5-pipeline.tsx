@@ -280,9 +280,9 @@ export function Step5Pipeline({ selectedLeadIds, leads, userEarnings }: Step5Pro
               <p className="text-[11px] text-[#8E9BB4] mb-2">
                 Package this deliverable template to sell repeatedly for a 70–80% seller split.
               </p>
-              <Link href="/marketplace">
+              <Link href="/earn">
                 <Button size="sm" variant="outline" className="text-xs h-7 border-white/10">
-                  Open Marketplace &rarr;
+                  Explore Earn &rarr;
                 </Button>
               </Link>
             </div>

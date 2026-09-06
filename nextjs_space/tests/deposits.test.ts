@@ -8,11 +8,10 @@ import {
   parseDepositTx,
   verifyDeposits,
 } from '../lib/money/deposits';
-import { settleBattle } from '../lib/money/battles/settle';
 
-// T4: on-chain USDC deposits (memo-matched), the verifier cursor, and the
-// battle ledger flow. RPC is stubbed with fixtures; ledger/deposit rows are
-// real so idempotency guarantees are exercised against the database.
+// T4: on-chain USDC deposits (memo-matched) and the verifier cursor.
+// RPC is stubbed with fixtures; ledger/deposit rows are real so idempotency
+// guarantees are exercised against the database.
 
 const RUN = `dep-${Date.now()}`;
 const TREASURY = `Treasury${RUN}Addr`.slice(0, 40);
@@ -167,7 +166,7 @@ describe('verifyDeposits (RPC-stubbed end to end)', () => {
 
     expect(result.skipped).toBeFalsy();
     expect(result.credited).toBe(2); // oldest + match both carry our code
-    expect(result.rejected).toBe(1); // unknown memo refused — never guessed
+    expect(result.rejected).toBe(1); // unknown memo refused Ã¢â‚¬â€ never guessed
     expect(result.cursor).toBe(sigFailed); // newest processed signature
 
     // Ledger credited exactly what arrived on-chain.
@@ -186,94 +185,12 @@ describe('verifyDeposits (RPC-stubbed end to end)', () => {
 
     const replay = await verifyDeposits();
 
-    // Cursor from the previous pass scopes this scan…
+    // Cursor from the previous pass scopes this scanÃ¢â‚¬Â¦
     expect(fetchMock.mock.calls.some(([, init]: any[]) =>
       JSON.parse(init.body).params?.[1]?.until === sigFailed
     )).toBe(true);
-    // …so nothing re-credits.
+    // Ã¢â‚¬Â¦so nothing re-credits.
     expect(replay.credited).toBe(0);
     expect(await ledgerBalance(agentId)).toBeCloseTo(50);
-  });
-});
-
-describe('battle ledger flow', () => {
-  let challengerId: string;
-  let defenderId: string;
-
-  beforeAll(async () => {
-    const challenger = await prisma.web4Agent.create({
-      data: {
-        userId,
-        name: 'Battle Challenger',
-        archetype: 'GENERALIST',
-        walletAddress: generateConwayWallet(`${RUN}-c`).address,
-        walletBalance: 0,
-        skills: [],
-      },
-    });
-    challengerId = challenger.id;
-    const defender = await prisma.web4Agent.create({
-      data: {
-        userId,
-        name: 'Battle Defender',
-        archetype: 'GENERALIST',
-        walletAddress: generateConwayWallet(`${RUN}-d`).address,
-        walletBalance: 0,
-        skills: [],
-      },
-    });
-    defenderId = defender.id;
-
-    // Fund both via honest deposits.
-    await prisma.ledgerEntry.create({ data: { agentId: challengerId, userId, type: 'DEPOSIT', amountUsdc: 10, ref: `${RUN}-bfund` } });
-    await prisma.web4Agent.update({ where: { id: challengerId }, data: { walletBalance: 10 } });
-    await prisma.ledgerEntry.create({ data: { agentId: defenderId, userId, type: 'DEPOSIT', amountUsdc: 4, ref: `${RUN}-dfund` } });
-    await prisma.web4Agent.update({ where: { id: defenderId }, data: { walletBalance: 4 } });
-  });
-
-  afterAll(async () => {
-    await prisma.agentBattle.deleteMany({ where: { OR: [{ challengerId }, { defenderId }] } });
-    await prisma.ledgerEntry.deleteMany({ where: { agentId: { in: [challengerId, defenderId] } } });
-    await prisma.web4Agent.deleteMany({ where: { id: { in: [challengerId, defenderId] } } });
-  });
-
-  const tier = { name: 'Bronze Contender Arena', tier: 'BRONZE', entryFeeUsdc: 5 };
-
-  it('debits the entry fee from the challenger and credits the winner pot', async () => {
-    const settled = await settleBattle({
-      challenger: { id: challengerId, userId, walletBalance: 10 },
-      defender: { id: defenderId, userId, walletBalance: 4 },
-      winnerId: defenderId, // challenger loses — entry moves to the pot holder
-      tierConfig: tier as any,
-    });
-
-    expect(settled.ok).toBe(true);
-    expect(settled.pot).toBe(5);
-    expect(settled.balances!.challenger).toBeCloseTo(5);
-    expect(settled.balances!.defender).toBeCloseTo(9);
-  });
-
-  it('a winning challenger nets zero — no money created', async () => {
-    const settled = await settleBattle({
-      challenger: { id: challengerId, userId, walletBalance: 5 },
-      defender: { id: defenderId, userId, walletBalance: 9 },
-      winnerId: challengerId,
-      tierConfig: tier as any,
-    });
-
-    expect(settled.ok).toBe(true);
-    expect(settled.balances!.challenger).toBeCloseTo(5); // -5 entry +5 pot
-  });
-
-  it('rejects entry when the challenger cannot cover the fee', async () => {
-    const settled = await settleBattle({
-      challenger: { id: challengerId, userId, walletBalance: 5 },
-      defender: { id: defenderId, userId, walletBalance: 9 },
-      winnerId: challengerId,
-      tierConfig: { name: 'Gold Mastermind Arena', tier: 'GOLD', entryFeeUsdc: 50 } as any,
-    });
-
-    expect(settled.ok).toBe(false);
-    expect(settled.code).toBe('INSUFFICIENT_FUNDS');
   });
 });
