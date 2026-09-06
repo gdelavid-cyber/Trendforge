@@ -1755,6 +1755,16 @@ model NovaTrace {
   @@index([kind, createdAt])
 }
 
+// Stripe webhook idempotency: one row per processed event; replays ack
+// without re-running.
+model ProcessedStripeEvent {
+  eventId     String   @id
+  type        String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // ============================================================================
 // AI CO-PILOT / AUTO-CLOSE SALES EXECUTION LAYER
 // ============================================================================

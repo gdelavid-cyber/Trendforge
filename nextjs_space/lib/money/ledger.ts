@@ -42,7 +42,12 @@ async function move(params: {
   note?: string;
 }): Promise<MoveResult> {
   const { agentId, userId, type, ref, note } = params;
-  const amount = Math.round(params.amountUsdc * 1e6) / 1e6; // kill float dust
+  // Cent invariant: every ledger value is whole cents. Float64 holds integer
+  // cents exactly (no drift to $90T), so rounding once here — rather than
+  // migrating every money column — permanently ends dust accumulation.
+  // Any fractional-cent input is rounded, never truncated silently: callers
+  // computing fees must round before posting (see settlement.ts).
+  const amount = Math.round(params.amountUsdc * 100) / 100;
   return prisma.$transaction(async (tx) => {
     const dup = await tx.ledgerEntry.findUnique({
       where: { agentId_type_ref: { agentId, type, ref } },

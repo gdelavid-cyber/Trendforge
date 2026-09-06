@@ -177,16 +177,28 @@ export async function verifyDeposits(opts: { limit?: number } = {}): Promise<Ver
     const agent = await prisma.web4Agent.findUnique({ where: { referenceCode: refCode } });
     if (!agent) { rejected++; continue; }
 
-    const deposit = await prisma.deposit.create({
-      data: {
-        userId: agent.userId,
-        agentId: agent.id,
-        referenceCode: refCode,
-        txSignature: info.signature,
-        amountUsdc: parsed.amountUsdc,
-        status: 'PENDING',
-      },
-    });
+    // Idempotent per signature: a replayed or previously-crashed signature
+    // resumes from its stored row instead of throwing and aborting the page.
+    let deposit = await prisma.deposit.findUnique({ where: { txSignature: info.signature } });
+    if (deposit?.status === 'CREDITED') continue; // already settled — skip
+    if (!deposit) {
+      try {
+        deposit = await prisma.deposit.create({
+          data: {
+            userId: agent.userId,
+            agentId: agent.id,
+            referenceCode: refCode,
+            txSignature: info.signature,
+            amountUsdc: parsed.amountUsdc,
+            status: 'PENDING',
+          },
+        });
+      } catch {
+        // Lost a race with a concurrent verifier; re-read the winner's row.
+        deposit = await prisma.deposit.findUnique({ where: { txSignature: info.signature } });
+        if (!deposit || deposit.status === 'CREDITED') continue;
+      }
+    }
 
     const move = await postEntry({
       agentId: agent.id,
@@ -202,6 +214,7 @@ export async function verifyDeposits(opts: { limit?: number } = {}): Promise<Ver
       await prisma.deposit.update({ where: { id: deposit.id }, data: { status: 'CREDITED' } });
     } else {
       // Ledger already has this signature (replay); mark honestly, no credit.
+      rejected++;
       await prisma.deposit.update({ where: { id: deposit.id }, data: { status: 'REJECTED' } });
     }
   }

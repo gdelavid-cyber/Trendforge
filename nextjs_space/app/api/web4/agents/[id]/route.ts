@@ -29,13 +29,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+  if (!user) return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
 
-  const agent = await prisma.web4Agent.findUnique({
-    where: { id: params.id },
-  });
-
-  if (!agent) {
-    return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+  const agent = await prisma.web4Agent.findUnique({ where: { id: params.id } });
+  if (!agent) return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+  // Ownership: only the agent's owner may burn its balance.
+  if (agent.userId !== user.id) {
+    return NextResponse.json({ error: 'Not your agent.' }, { status: 403 });
   }
 
   try {

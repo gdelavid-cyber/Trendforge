@@ -26,35 +26,56 @@ export async function PATCH(request: Request) {
 
     const wr = await prisma.withdrawalRequest.findUnique({ where: { id }, include: { agent: true } });
     if (!wr) return NextResponse.json({ error: 'Request not found' }, { status: 404 });
-    if (wr.status !== 'PENDING') {
-      return NextResponse.json({ error: `Already reviewed (${wr.status})` }, { status: 409 });
+
+    // Atomic claim: exactly one approver can take a PENDING request.
+    // Crash after the debit below still leaves an APPROVED row with the
+    // ledger entry posted — consistent, and retries 409 instead of double-paying.
+    const claimed = await prisma.withdrawalRequest.updateMany({
+      where: { id, status: 'PENDING' },
+      data: { status: 'APPROVED', reviewedBy: (session.user as any).id ?? 'admin' },
+    });
+    if (claimed.count === 0) {
+      const current = await prisma.withdrawalRequest.findUnique({ where: { id }, select: { status: true } });
+      return NextResponse.json({ error: `Already reviewed (${current?.status ?? 'unknown'}).` }, { status: 409 });
     }
-    if (decision === 'APPROVED' && wr.agent.walletBalance < wr.amountUsdc) {
+
+    const agent = await prisma.web4Agent.findUnique({ where: { id: wr.agentId } });
+    if (!agent || agent.walletBalance < wr.amountUsdc) {
+      await prisma.withdrawalRequest.update({ where: { id }, data: { status: 'PENDING', reviewedBy: null } });
       return NextResponse.json({
-        error: `Agent balance dropped to $${wr.agent.walletBalance.toFixed(2)} — cannot approve $${wr.amountUsdc.toFixed(2)}.`,
+        error: `Agent balance $${(agent?.walletBalance ?? 0).toFixed(2)} cannot cover $${wr.amountUsdc.toFixed(2)}. Claim released — request is PENDING again.`,
       }, { status: 409 });
     }
 
-    if (decision === 'APPROVED') {
-      const move = await postEntry({
-        agentId: wr.agentId,
-        userId: wr.userId,
-        type: 'WITHDRAWAL',
-        amountUsdc: -wr.amountUsdc,
-        ref: `withdrawal-${wr.id}`,
-        note: `Admin-approved withdrawal to ${wr.destination.slice(0, 8)}…`,
+    if (decision === 'REJECTED') {
+      const updated = await prisma.withdrawalRequest.update({
+        where: { id },
+        data: { status: 'REJECTED' },
       });
-      if (!move.ok && move.reason === 'duplicate') {
-        return NextResponse.json({ error: 'Withdrawal already settled.' }, { status: 409 });
-      }
+      return NextResponse.json({ success: true, request: { id: updated.id, status: updated.status } });
     }
 
-    const updated = await prisma.withdrawalRequest.update({
-      where: { id },
-      data: { status: decision, reviewedBy: (session.user as any).id ?? 'admin' },
+    const move = await postEntry({
+      agentId: wr.agentId,
+      userId: wr.userId,
+      type: 'WITHDRAWAL',
+      amountUsdc: -wr.amountUsdc,
+      ref: `withdrawal-${wr.id}`,
+      note: `Admin-approved withdrawal to ${wr.destination.slice(0, 8)}…`,
+    });
+    if (!move.ok && move.reason === 'duplicate') {
+      return NextResponse.json({ error: 'Withdrawal already settled.' }, { status: 409 });
+    }
+
+    // Bound the request-creation race: any other PENDING for this agent
+    // is now stale — close it so only one payout per agent survives.
+    await prisma.withdrawalRequest.updateMany({
+      where: { agentId: wr.agentId, status: 'PENDING', id: { not: wr.id } },
+      data: { status: 'REJECTED', reviewedBy: (session.user as any).id ?? 'admin' },
     });
 
-    return NextResponse.json({ success: true, request: { id: updated.id, status: updated.status } });
+    const updated = await prisma.withdrawalRequest.findUnique({ where: { id } });
+    return NextResponse.json({ success: true, request: { id: updated!.id, status: updated!.status } });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Review failed' }, { status: 500 });
   }

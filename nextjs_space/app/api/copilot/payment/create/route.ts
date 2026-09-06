@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
+import { stripe } from '@/lib/core/stripe';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -48,14 +49,32 @@ export async function POST(request: Request) {
       );
     }
 
-    const paymentUrl = `https://buy.stripe.com/trendly_sale_${copilotSession.id}_${Math.round(requestedAmount)}`;
-    const linkId = `plink_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    // Real Stripe Checkout session — never a minted URL. The buyer pays
+    // Stripe; Stripe tells us via webhook; the ledger moves only then.
+    const baseUrl = (process.env.NEXTAUTH_URL || 'https://trendly-platform-chi.vercel.app').replace(/\/+$/, '');
+    const checkout = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      client_reference_id: copilotSession.userId,
+      metadata: { copilotSessionId: copilotSession.id, kind: 'copilot-close' },
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: Math.round(requestedAmount * 100),
+            product_data: { name: `Trendly close — session ${copilotSession.id.slice(-6)}` },
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${baseUrl}/earn?close=won&session=${copilotSession.id}`,
+      cancel_url: `${baseUrl}/earn?close=cancelled&session=${copilotSession.id}`,
+    });
 
     const paymentLinkSale = await prisma.paymentLinkSale.create({
       data: {
         sessionId: copilotSession.id,
-        stripeLinkId: linkId,
-        url: paymentUrl,
+        stripeLinkId: checkout.id,
+        url: checkout.url ?? '',
         amount: requestedAmount,
         status: 'pending',
       },

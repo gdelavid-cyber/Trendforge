@@ -1,11 +1,24 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { broadcastCopilotEvent } from '@/lib/copilot/realtime';
 
 export async function POST(request: Request) {
   try {
+    // This endpoint flips deal state and books revenue figures. It is NOT a
+    // Stripe-signed webhook (no signature exists on this payload), so it
+    // requires the session owner's identity instead — and the session must
+    // belong to the caller. Amounts stay capped by the recorded price offer.
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+    if (!user) return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
+
     const body = await request.json().catch(() => ({}));
     const { sessionId, linkId, amount, currency = 'usd' } = body;
 
@@ -41,8 +54,15 @@ export async function POST(request: Request) {
     if (!copilotSession) {
       return NextResponse.json({ error: 'Matching sales session not found' }, { status: 404 });
     }
+    if (copilotSession.userId !== user.id) {
+      return NextResponse.json({ error: 'Not your sales session.' }, { status: 403 });
+    }
 
-    const paidAmount = Number(amount) || paymentLink?.amount || copilotSession.priceOffer || 450;
+    // Amounts are claims, not money: cap at the recorded offer and never
+    // invent revenue above what the session agreed.
+    const claimed = Number(amount);
+    const cap = paymentLink?.amount ?? copilotSession.priceOffer ?? 450;
+    const paidAmount = Number.isFinite(claimed) && claimed > 0 ? Math.min(claimed, cap) : cap;
 
     // 1. Flip session status to closed_won
     const updatedSession = await prisma.coPilotSession.update({

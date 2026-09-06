@@ -12,6 +12,24 @@ const PLAN_MAP: Record<string, string> = {
   [process.env.STRIPE_PRICE_ENTERPRISE ?? '']: 'ENTERPRISE',
 };
 
+function roleForPrice(priceId: string): string | null {
+  return PLAN_MAP[priceId] ?? null;
+}
+
+async function alreadyProcessed(eventId: string): Promise<boolean> {
+  const existing = await prisma.processedStripeEvent.findUnique({ where: { eventId } });
+  return !!existing;
+}
+
+async function markProcessed(eventId: string, type: string): Promise<boolean> {
+  try {
+    await prisma.processedStripeEvent.create({ data: { eventId, type } });
+    return true;
+  } catch {
+    return false; // unique-violation = concurrent replay already handled it
+  }
+}
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature');
@@ -28,6 +46,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  // Idempotency first: replays ack without re-running.
+  if (await alreadyProcessed(event.id)) {
+    return NextResponse.json({ received: true, deduplicated: true });
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -35,27 +58,47 @@ export async function POST(request: Request) {
         const userId = session.metadata?.userId ?? session.client_reference_id;
         if (!userId) break;
 
-        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-        const priceId = subscription.items?.data?.[0]?.price?.id ?? '';
-        const role = PLAN_MAP[priceId] ?? 'PREMIUM';
+        // Prefer the purchased plan from metadata; fall back to the live price.
+        let role: string | null = null;
+        const metaPlan = (session.metadata?.plan ?? '').toUpperCase();
+        if (['PREMIUM', 'PRO', 'ENTERPRISE', 'FREE'].includes(metaPlan)) {
+          role = metaPlan === 'FREE' ? 'FREE' : metaPlan;
+        }
+        let status = 'active';
+        if (session.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          status = subscription.status;
+          const priceId = subscription.items?.data?.[0]?.price?.id ?? '';
+          role = role ?? roleForPrice(priceId);
+        } else if (!role) {
+          const priceId = (session as { metadata?: { priceId?: string } }).metadata?.priceId ?? '';
+          role = roleForPrice(priceId);
+        }
+
+        // Fail closed: unknown prices grant nothing, loudly.
+        if (!role) {
+          console.error(`[stripe-webhook] unknown price for checkout ${session.id}; granting FREE pending review.`);
+          role = 'FREE';
+          status = 'incomplete';
+        }
 
         await prisma.user.update({
           where: { id: userId },
           data: {
             stripeCustomerId: session.customer as string,
-            stripeSubscriptionId: session.subscription as string,
-            subscriptionStatus: 'active',
+            stripeSubscriptionId: (session.subscription as string) ?? null,
+            subscriptionStatus: status,
             role: role as any,
           },
         });
 
         const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (user?.email) {
+        if (user?.email && role !== 'FREE') {
           sendNotificationEmail({
             notificationId: process.env.NOTIF_ID_SUBSCRIPTION_CONFIRMATION ?? '',
             recipientEmail: user.email,
             subject: `Welcome to Trendly ${role}!`,
-            body: `<div style="font-family: Arial; background: #0A0A0F; color: #E8E8E8; padding: 32px;"><h2 style="color: #F5A623;">You're now a ${role} member! 🎉</h2><p>Enjoy all the premium features including full task access, tools, and more.</p></div>`,
+            body: `<div style="font-family: Arial; background: #0A0A0F; color: #E8E8E8; padding: 32px;"><h2 style="color: #F5A623;">You're now a ${role} member!</h2><p>Enjoy all the premium features including full task access, tools, and more.</p></div>`,
             isHtml: true,
           }).catch(() => {});
         }
@@ -64,15 +107,17 @@ export async function POST(request: Request) {
 
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
-        const priceId = sub.items?.data?.[0]?.price?.id ?? '';
-        const role = PLAN_MAP[priceId] ?? 'FREE';
-
+        const role = roleForPrice(sub.items?.data?.[0]?.price?.id ?? '');
+        const live = ['active', 'trialing'].includes(sub.status);
         const user = await prisma.user.findFirst({ where: { stripeSubscriptionId: sub.id } });
         if (user) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { subscriptionStatus: sub.status, role: role as any },
-          });
+          // Unknown prices leave the role untouched while paid; lapsed
+          // subscriptions always fall back to FREE.
+          const data: { subscriptionStatus: string; role?: any } = { subscriptionStatus: sub.status };
+          if (role && live) data.role = role as any;
+          else if (!live) data.role = 'FREE' as any;
+          else console.error(`[stripe-webhook] unknown price on ${sub.id}; role left untouched.`);
+          await prisma.user.update({ where: { id: user.id }, data });
         }
         break;
       }
@@ -94,10 +139,32 @@ export async function POST(request: Request) {
         const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
         if (customerId) {
           const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
+          // Record arrears but keep the paid role through the grace window;
+          // demotion happens on subscription.deleted or grace expiry, not first failure.
           if (user) {
             await prisma.user.update({
               where: { id: user.id },
-              data: { subscriptionStatus: 'past_due', role: 'FREE' },
+              data: { subscriptionStatus: 'past_due' },
+            });
+          }
+        }
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer as any)?.id;
+        if (customerId) {
+          const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
+          if (user?.stripeSubscriptionId) {
+            const sub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+            const role = roleForPrice(sub.items?.data?.[0]?.price?.id ?? '');
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                subscriptionStatus: sub.status,
+                ...(role && ['active', 'trialing'].includes(sub.status) ? { role: role as any } : {}),
+              },
             });
           }
         }
@@ -105,8 +172,13 @@ export async function POST(request: Request) {
       }
     }
   } catch (error: any) {
+    // Fail loud: Stripe retries, state converges instead of diverging silently.
     console.error('Webhook handler error:', error);
+    return NextResponse.json({ error: 'Handler failed, will retry.' }, { status: 500 });
   }
 
+  if (!(await markProcessed(event.id, event.type))) {
+    return NextResponse.json({ received: true, deduplicated: true });
+  }
   return NextResponse.json({ received: true });
 }
