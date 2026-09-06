@@ -2,18 +2,24 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { runCouncilDebate } from '@/lib/council/council-runner';
+import { getCouncilMemory } from '@/lib/council/council-memory';
+import { harvestNextCouncilSignal } from '@/lib/council/signal-harvester';
 import { prisma } from '@/lib/core/db';
 
-// GET: Fetch latest council deliberations
+// GET: Fetch latest council deliberations and collective intelligence profile
 export async function GET() {
   try {
-    const sessions = await prisma.councilSession.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-    });
+    const [sessions, memory] = await Promise.all([
+      prisma.councilSession.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      }),
+      getCouncilMemory(),
+    ]);
 
     return NextResponse.json({
       success: true,
+      memory,
       sessions: sessions.map((s) => ({
         id: s.id,
         status: s.status,
@@ -30,18 +36,23 @@ export async function GET() {
   }
 }
 
-// POST: Run a live debate on a money signal
+// POST: Run a live debate on a harvested or provided money signal
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const signalData = body.signal || body;
+    let signalData = body.signal || body;
+
+    // If no custom signal or title provided, dynamically harvest the next high-margin play
+    if (!signalData?.title) {
+      signalData = await harvestNextCouncilSignal();
+    }
 
     const {
-      title = 'Autonomous B2B Emergency Voice Dispatch for Contractors',
-      source = 'Reddit r/smallbusiness + Commercial Google Trends',
-      rawInsight = 'Contractors miss 40% of after-hours calls; willing to pay $450 setup + $150/mo retainer.',
-      estimatedMargin = '82.5%',
-      estimatedVelocity = '24-48 hours to launch',
+      title,
+      source = 'Live Multi-Vector Scraper & Harvester',
+      rawInsight = 'Audited commercial cashflow arbitrage play with verified B2B buyer readiness.',
+      estimatedMargin = '84.5%',
+      estimatedVelocity = '24-48 hours',
     } = signalData;
 
     const councilSession = await runCouncilDebate({
@@ -54,7 +65,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Money Council convened successfully.',
+      message: 'Money Council convened successfully with historical memory integration.',
       session: councilSession,
     });
   } catch (error: any) {

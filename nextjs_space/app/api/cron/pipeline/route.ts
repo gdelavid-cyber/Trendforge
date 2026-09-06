@@ -172,11 +172,11 @@ async function runPipelineCycle() {
       const llmTaskRes = await callLLM(taskPrompt, true);
       const parsedTask = JSON.parse(llmTaskRes ?? '{}');
 
-      let taskTitle = parsedTask.title || `Monetize ${trend.name}`;
+      let taskTitle = (parsedTask.title || `Monetize ${trend.name}`).trim();
 
-      // Check task duplicate
-      if (isDuplicate(taskTitle, existingTaskTitles, 0.6)) {
-        taskTitle = `${taskTitle} (Strategy ${Math.floor(Math.random() * 90 + 10)})`;
+      // Enforce strict non-repetition: if duplicate against existing database, skip to ensure variety
+      if (isDuplicate(taskTitle, existingTaskTitles, 0.45)) {
+        continue;
       }
 
       await prisma.task.create({

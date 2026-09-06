@@ -211,27 +211,88 @@ export function calculateSimilarity(str1: string, str2: string): number {
   return union > 0 ? intersection / union : 0;
 }
 
-export function isDuplicate(text: string, existingList: Set<string> | string[], threshold = 0.55): boolean {
+export function isDuplicate(text: string, existingList: Set<string> | string[], threshold = 0.45): boolean {
   const cleanTarget = text.toLowerCase().trim();
   const list = existingList instanceof Set ? Array.from(existingList) : existingList;
   
   for (const item of list) {
     const cleanItem = item.toLowerCase().trim();
     if (cleanItem === cleanTarget) return true;
+    // Substring containment catches near-identical paraphrases
+    if (cleanTarget.length > 15 && cleanItem.length > 15) {
+      if (cleanTarget.includes(cleanItem) || cleanItem.includes(cleanTarget)) return true;
+    }
     if (calculateSimilarity(cleanTarget, cleanItem) >= threshold) return true;
   }
   return false;
 }
 
+// 4 Distinct rotating channel pools covering real commercial B2B demand
+export const REDDIT_SCRAPING_CHANNELS = [
+  {
+    category: 'SMB & Contractor Demand',
+    subreddits: ['smallbusiness', 'sweatystartup', 'roofing', 'HVAC'],
+    queries: ['software alternative', 'hiring someone to', 'missed calls', 'expensive agency'],
+  },
+  {
+    category: 'Agency & B2B Arbitrage',
+    subreddits: ['agency', 'b2bmarketing', 'freelance', 'consulting', 'sales'],
+    queries: ['willing to pay', 'looking for a service', 'lead generation tool', 'manual reporting'],
+  },
+  {
+    category: 'Automation & Workflow Bottlenecks',
+    subreddits: ['SaaS', 'automation', 'nocode', 'SideProject', 'artificial'],
+    queries: ['built a tool for', 'workflow bottlenecks', 'Stripe checkout', 'API integration'],
+  },
+  {
+    category: 'High-Growth Ventures',
+    subreddits: ['Entrepreneur', 'startups', 'growthhacking', 'digitalmarketing'],
+    queries: ['hire developer', 'outsource manual task', 'customer churn', 'paying for tool'],
+  },
+];
+
 /**
- * Scrapes live viral stories from HackerNews Top Stories API
+ * Scrapes live Reddit high-velocity posts with rotating channel clusters and query intents
+ */
+export async function scrapeRedditViral(): Promise<any[]> {
+  try {
+    // 1. Pick rotating channel group based on current hour/minute to guarantee diversity
+    const channelIdx = Math.floor(Date.now() / (1000 * 60 * 15)) % REDDIT_SCRAPING_CHANNELS.length;
+    const channel = REDDIT_SCRAPING_CHANNELS[channelIdx];
+    const subList = channel.subreddits.join('+');
+    
+    // 2. Rotate sort orders to avoid repeating stale hot posts
+    const sorts = ['rising', 'hot', 'new'];
+    const selectedSort = sorts[Math.floor(Math.random() * sorts.length)];
+
+    const res = await fetch(`https://www.reddit.com/r/${subList}/${selectedSort}.json?limit=25`, {
+      headers: {
+        'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) TrendlyPipeline/3.0 (cluster: ${channel.category})`,
+      },
+      next: { revalidate: 180 },
+    });
+
+    if (!res.ok) return [];
+    const json = await res.json();
+    const posts = json?.data?.children?.map((c: any) => c?.data) || [];
+
+    // Filter out low-effort or deleted posts; require minimum upvote or comment engagement
+    return posts.filter((p: any) => p?.title && !p?.over_18 && (p?.score >= 5 || p?.num_comments >= 3));
+  } catch (err) {
+    console.warn('[PIPELINE] Reddit dynamic scraper fallback:', err);
+    return [];
+  }
+}
+
+/**
+ * Scrapes live viral stories and Show HN product launches from HackerNews
  */
 export async function scrapeHackerNewsViral(): Promise<any[]> {
   try {
     const topRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', { next: { revalidate: 300 } });
     if (!topRes.ok) return [];
-    const storyIds = (await topRes.json()).slice(0, 10);
-    
+    const storyIds = (await topRes.json()).slice(0, 12);
+
     const stories = await Promise.all(
       storyIds.map(async (id: number) => {
         try {
@@ -246,24 +307,6 @@ export async function scrapeHackerNewsViral(): Promise<any[]> {
     return stories.filter(Boolean).filter((s) => s.title && s.score > 25);
   } catch (err) {
     console.warn('[PIPELINE] HackerNews scrape fallback:', err);
-    return [];
-  }
-}
-
-/**
- * Scrapes live Reddit high-velocity posts
- */
-export async function scrapeRedditViral(): Promise<any[]> {
-  try {
-    const res = await fetch('https://www.reddit.com/r/SaaS+SideProject+Entrepreneur+artificial/hot.json?limit=15', {
-      headers: { 'User-Agent': 'Mozilla/5.0 TrendlyAI/2.0' },
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json?.data?.children?.map((c: any) => c?.data) || [];
-  } catch (err) {
-    console.warn('[PIPELINE] Reddit scrape fallback:', err);
     return [];
   }
 }
