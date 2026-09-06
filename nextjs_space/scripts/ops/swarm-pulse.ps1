@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$projectRoot = Split-Path -Parent $scriptDir
+$projectRoot = Split-Path -Parent (Split-Path -Parent $scriptDir)
 $envPath = Join-Path $projectRoot ".env"
 $logDir = Join-Path $projectRoot "logs"
 $logPath = Join-Path $logDir "swarm-pulse.log"

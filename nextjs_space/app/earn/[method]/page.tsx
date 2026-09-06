@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { notFound, redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
-import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
+import { userRealIncomeUsdc } from '@/lib/money/ledger';
 import { getMethodBySlug } from '@/lib/earn/methods';
 import { MethodClient } from './_components/method-client';
 import { computeUnlockState } from '@/lib/earn/unlocks';
@@ -25,15 +25,12 @@ export default async function MethodDetailPage({
     redirect(`/auth/signin?callbackUrl=/earn/${params.method}`);
   }
 
-  // Check user unlock level
+  // Check user unlock level — gated on ledger-backed real income only,
+  // never the frozen totalEarnings counter.
   const userId = (session?.user as any)?.id;
   let userEarnings = 0;
   if (userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { totalEarnings: true },
-    });
-    if (user) userEarnings = user.totalEarnings;
+    userEarnings = await userRealIncomeUsdc(userId);
   }
 
   const unlockState = computeUnlockState(userEarnings, false, false);

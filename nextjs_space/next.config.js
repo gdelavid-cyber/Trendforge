@@ -17,13 +17,10 @@ const nextConfig = {
   },
   images: { unoptimized: true },
   async redirects() {
-    return [
-      { source: '/manifesto', destination: '/about', permanent: true },
-      { source: '/web4/manifesto', destination: '/about', permanent: true },
-      { source: '/avatar-studio', destination: '/dashboard', permanent: true },
-      { source: '/builder', destination: '/dashboard', permanent: true },
-      { source: '/blueprints', destination: '/tasks', permanent: true },
-    ];
+    // No shadows: every destination below must NOT have a live page.
+    // (Removed 2026-09: /manifesto, /avatar-studio, /builder, /blueprints
+    // and /marketplace/web4 all had live pages the redirects were hiding.)
+    return [];
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

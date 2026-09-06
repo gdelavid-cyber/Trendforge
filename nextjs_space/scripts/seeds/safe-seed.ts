@@ -3,7 +3,7 @@ import path from "path";
 import { execSync } from "child_process";
 
 try {
-  const seedFile = path.resolve(process.cwd(), "scripts/seed.ts");
+  const seedFile = path.resolve(process.cwd(), "scripts/seeds/seed.ts");
   const content = fs.readFileSync(seedFile, "utf-8");
 
   const forbiddenPatterns = [
@@ -21,6 +21,8 @@ try {
   }
 
 } catch (err: any) {
+  console.error("Seed guard failed to read the seed file — refusing to run blind:", err?.message ?? err);
+  process.exit(1);
 }
 
-execSync("tsx --require dotenv/config scripts/seed.ts", { stdio: "inherit" });
+execSync("tsx --require dotenv/config scripts/seeds/seed.ts", { stdio: "inherit" });

@@ -4,7 +4,7 @@
  * Real income lives exclusively on the agent ledger. This zeroes the fake
  * column so no surface can ever display it again.
  *
- * Run once:  npx tsx scripts/reset-fake-earnings.ts
+ * Run once:  npx tsx scripts/resets/reset-fake-earnings.ts
  */
 import { prisma } from '../../lib/core/db';
 

@@ -2,11 +2,8 @@
 export * from './trend-scout';
 export * from './deliverable-architect';
 export * from './buyer-hunter';
-export * from './outreach-composer';
-export * from './video-production';
 export * from './platform-scout';
 export * from './sales-closer';
-export * from './quality-controller';
 export * from './analytics-optimizer';
 
 import { AgentMetadata } from './types';

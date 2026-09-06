@@ -124,16 +124,6 @@ export interface ObjectionResponse {
   psychologicalLever: string;
 }
 
-export interface InvoiceDraft {
-  id: string;
-  clientName: string;
-  amount: number;
-  type: 'ONE_TIME' | 'MONTHLY_RETAINER';
-  terms: string;
-  deliverablesIncluded: string[];
-  stripePaymentLink?: string;
-}
-
 // 8. Quality Controller
 export interface QualityAuditResult {
   deliverableId: string;

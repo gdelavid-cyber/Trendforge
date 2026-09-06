@@ -1,4 +1,4 @@
-﻿import { InvoiceDraft, ObjectionResponse } from './types';
+import { ObjectionResponse } from './types';
 
 export const OBJECTION_DATABASE: ObjectionResponse[] = [
   {
@@ -37,23 +37,3 @@ export const OBJECTION_DATABASE: ObjectionResponse[] = [
     psychologicalLever: 'Bypassing brochure brush-off to live product engagement.',
   },
 ];
-
-export function generateInvoiceDraft(
-  clientName: string,
-  amount: number,
-  type: 'ONE_TIME' | 'MONTHLY_RETAINER' = 'ONE_TIME'
-): InvoiceDraft {
-  return {
-    id: `inv-${Date.now()}`,
-    clientName,
-    amount,
-    type,
-    terms: type === 'ONE_TIME' ? '50% upon contract authorization, 50% upon live SIP handover' : 'Monthly recurring auto-debit via Stripe',
-    deliverablesIncluded: [
-      'Turnkey AI Voice / Video Production Setup',
-      'Full technical documentation and handover guide',
-      'Direct priority Slack / Email support channel',
-    ],
-    stripePaymentLink: `https://buy.stripe.com/test_trendly_${amount}`,
-  };
-}

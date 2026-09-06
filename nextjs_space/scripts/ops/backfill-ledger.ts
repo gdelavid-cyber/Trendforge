@@ -4,7 +4,7 @@
  * balance as a clearly-labeled ADJUSTMENT entry so the ledger sum matches
  * reality and history stays transparent. Idempotent — safe to re-run.
  *
- * Usage: npx tsx scripts/backfill-ledger.ts
+ * Usage: npx tsx scripts/ops/backfill-ledger.ts
  */
 import { prisma } from '../../lib/core/db';
 
