@@ -67,6 +67,11 @@ export function Step1Pick({
       </div>
 
       {/* 3 Opportunity Cards */}
+      {opportunities.length === 0 && (
+        <p className="text-center text-xs font-mono uppercase tracking-wider text-[#8E9BB4] py-8">
+          pending fresh intel — retry
+        </p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {opportunities.map((opp) => {
           const isSelected = opp.id === selectedOppId;
@@ -156,7 +161,8 @@ export function Step1Pick({
         <Button
           size="lg"
           onClick={onContinue}
-          className="cyan-gradient text-black font-extrabold uppercase px-8 h-12 font-mono shadow-[0_0_25px_rgba(0,240,255,0.4)]"
+          disabled={opportunities.length === 0}
+          className="cyan-gradient text-black font-extrabold uppercase px-8 h-12 font-mono shadow-[0_0_25px_rgba(0,240,255,0.4)] disabled:opacity-40"
         >
           Continue to Step 2: AI Plan &rarr;
         </Button>

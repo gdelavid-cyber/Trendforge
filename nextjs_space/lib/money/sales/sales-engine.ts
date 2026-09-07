@@ -225,7 +225,9 @@ export async function simulateBuyerResponse(leadId: string) {
   const responses = [
     `Thanks for reaching out! This looks exactly like what we need. Could you confirm what the price is and if we get the full source files?`,
     `Great timing! We were just reviewing proposals. What is the turnaround time if we approve today?`,
-    `Hey, looks interesting. Can you do $${Math.max(50, Math.round((lead.statedBudgetCents || 15000) / 100))} for the complete package? If so, we are ready to purchase immediately.`,
+    lead.statedBudgetCents
+      ? `Hey, looks interesting. Can you do $${Math.max(50, Math.round(lead.statedBudgetCents / 100))} for the complete package? If so, we are ready to purchase immediately.`
+      : `Hey, looks interesting. Could you share the budget range you had in mind for the complete package? If the scope fits, we are ready to purchase immediately.`,
   ];
 
   const responseText = responses[Math.floor(Math.random() * responses.length)];

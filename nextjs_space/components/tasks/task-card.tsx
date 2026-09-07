@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Zap, Clock, Shield, Bookmark, DollarSign } from 'lucide-react';
+import { ArrowRight, Zap, Clock, Shield, Bookmark, DollarSign, CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 import { DIFFICULTY_CONFIG, RISK_CONFIG } from '@/lib/core/constants';
+import { formatTaskAge, isLiveTask, isNewTask } from '@/lib/tasks/freshness';
 import { toast } from 'sonner';
 
 interface TaskCardProps {
@@ -18,6 +19,10 @@ interface TaskCardProps {
     estimatedEarningsHigh: number;
     timeToFirstDollar: string | null;
     category: string;
+    createdAt?: string | null;
+    generatedAt?: string | null;
+    trendScore?: number | null;
+    fingerprint?: string | null;
   };
 }
 
@@ -26,6 +31,11 @@ export function TaskCard({ task }: TaskCardProps) {
   const [saved, setSaved] = useState(false);
 
   const risk = RISK_CONFIG[task?.riskLevel ?? 'LOW'] ?? RISK_CONFIG.LOW;
+
+  // Freshness: NEW = issued <24h ago, LIVE = trendScore>=80. Server counts only.
+  const issuedAt = task?.createdAt ?? task?.generatedAt ?? null;
+  const isNew = isNewTask(issuedAt);
+  const isLive = isLiveTask(task?.trendScore);
 
   const getDifficultyStars = (difficulty: string) => {
     switch (difficulty) {
@@ -59,9 +69,21 @@ export function TaskCard({ task }: TaskCardProps) {
         <div>
           {/* Difficulty Stars & Actions */}
           <div className="flex justify-between items-center mb-3">
-            <span className="text-[10px] text-[#FFD700] font-bold font-mono bg-[#FFD700]/10 border border-[#FFD700]/20 px-2.5 py-0.5 rounded-full tracking-wide">
-              {getDifficultyStars(task?.difficulty)}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-[#FFD700] font-bold font-mono bg-[#FFD700]/10 border border-[#FFD700]/20 px-2.5 py-0.5 rounded-full tracking-wide">
+                {getDifficultyStars(task?.difficulty)}
+              </span>
+              {isNew && (
+                <span className="text-[10px] font-bold font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-full tracking-wide">
+                  NEW
+                </span>
+              )}
+              {isLive && (
+                <span className="text-[10px] font-bold font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 px-2 py-0.5 rounded-full tracking-wide">
+                  LIVE
+                </span>
+              )}
+            </div>
             
             <div className="flex items-center gap-1.5">
               <button 
@@ -95,6 +117,12 @@ export function TaskCard({ task }: TaskCardProps) {
             </span>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-mono font-bold ${risk?.bg} ${risk?.text}`}>
               <Shield className="w-3 h-3 mr-1" />{risk?.label}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[#8892B0] bg-white/[0.03] border border-white/[0.06]">
+              <CalendarDays className="w-3 h-3 mr-1" />
+              {issuedAt
+                ? `Issued ${new Date(issuedAt).toLocaleDateString()} · ${formatTaskAge(issuedAt)}`
+                : 'Issued pending fresh intel'}
             </span>
           </div>
         </div>

@@ -44,10 +44,12 @@ export async function GET(request: Request) {
     if (category && category !== 'ALL') where.category = category;
     if (riskLevel && riskLevel !== 'ALL') where.riskLevel = riskLevel;
 
-    // Define cursor parsing and query structures based on sort order
+    // Define cursor parsing and query structures based on sort order.
+    // Live-new-first: featured pins on top, then newest issued first, then stable id tiebreak.
     let orderBy: any = [];
     if (sort === 'trending') {
       orderBy = [
+        { isFeatured: 'desc' },
         { trendScore: 'desc' },
         { id: 'desc' }
       ];
@@ -65,6 +67,7 @@ export async function GET(request: Request) {
       }
     } else if (sort === 'earnings') {
       orderBy = [
+        { isFeatured: 'desc' },
         { estimatedEarningsHigh: 'desc' },
         { id: 'desc' }
       ];
@@ -81,22 +84,44 @@ export async function GET(request: Request) {
         ];
       }
     } else {
-      // Default: newest
+      // Default: live-new first — featured pins, then newest issued, then stable id.
       orderBy = [
-        { generatedAt: 'desc' },
+        { isFeatured: 'desc' },
+        { createdAt: 'desc' },
         { id: 'desc' }
       ];
       if (cursor) {
-        const [timeStr, cursorId] = cursor.split('_');
+        const [featStr, timeStr, cursorId] = cursor.split('_');
+        const cursorFeatured = featStr === '1';
         const cursorDate = new Date(parseInt(timeStr || '0'));
-        where.AND = [
-          {
-            OR: [
-              { generatedAt: { lt: cursorDate } },
-              { generatedAt: cursorDate, id: { lt: cursorId } }
-            ]
-          }
-        ];
+        if (cursorFeatured) {
+          // Still inside the featured block: featured rows older than cursor,
+          // then the entire non-featured block.
+          where.AND = [
+            {
+              OR: [
+                { isFeatured: false },
+                {
+                  isFeatured: true,
+                  OR: [
+                    { createdAt: { lt: cursorDate } },
+                    { createdAt: cursorDate, id: { lt: cursorId } },
+                  ],
+                },
+              ],
+            },
+          ];
+        } else {
+          where.AND = [
+            {
+              isFeatured: false,
+              OR: [
+                { createdAt: { lt: cursorDate } },
+                { createdAt: cursorDate, id: { lt: cursorId } },
+              ],
+            },
+          ];
+        }
       }
     }
 
@@ -104,6 +129,27 @@ export async function GET(request: Request) {
       where,
       orderBy,
       take: limit + 1, // Fetch limit + 1 to determine next cursor
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        difficulty: true,
+        riskLevel: true,
+        startupCost: true,
+        estimatedEarningsLow: true,
+        estimatedEarningsHigh: true,
+        timeToFirstDollar: true,
+        upvotes: true,
+        downvotes: true,
+        isFeatured: true,
+        isVerified: true,
+        category: true,
+        trendScore: true,
+        fingerprint: true,
+        createdAt: true,
+        generatedAt: true,
+        expiresAt: true,
+      },
     });
 
     const hasMore = tasks.length > limit;
@@ -117,7 +163,7 @@ export async function GET(request: Request) {
       } else if (sort === 'earnings') {
         nextCursor = `${lastItem.estimatedEarningsHigh}_${lastItem.id}`;
       } else {
-        nextCursor = `${lastItem.generatedAt.getTime()}_${lastItem.id}`;
+        nextCursor = `${lastItem.isFeatured ? '1' : '0'}_${lastItem.createdAt.getTime()}_${lastItem.id}`;
       }
     }
 
@@ -138,7 +184,9 @@ export async function GET(request: Request) {
         isVerified: t.isVerified,
         category: t.category,
         trendScore: t.trendScore,
-        isTrending: t.isTrending,
+        isTrending: (t.trendScore ?? 0) >= 80,
+        fingerprint: t.fingerprint ?? null,
+        createdAt: t.createdAt.toISOString(),
         generatedAt: t.generatedAt.toISOString(),
         expiresAt: t.expiresAt?.toISOString() ?? null,
       })),

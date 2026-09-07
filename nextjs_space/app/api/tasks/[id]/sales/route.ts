@@ -36,15 +36,29 @@ export async function POST(
 
     // If existing lead
     if (leadId) {
-      const sale = await executeDealClosureAndSale(taskId, userId, leadId, saleAmountCents || 15000, 'user');
+      const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+      const amount = saleAmountCents ?? lead?.statedBudgetCents ?? 0;
+      if (!amount || amount <= 0) {
+        return NextResponse.json(
+          { success: false, error: 'saleAmountCents required — $0 pending verified amount', pending: true },
+          { status: 400 },
+        );
+      }
+      const sale = await executeDealClosureAndSale(taskId, userId, leadId, amount, 'user');
       return NextResponse.json({ success: true, sale });
     }
 
     // Manual custom sale logging. Self-reported claims are NEVER income:
     // they enter as PENDING and credit nothing until escrow release posts
-    // TRADE_PROCEEDS to the ledger.
+    // TRADE_PROCEEDS to the ledger. No amount invented: missing means $0 pending.
     const platformFeePercentage = 0.10;
-    const amount = saleAmountCents || 15000;
+    const amount = saleAmountCents ?? 0;
+    if (!amount || amount <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'saleAmountCents required — $0 pending verified amount', pending: true },
+        { status: 400 },
+      );
+    }
     const platformFeeCents = Math.round(amount * platformFeePercentage);
     const userPayoutCents = amount - platformFeeCents;
 

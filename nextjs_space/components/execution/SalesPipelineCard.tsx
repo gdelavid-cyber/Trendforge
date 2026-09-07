@@ -50,7 +50,8 @@ export function SalesPipelineCard({
   loading,
 }: Props) {
   const topScore = leads.length > 0 ? Math.max(...leads.map((l) => l.compositeScore)) : 0;
-  const totalPipelineValue = leads.reduce((acc, l) => acc + (l.statedBudgetCents || 15000), 0);
+  // No invented budgets: unstated pipeline value is $0 + pending, never a phantom $150.
+  const totalPipelineValue = leads.reduce((acc, l) => acc + (l.statedBudgetCents ?? 0), 0);
 
   return (
     <div className="liquid-glass rounded-3xl p-6 sm:p-8 space-y-6">
@@ -117,7 +118,7 @@ export function SalesPipelineCard({
         <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
           <div className="text-[10px] font-mono text-white/40 uppercase">Est. Pipeline Value</div>
           <div className="text-xl font-bold text-[#FFD700] mt-0.5">
-            ${(totalPipelineValue / 100).toFixed(0)}
+            {totalPipelineValue > 0 ? `$${(totalPipelineValue / 100).toFixed(0)}` : '$0 pending'}
           </div>
         </div>
 

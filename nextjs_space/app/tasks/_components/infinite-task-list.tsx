@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TaskCard } from '@/components/tasks/task-card';
 import { Loader2, Inbox } from 'lucide-react';
+import { dedupeTasksById, isLiveTask, isNewTask } from '@/lib/tasks/freshness';
 
 interface FiltersState {
   search: string;
@@ -41,10 +42,17 @@ export function InfiniteTaskList({ filters, customTasks }: Props) {
       const res = await fetch(`/api/tasks/stream?${queryParams.toString()}`);
       const data = await res.json();
       if (res.ok) {
+        const incoming: any[] = data.tasks ?? [];
         if (reset) {
-          setTasks(data.tasks ?? []);
+          // Stream is ordered live-new first; dedupe keeps that stable order.
+          setTasks(dedupeTasksById(incoming));
         } else {
-          setTasks((prev) => [...prev, ...(data.tasks ?? [])]);
+          setTasks((prev) => {
+            const seen = new Set(prev.map((t: any) => t?.id));
+            // Append only unseen ids so fresh polls never duplicate or reorder.
+            const fresh = incoming.filter((t: any) => t?.id && !seen.has(t.id));
+            return [...prev, ...fresh];
+          });
         }
         setNextCursor(data.nextCursor ?? null);
       }
@@ -87,10 +95,19 @@ export function InfiniteTaskList({ filters, customTasks }: Props) {
     };
   }, [nextCursor, loading, loadMore]);
 
-  // Prepend prepended custom generated tasks, filtering out duplicates
-  const allTasks = [...customTasks, ...tasks];
-  const uniqueTasks = allTasks.filter(
-    (task, index, self) => self.findIndex((t) => t.id === task.id) === index
+  // Prepend custom generated tasks, dedupe by id for a stable list.
+  // NEW = issued <24h ago, LIVE = trendScore>=80 (badges render in TaskCard).
+  const uniqueTasks = useMemo(
+    () => dedupeTasksById([...customTasks, ...tasks].filter((t: any) => t?.id)),
+    [customTasks, tasks],
+  );
+  const newCount = useMemo(
+    () => uniqueTasks.filter((t: any) => isNewTask(t.createdAt ?? t.generatedAt)).length,
+    [uniqueTasks],
+  );
+  const liveCount = useMemo(
+    () => uniqueTasks.filter((t: any) => isLiveTask(t.trendScore)).length,
+    [uniqueTasks],
   );
 
   // Apply search filtering on client side for immediate response
@@ -111,6 +128,20 @@ export function InfiniteTaskList({ filters, customTasks }: Props) {
         </div>
       ) : (
         <>
+          {(newCount > 0 || liveCount > 0) && (
+            <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              {newCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">
+                  {newCount} NEW
+                </span>
+              )}
+              {liveCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 font-bold">
+                  {liveCount} LIVE
+                </span>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-tour="tasks-list">
             <AnimatePresence mode="popLayout">
               {filteredTasks.map((task: any, i: number) => (
