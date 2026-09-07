@@ -20,6 +20,7 @@ import { SalesPipelineCard } from '@/components/execution/SalesPipelineCard';
 import { LiveLogTerminal } from '@/components/execution/LiveLogTerminal';
 import { LogSaleModal } from '@/components/execution/LogSaleModal';
 import { BrainstormModal } from '@/components/earn/brainstorm-modal';
+import { TeamActivityDrawer } from '@/components/activity/TeamActivityDrawer';
 import { useTeamActivity } from '@/hooks/useTeamActivity';
 
 interface Props {
@@ -1164,6 +1165,9 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
           taskId={task?.id}
           trendTitle={task?.title}
         />
+
+        {/* Unified live drawer: auto-open on task mount, inline approvals */}
+        <TeamActivityDrawer taskId={task?.id} autoOpen />
       </motion.div>
     </div>
   );
