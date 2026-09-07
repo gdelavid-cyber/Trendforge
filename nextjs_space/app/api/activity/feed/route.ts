@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     where = { taskId: { in: ids } };
   }
   const logs = await prisma.executionLog.findMany({
-    where: cursor ? { ...where, timestamp: { lt: new Date(parseInt(cursor)) } } : where,
-    orderBy: { timestamp: 'desc' },
+    where: cursor ? { ...where, timestamp: { gt: new Date(parseInt(cursor)) } } : where,
+    orderBy: [{ timestamp: 'asc' }, { id: 'asc' }],
     take: limit + 1,
   });
   const hasMore = logs.length > limit;
