@@ -415,6 +415,22 @@ export class SwarmMemory {
     salePrice?: number;
     assignedAgents?: Record<string, string>;
   }) {
+    // Global fingerprint dedup (Track 2 Task 2): SwarmTask has no title
+    // column, so the idempotency key is templateId + trendId. A repeat
+    // trigger for the same template+trend returns the live row instead of
+    // inserting a duplicate — callers get {ok:false, reason:'duplicate'}
+    // semantics by receiving the existing task.
+    if (params.trendId) {
+      const dupe = await prisma.swarmTask.findFirst({
+        where: {
+          templateId: params.templateId,
+          trendId: params.trendId,
+          state: { notIn: ['FAILED', 'REFUNDED'] },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (dupe) return dupe;
+    }
     return prisma.swarmTask.create({
       data: {
         templateId: params.templateId,

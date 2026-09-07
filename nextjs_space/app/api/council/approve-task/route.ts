@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { isUserAdmin } from '@/lib/council/config';
 import { prisma } from '@/lib/core/db';
+import { fingerprint, isDuplicate } from '@/lib/pipeline';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -26,29 +27,49 @@ export async function POST(request: Request) {
       steps,
     } = body;
 
-    // 1. Find or create linked Trend
+    // 1. Find or create linked Trend (fingerprint-guarded, idempotent)
     const trendName = `Commercial Alpha: ${title.slice(0, 60)}`;
+    const trendFp = fingerprint(trendName);
     let trend = await prisma.trend.findFirst({
       where: { name: trendName },
     });
+    if (!trend) {
+      try {
+        trend = await (prisma.trend.findFirst as any)({ where: { fingerprint: trendFp } });
+      } catch {
+        trend = null;
+      }
+    }
 
     if (!trend) {
-      trend = await prisma.trend.create({
-        data: {
-          name: trendName,
-          sourcePlatforms: ['Reddit r/smallbusiness', 'Google Trends', 'AI Money Council'],
-          mentionVelocity: 95.0,
-          sentimentScore: 0.94,
-          confidence: 0.96,
-          category: 'AGENT_ECONOMY',
-          status: 'ACTIVE',
-          isMonetizable: true,
-          monetizationScore: 0.98,
-          monetizationRationale: 'Approved by AI Money Council with audited unit economics and verified commercial buyer intent.',
-          newsSummary: description,
-          whyItMatters: 'Zero vanity noise. High-velocity B2B cashflow opportunity with day-one profitability.',
-        },
-      });
+      const trendDataBase = {
+        name: trendName,
+        sourcePlatforms: ['Reddit r/smallbusiness', 'Google Trends', 'AI Money Council'],
+        mentionVelocity: 95.0,
+        sentimentScore: 0.94,
+        confidence: 0.96,
+        category: 'AGENT_ECONOMY',
+        status: 'ACTIVE',
+        isMonetizable: true,
+        monetizationScore: 0.98,
+        monetizationRationale: 'Approved by AI Money Council with audited unit economics and verified commercial buyer intent.',
+        newsSummary: description,
+        whyItMatters: 'Zero vanity noise. High-velocity B2B cashflow opportunity with day-one profitability.',
+      };
+      try {
+        trend = await prisma.trend.create({ data: { ...trendDataBase, fingerprint: trendFp } as any });
+      } catch (e: any) {
+        if (e?.code === 'P2002') {
+          trend = await prisma.trend.findFirst({ where: { name: trendName } });
+        } else if (/fingerprint|Unknown argument/i.test(String(e?.message || ''))) {
+          trend = await prisma.trend.create({ data: trendDataBase as any });
+        } else {
+          throw e;
+        }
+      }
+      if (!trend) {
+        trend = await prisma.trend.findFirst({ where: { name: trendName } });
+      }
     }
 
     // 2. Default concrete execution steps if none provided
@@ -63,10 +84,33 @@ export async function POST(request: Request) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
-    // 3. Create the Task in Hot Tasks roster (isFeatured: true, trendScore: 98)
-    const task = await prisma.task.create({
-      data: {
-        trendId: trend.id,
+    // 3. Double-click guard: same title fingerprint → return existing, never duplicate.
+    const taskFp = fingerprint(String(title));
+    let existing: any = null;
+    try {
+      existing = await (prisma.task.findFirst as any)({ where: { fingerprint: taskFp } });
+    } catch {
+      existing = null;
+    }
+    if (!existing) {
+      existing = await prisma.task.findFirst({ where: { title: String(title) } });
+    }
+    if (!existing) {
+      // Fuzzy sweep over recent tasks for this trend (Jaccard >= 0.45).
+      const recent = await prisma.task.findMany({
+        where: { trendId: trend!.id },
+        select: { id: true, title: true },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
+      const hit = recent.find((r) => isDuplicate(String(title), [r.title], 0.45));
+      if (hit) existing = hit;
+    }
+    let task: any = existing;
+    let duplicate = Boolean(existing);
+    if (!task) {
+      const taskDataBase = {
+        trendId: trend!.id,
         title,
         description,
         steps: taskSteps,
@@ -87,8 +131,21 @@ export async function POST(request: Request) {
         weekOf: now,
         generatedAt: now,
         expiresAt,
-      },
-    });
+      };
+      try {
+        // Create the Task in Hot Tasks roster (isFeatured: true, trendScore: 98)
+        task = await prisma.task.create({ data: { ...taskDataBase, fingerprint: taskFp } as any });
+      } catch (e: any) {
+        if (e?.code === 'P2002') {
+          task = await prisma.task.findFirst({ where: { title: String(title) } });
+          duplicate = true;
+        } else if (/fingerprint|Unknown argument/i.test(String(e?.message || ''))) {
+          task = await prisma.task.create({ data: taskDataBase as any });
+        } else {
+          throw e;
+        }
+      }
+    }
 
     // 4. Update CouncilSession if sessionId provided
     if (sessionId) {
@@ -111,9 +168,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      ok: !duplicate,
+      duplicate,
+      ...(duplicate ? { reason: 'duplicate' } : null),
       taskId: task.id,
       title: task.title,
-      message: 'Council idea approved and moved to Hot Tasks section!',
+      message: duplicate
+        ? 'Already in Hot Tasks — returning existing task (double-click safe).'
+        : 'Council idea approved and moved to Hot Tasks section!',
       hotTaskUrl: `/tasks?tab=trending`,
     });
   } catch (error: any) {

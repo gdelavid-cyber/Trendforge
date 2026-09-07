@@ -154,6 +154,7 @@ model User {
 model Trend {
   id                  String         @id @default(cuid())
   name                String
+  fingerprint         String?        @unique
   sourcePlatforms     String[]       @default([])
   mentionVelocity     Float          @default(0)
   sentimentScore      Float          @default(0)
@@ -176,6 +177,7 @@ model Trend {
   @@index([detectedAt])
   @@index([category])
   @@index([isMonetizable])
+  @@index([fingerprint])
 }
 
 model Task {
@@ -183,6 +185,7 @@ model Task {
   trendId               String
   trend                 Trend          @relation(fields: [trendId], references: [id])
   title                 String
+  fingerprint           String?        @unique
   description           String
   steps                 Json           @default("[]")
   difficulty            TaskDifficulty @default(LOW)
@@ -225,6 +228,7 @@ model Task {
   @@index([weekOf])
   @@index([isFeatured])
   @@index([isVerified])
+  @@index([fingerprint])
 }
 
 model UserTask {

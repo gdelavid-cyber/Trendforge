@@ -207,6 +207,17 @@ export const TREND_BLUEPRINTS = [
   },
 ];
 
+// Global fingerprint: single normalization used by every writer (cron,
+// council approve, swarm memory) so "AI voice agents for HVAC",
+// "ai voice agents for hvac!!" and "  AI Voice Agents for HVAC!! " all map
+// to the same unique key. Backed by `fingerprint @unique` on Trend + Task.
+export const DEDUP_THRESHOLD = 0.45;
+export const DEDUP_FINGERPRINT_MAX_LEN = 120;
+
+export function fingerprint(s: string): string {
+  return (s ?? '').toLowerCase().trim().replace(/[^a-z0-9 ]/g, '').slice(0, DEDUP_FINGERPRINT_MAX_LEN);
+}
+
 // Fuzzy token overlap similarity checker to strictly prevent duplicate entries
 export function calculateSimilarity(str1: string, str2: string): number {
   const words1 = new Set(str1.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean));

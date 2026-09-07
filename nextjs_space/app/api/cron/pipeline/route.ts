@@ -9,6 +9,7 @@ import {
   scrapeRedditViral,
   isDuplicate,
   calculateSimilarity,
+  fingerprint,
 } from '@/lib/pipeline';
 
 import { checkCronAuth } from '@/lib/core/route-auth';
@@ -102,26 +103,63 @@ async function runPipelineCycle() {
 
   const validCategories = ['AI_TOOLS', 'LOCAL_SERVICES', 'CRYPTO_FINANCE', 'ECOMMERCE', 'AI_CONTENT', 'OTHER'];
 
-  // 4. Ingest unique trends into database
+  // 4. Ingest unique trends into database (global fingerprint pre-check)
   const createdTrendRecords: any[] = [];
   for (const t of liveTrends.slice(0, 3)) {
     try {
-      const trendName = t.trend_name || 'Emerging Market Vector';
+      const trendName = (t.trend_name || 'Emerging Market Vector').trim();
+      const fp = fingerprint(trendName);
       const cat = validCategories.includes(t.category) ? t.category : 'AI_TOOLS';
 
-      const newTrend = await prisma.trend.create({
-        data: {
-          name: trendName,
-          category: cat as any,
-          sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Twitter', 'Reddit'],
-          mentionVelocity: Number(t.mention_velocity) || 14.5,
-          sentimentScore: Number(t.sentiment_score) || 0.85,
-          confidence: Number(t.initial_confidence) || 0.9,
-          status: 'ACTIVE',
-        },
-      });
+      // Pre-check 1: exact fingerprint hit (unique constraint mirror).
+      // findFirst + try/catch so this works before `prisma migrate` adds the column.
+      try {
+        const hit = await (prisma.trend.findFirst as any)({ where: { fingerprint: fp } });
+        if (hit) continue;
+      } catch {
+        // Column not migrated yet — fall through to in-memory Jaccard check.
+      }
+      // Pre-check 2: fuzzy near-duplicate vs recent in-memory set.
+      if (isDuplicate(trendName, existingTrendNames, 0.45)) continue;
+
+      let newTrend: any;
+      try {
+        newTrend = await prisma.trend.create({
+          data: {
+            name: trendName,
+            fingerprint: fp,
+            category: cat as any,
+            sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Twitter', 'Reddit'],
+            mentionVelocity: Number(t.mention_velocity) || 14.5,
+            sentimentScore: Number(t.sentiment_score) || 0.85,
+            confidence: Number(t.initial_confidence) || 0.9,
+            status: 'ACTIVE',
+          } as any,
+        });
+      } catch (createErr: any) {
+        // P2002 = fingerprint unique hit (concurrent cron); unknown-arg =
+        // column not migrated yet → retry without fingerprint.
+        if (createErr?.code === 'P2002') continue;
+        const msg = String(createErr?.message || '');
+        if (/fingerprint|Unknown argument/i.test(msg)) {
+          newTrend = await prisma.trend.create({
+            data: {
+              name: trendName,
+              category: cat as any,
+              sourcePlatforms: Array.isArray(t.source_platforms) ? t.source_platforms : ['Twitter', 'Reddit'],
+              mentionVelocity: Number(t.mention_velocity) || 14.5,
+              sentimentScore: Number(t.sentiment_score) || 0.85,
+              confidence: Number(t.initial_confidence) || 0.9,
+              status: 'ACTIVE',
+            },
+          });
+        } else {
+          throw createErr;
+        }
+      }
 
       createdTrendRecords.push(newTrend);
+      existingTrendNames.add(trendName.toLowerCase());
       trendsCreated++;
     } catch (e: any) {
       errors.push(`Failed to save trend "${t?.trend_name}": ${e.message}`);
@@ -144,35 +182,52 @@ async function runPipelineCycle() {
       const parsedTask = JSON.parse(llmTaskRes ?? '{}');
 
       let taskTitle = (parsedTask.title || `Monetize ${trend.name}`).trim();
+      const taskFp = fingerprint(taskTitle);
 
+      // Global dedup pre-check: exact fingerprint hit, then fuzzy Jaccard >= 0.45.
+      try {
+        const hit = await (prisma.task.findFirst as any)({ where: { fingerprint: taskFp } });
+        if (hit) continue;
+      } catch {
+        // Column not migrated yet — fall through to in-memory check.
+      }
       // Enforce strict non-repetition: if duplicate against existing database, skip to ensure variety
       if (isDuplicate(taskTitle, existingTaskTitles, 0.45)) {
         continue;
       }
 
-      await prisma.task.create({
-        data: {
-          title: taskTitle,
-          description: parsedTask.description || `Step-by-step blueprint to monetize ${trend.name}.`,
-          category: trend.category,
-          steps: toStructuredStepsJson(
-            Array.isArray(parsedTask.steps) && parsedTask.steps.length > 0
-              ? parsedTask.steps
-              : ['Identify demand', 'Deploy solution', 'Acquire clients']
-          ),
-          difficulty: ['ZERO', 'LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.difficulty) ? parsedTask.difficulty : 'LOW',
-          startupCost: typeof parsedTask.startup_cost === 'number' ? parsedTask.startup_cost : 0,
-          timeToFirstDollar: parsedTask.time_to_first_dollar || '1-3 days',
-          estimatedEarningsLow: typeof parsedTask.earnings_low === 'number' ? parsedTask.earnings_low : 350,
-          estimatedEarningsHigh: typeof parsedTask.earnings_high === 'number' ? parsedTask.earnings_high : 1500,
-          riskLevel: ['LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.risk_level) ? parsedTask.risk_level : 'LOW',
-          riskExplanation: parsedTask.risk_explanation || 'Low initial capital needed.',
-          mitigationStrategy: parsedTask.mitigation_strategy || 'Test with free pilot.',
-          proTip: parsedTask.pro_tip || 'Focus on direct outreach.',
-          trendId: trend.id,
-          isFeatured: tasksCreated === 0,
-        },
-      });
+      const taskDataBase = {
+        title: taskTitle,
+        description: parsedTask.description || `Step-by-step blueprint to monetize ${trend.name}.`,
+        category: trend.category,
+        steps: toStructuredStepsJson(
+          Array.isArray(parsedTask.steps) && parsedTask.steps.length > 0
+            ? parsedTask.steps
+            : ['Identify demand', 'Deploy solution', 'Acquire clients']
+        ),
+        difficulty: ['ZERO', 'LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.difficulty) ? parsedTask.difficulty : 'LOW',
+        startupCost: typeof parsedTask.startup_cost === 'number' ? parsedTask.startup_cost : 0,
+        timeToFirstDollar: parsedTask.time_to_first_dollar || '1-3 days',
+        estimatedEarningsLow: typeof parsedTask.earnings_low === 'number' ? parsedTask.earnings_low : 350,
+        estimatedEarningsHigh: typeof parsedTask.earnings_high === 'number' ? parsedTask.earnings_high : 1500,
+        riskLevel: ['LOW', 'MEDIUM', 'HIGH'].includes(parsedTask.risk_level) ? parsedTask.risk_level : 'LOW',
+        riskExplanation: parsedTask.risk_explanation || 'Low initial capital needed.',
+        mitigationStrategy: parsedTask.mitigation_strategy || 'Test with free pilot.',
+        proTip: parsedTask.pro_tip || 'Focus on direct outreach.',
+        trendId: trend.id,
+        isFeatured: tasksCreated === 0,
+      };
+      try {
+        await prisma.task.create({ data: { ...taskDataBase, fingerprint: taskFp } as any });
+      } catch (createErr: any) {
+        if (createErr?.code === 'P2002') continue; // concurrent duplicate — skip
+        const msg = String(createErr?.message || '');
+        if (/fingerprint|Unknown argument/i.test(msg)) {
+          await prisma.task.create({ data: taskDataBase });
+        } else {
+          throw createErr;
+        }
+      }
 
       existingTaskTitles.add(taskTitle.toLowerCase());
       tasksCreated++;
