@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, CheckCircle2, Shield, ShieldCheck, TrendingUp, AlertTriangle, ThumbsUp, ThumbsDown, ExternalLink, Lightbulb, Rocket, Star, Trophy, Bot, Zap, Wrench, Loader2, FileText, Mail, Share2, Search, Mic, Video, Briefcase, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -416,27 +416,33 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
   const [autonomousPlan, setAutonomousPlan] = useState<any>(null);
   const [artifactsList, setArtifactsList] = useState<any[]>([]);
   const [leadsList, setLeadsList] = useState<any[]>([]);
+  // ExecutionLog entries backing the ordered sellflow drawer steps
+  // (brainstorm > plan > dispatch > milestones > leads > kit > sale).
+  const [execEntries, setExecEntries] = useState<{ id: string; kind: string; text: string }[]>([]);
   const [planLoading, setPlanLoading] = useState(false);
   const [isLogSaleOpen, setIsLogSaleOpen] = useState(false);
 
   const fetchAutonomousData = useCallback(async () => {
     if (!task?.id) return;
     try {
-      const [planRes, artRes, leadsRes] = await Promise.all([
+      const [planRes, artRes, leadsRes, feedRes] = await Promise.all([
         fetch(`/api/tasks/${task.id}/execution-plan`),
         fetch(`/api/tasks/${task.id}/artifacts`),
         fetch(`/api/tasks/${task.id}/leads`),
+        fetch(`/api/activity/feed?taskId=${task.id}&limit=100`, { cache: 'no-store' }),
       ]);
 
-      const [planData, artData, leadsData] = await Promise.all([
+      const [planData, artData, leadsData, feedData] = await Promise.all([
         planRes.json(),
         artRes.json(),
         leadsRes.json(),
+        feedRes.json().catch(() => null),
       ]);
 
       if (planData.success) setAutonomousPlan(planData.plan);
       if (artData.success) setArtifactsList(artData.artifacts);
       if (leadsData.success) setLeadsList(leadsData.leads);
+      if (feedData?.success && Array.isArray(feedData.entries)) setExecEntries(feedData.entries);
     } catch (e) {}
   }, [task?.id]);
 
@@ -586,6 +592,26 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
       await fetchAutonomousData();
     }
   };
+
+  // ---- Ordered sellflow drawer steps (brainstorm > plan > dispatch >
+  // ---- milestones > leads > kit > sale), each pending/done from ExecutionLog.
+  const sellflowSteps: { key: string; label: string; status: 'pending' | 'done' }[] = useMemo(() => {
+    const kinds = new Set(execEntries.map((e) => e.kind));
+    const has = (...ks: string[]) => ks.some((k) => kinds.has(k));
+    const milestones = autonomousPlan?.milestones ?? [];
+    const milestonesDone = milestones.filter((m: any) => m?.status === 'COMPLETED').length;
+    const planDone = milestones.length > 0;
+    const dispatched = has('milestone_start', 'milestone_complete') || ['IN_PROGRESS', 'RUNNING', 'WAITING_USER_CHOICE', 'COMPLETED'].includes(autonomousPlan?.status);
+    return [
+      { key: 'brainstorm', label: 'Brainstorm', status: autonomousPlan ? 'done' : 'pending' },
+      { key: 'plan', label: 'Plan', status: planDone ? 'done' : 'pending' },
+      { key: 'dispatch', label: 'Dispatch', status: dispatched ? 'done' : 'pending' },
+      { key: 'milestones', label: `Milestones${milestones.length ? ` ${milestonesDone}/${milestones.length}` : ''}`, status: autonomousPlan?.status === 'COMPLETED' ? 'done' : 'pending' },
+      { key: 'leads', label: `Leads${leadsList.length ? ` (${leadsList.length})` : ''}`, status: leadsList.length > 0 || has('lead_scraped') ? 'done' : 'pending' },
+      { key: 'kit', label: 'Kit', status: has('artifact_created', 'outreach_sent') || artifactsList.length > 0 ? 'done' : 'pending' },
+      { key: 'sale', label: 'Sale', status: has('sale_completed', 'payment_event') ? 'done' : 'pending' },
+    ];
+  }, [execEntries, autonomousPlan, leadsList, artifactsList]);
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
@@ -818,6 +844,28 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
             loading={planLoading}
           />
         )}
+
+        {/* Sellflow drawer steps in order: brainstorm > plan > dispatch > milestones > leads > kit > sale */}
+        <div className="glass-card border border-white/5 rounded-xl p-4" data-testid="sellflow-steps">
+          <div className="text-[11px] font-mono text-white/40 uppercase mb-3">Sellflow Progress</div>
+          <ol className="flex flex-wrap items-center gap-2">
+            {sellflowSteps.map((s, i) => (
+              <li key={s.key} className="flex items-center gap-2">
+                {i > 0 && <span className="text-white/20 text-xs">›</span>}
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-mono font-bold uppercase ${
+                    s.status === 'done'
+                      ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                      : 'bg-white/[0.02] border-white/10 text-white/40'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.status === 'done' ? 'bg-green-400' : 'bg-white/20'}`} />
+                  {s.label} · {s.status}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
 
         {/* Buyer Leads & Sales Pipeline Option Selector */}
         <SalesPipelineCard

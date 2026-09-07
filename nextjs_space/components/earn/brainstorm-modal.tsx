@@ -21,6 +21,7 @@ export function BrainstormModal({ isOpen, onClose, taskId: initialTaskId, trendI
   const [taskId, setTaskId] = useState<string | undefined>(initialTaskId);
   const [loading, setLoading] = useState(false);
   const [brainstorm, setBrainstorm] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -31,6 +32,7 @@ export function BrainstormModal({ isOpen, onClose, taskId: initialTaskId, trendI
 
   const initBrainstorm = async () => {
     setLoading(true);
+    setError(null);
     let activeTaskId = initialTaskId;
 
     try {
@@ -44,37 +46,27 @@ export function BrainstormModal({ isOpen, onClose, taskId: initialTaskId, trendI
         }
       }
 
-      // Fetch brainstorm data
+      // Fetch brainstorm data — no hardcoded fallback: on failure the
+      // drawer shows pending with a retry instead of invented content.
       if (activeTaskId) {
         const bRes = await fetch(`/api/tasks/${activeTaskId}/brainstorm`, { method: 'POST' });
         const bData = await bRes.json();
         if (bRes.ok && bData.brainstorm) {
           setBrainstorm(bData.brainstorm);
         } else {
-          // Procedural fallback if LLM or API is unavailable
-          setBrainstorm({
-            marketVector: trendTitle || 'High-Velocity Monetization Blueprint',
-            targetBuyer: 'Local SMBs, Digital Agencies & Creators',
-            deliverables: ['Automated Script & Audio', '9:16 Video Asset', 'Personalized Cold Pitch'],
-            estimatedTime: '24-48 hours',
-            estimatedYield: '$500 - $1,500/sale',
-            consensusStrategy: 'Deploy parallel builder swarm while concurrently mining pre-qualified buyers.',
-          });
+          setBrainstorm(null);
+          setError(bData?.error ?? 'Brainstorm unavailable — pending fresh intel.');
         }
       } else {
-        setBrainstorm({
-          marketVector: trendTitle || 'High-Velocity Monetization Blueprint',
-          targetBuyer: 'Local SMBs & Online Services',
-          deliverables: ['Custom AI Deliverable', 'Buyer Outreach Sequences'],
-          estimatedTime: '24-48 hours',
-          estimatedYield: '$500 - $1,500',
-          consensusStrategy: 'Parallel synthesis with human-in-the-loop validation.',
-        });
+        setBrainstorm(null);
+        setError('No task yet — pending fresh intel.');
       }
 
       setStep('PLAN');
     } catch (err: any) {
-      toast.error('Failed to analyze opportunity. Proceeding with procedural gameplan.');
+      setBrainstorm(null);
+      setError('Failed to analyze opportunity — pending fresh intel.');
+      toast.error('Brainstorm unavailable — pending fresh intel. Retry when ready.');
       setStep('PLAN');
     } finally {
       setLoading(false);
@@ -170,33 +162,47 @@ export function BrainstormModal({ isOpen, onClose, taskId: initialTaskId, trendI
             <div className="text-lg font-bold font-mono text-white mb-1">SWARM ACTIVATED</div>
             <p className="text-xs text-[#8E9BB4]">Parallel agents and buyer hunting scout deployed. Launching task workspace...</p>
           </div>
+        ) : !brainstorm ? (
+          <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 font-mono">
+            <AlertCircle className="w-8 h-8 text-[#FFD700]" />
+            <div className="text-sm font-bold text-white">BRAINSTORM PENDING</div>
+            <p className="text-xs text-[#8E9BB4] max-w-sm">
+              {error ?? 'Pending fresh intel — no invented gameplan is shown.'}
+            </p>
+            <Button
+              onClick={initBrainstorm}
+              className="cyan-gradient text-black font-extrabold uppercase px-6 h-10 font-mono"
+            >
+              Retry Brainstorm
+            </Button>
+          </div>
         ) : (
           <div className="space-y-4 font-mono">
             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.08]">
               <div className="text-[11px] text-[#8E9BB4] mb-1">CORE OPPORTUNITY & THESIS</div>
               <div className="text-sm font-bold text-[#00F0FF] mb-2">
-                {brainstorm?.marketVector || trendTitle}
+                {brainstorm?.marketVector ?? trendTitle ?? 'pending fresh intel'}
               </div>
               <p className="text-xs text-[#8E9BB4] leading-relaxed">
-                {brainstorm?.consensusStrategy || 'Autonomous generation of client-ready assets and concurrent buyer qualification.'}
+                {brainstorm?.consensusStrategy ?? 'pending fresh intel'}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.08]">
                 <div className="text-[10px] text-[#8E9BB4] mb-1">TARGET BUYER PROFILE</div>
-                <div className="text-xs font-bold text-white">{brainstorm?.targetBuyer || 'Verified B2B Leads'}</div>
+                <div className="text-xs font-bold text-white">{brainstorm?.targetBuyer ?? 'pending'}</div>
               </div>
               <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.08]">
                 <div className="text-[10px] text-[#8E9BB4] mb-1">ESTIMATED FIRST REVENUE</div>
-                <div className="text-xs font-bold text-[#00FF66]">{brainstorm?.estimatedYield || '$500 - $2,500'}</div>
+                <div className="text-xs font-bold text-[#00FF66]">{brainstorm?.estimatedYield ?? 'pending'}</div>
               </div>
             </div>
 
             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.08]">
               <div className="text-[10px] text-[#8E9BB4] mb-2">DELIVERABLES INCLUDED</div>
               <div className="flex flex-wrap gap-2">
-                {(brainstorm?.deliverables || ['Turnkey Deliverable', 'Audio/Video Demo', 'Personalized Cold Pitch']).map((d: string) => (
+                {(brainstorm?.deliverables?.length ? brainstorm.deliverables : ['pending']).map((d: string) => (
                   <span key={d} className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/10 text-[11px] text-white flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-[#00F0FF]" /> {d}
                   </span>
@@ -212,7 +218,7 @@ export function BrainstormModal({ isOpen, onClose, taskId: initialTaskId, trendI
         )}
 
         {/* Footer Actions */}
-        {step !== 'DISPATCH' && !loading && (
+        {step !== 'DISPATCH' && !loading && brainstorm && (
           <div className="flex items-center justify-between pt-6 mt-6 border-t border-white/[0.08]">
             <Button variant="ghost" onClick={onClose} className="text-xs font-mono text-[#8E9BB4]">
               Cancel & Exit
