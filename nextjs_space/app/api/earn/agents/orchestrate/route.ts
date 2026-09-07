@@ -9,8 +9,8 @@ import {
 export async function GET(req: NextRequest) {
   try {
     const agents = getActiveSwarmAgents();
-    const opportunities = getTopScoutedOpportunities();
-    const leads = huntQualifiedBuyers('HVAC and Local Services');
+    const opportunities = await getTopScoutedOpportunities();
+    const leads = await huntQualifiedBuyers('HVAC and Local Services');
 
     return NextResponse.json({
       ok: true,

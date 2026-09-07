@@ -1,4 +1,5 @@
 ﻿import { TrendScoutOpportunity } from './types';
+import { prisma } from '@/lib/core/db';
 
 export function calculateMoneyProbability(factors: {
   searchGrowth: number; // 0-100
@@ -18,87 +19,64 @@ export function calculateMoneyProbability(factors: {
   return Math.round(score);
 }
 
-export function getTopScoutedOpportunities(): TrendScoutOpportunity[] {
-  const opp1Factors = {
-    searchGrowth: 95,
-    socialVelocity: 88,
-    buyerIntent: 98,
-    competitionScore: 92, // Low competition = high score
-    aiExecutability: 100,
-    priceViability: 90,
-  };
+function clamp(n: number, min = 0, max = 100): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
 
-  const opp2Factors = {
-    searchGrowth: 92,
-    socialVelocity: 96,
-    buyerIntent: 89,
-    competitionScore: 84,
-    aiExecutability: 100,
-    priceViability: 88,
-  };
+/**
+ * Live-only trend scout. Reads monetizable trends from the database and maps
+ * real columns (mentionVelocity, category, whyItMatters, newsSummary) to
+ * opportunities. Returns [] when the DB is empty — callers surface
+ * `pending fresh intel — retry` instead of curated fakes.
+ */
+export async function getTopScoutedOpportunities(): Promise<TrendScoutOpportunity[]> {
+  let trends: Array<{
+    id: string;
+    name: string;
+    category: string;
+    mentionVelocity: number;
+    newsSummary: string | null;
+    whyItMatters: string | null;
+  }> = [];
+  try {
+    trends = await prisma.trend.findMany({
+      where: { isMonetizable: true },
+      orderBy: { detectedAt: 'desc' },
+      take: 5,
+      select: { id: true, name: true, category: true, mentionVelocity: true, newsSummary: true, whyItMatters: true },
+    });
+  } catch {
+    return [];
+  }
 
-  const opp3Factors = {
-    searchGrowth: 86,
-    socialVelocity: 80,
-    buyerIntent: 94,
-    competitionScore: 90,
-    aiExecutability: 96,
-    priceViability: 85,
-  };
+  if (!trends || trends.length === 0) return [];
 
-  return [
-    {
-      id: 'scout-hvac-voice',
-      trend: 'Emergency HVAC AI Voice Receptionist',
-      score: calculateMoneyProbability(opp1Factors),
+  return trends.slice(0, 3).map((t) => {
+    const velocity = clamp(t.mentionVelocity || 0);
+    const factors = {
+      searchGrowth: velocity,
+      socialVelocity: velocity,
+      buyerIntent: velocity,
+      competitionScore: 50,
+      aiExecutability: 50,
+      priceViability: 50,
+    };
+    return {
+      id: t.id,
+      trend: t.name,
+      score: calculateMoneyProbability(factors),
       demandSignals: [
-        '347 Upwork contracts posted this month seeking after-hours phone systems',
-        'r/HVAC contractor thread with 2,300 upvotes detailing missed night call revenue loss',
-        'Google Trends: "AI receptionist" searches up +340% over last 90 days',
-        'Average contractor missed emergency call cost: $1,200/occurrence',
+        t.whyItMatters || t.newsSummary || 'Live trend signal — see source trend record.',
+        `Mention velocity: ${t.mentionVelocity}`,
       ],
-      buyerProfile: 'Independent HVAC, plumbing, and electrical contractors (5–50 technicians)',
-      priceRange: '$500 – $1,500 setup + $150/month',
-      competition: 'LOW',
+      buyerProfile: `Live demand around "${t.name}" (${t.category}) — verify via source threads before outreach.`,
+      priceRange: 'pending fresh intel — retry',
+      competition: 'MEDIUM' as const,
       aiCanBuild: true,
-      estimatedCloseTime: '3–7 days',
-      confidence: 'HIGH',
-      breakdown: opp1Factors,
-    },
-    {
-      id: 'scout-faceless-shorts',
-      trend: 'Creator 9:16 Kinetic Video Clipping Engine',
-      score: calculateMoneyProbability(opp2Factors),
-      demandSignals: [
-        'TikTok Creative Center: #ShortsRepurpose indexed +410% weekly surge',
-        'Top 1,000 business podcasters upload weekly but 68% lack dedicated short-form clipping',
-        'YouTube Shorts algorithm weighting 15-second retention hooks at 2.4x higher RPM',
-        'Brands and creators paying $797–$1,497/month retainers for 60 short-form clips',
-      ],
-      buyerProfile: 'YouTubers, business podcasters, and coaches with 10K–500K long-form followers',
-      priceRange: '$797 – $1,497/month retainer',
-      competition: 'MEDIUM',
-      aiCanBuild: true,
-      estimatedCloseTime: '3–7 days',
-      confidence: 'HIGH',
-      breakdown: opp2Factors,
-    },
-    {
-      id: 'scout-gbp-ai-pack',
-      trend: 'Google Business Profile AI Citation & Review Pack',
-      score: calculateMoneyProbability(opp3Factors),
-      demandSignals: [
-        'Google Maps local 3-pack algorithmic update prioritizing weekly AI review engagement',
-        'Fiverr & Upwork gig volume for "Local SEO citation pack" up 180%',
-        'Local brick-and-mortar storefronts averaging 3.8 stars losing 40% foot traffic to top-3 ranking competitors',
-      ],
-      buyerProfile: 'Local retail, dentists, auto repair shops, and regional service businesses',
-      priceRange: '$250 – $600 one-time + $99/month',
-      competition: 'LOW',
-      aiCanBuild: true,
-      estimatedCloseTime: '24–48 hours',
-      confidence: 'HIGH',
-      breakdown: opp3Factors,
-    },
-  ];
+      estimatedCloseTime: 'pending fresh intel — retry',
+      confidence: 'LOW' as const,
+      breakdown: factors,
+    };
+  });
 }

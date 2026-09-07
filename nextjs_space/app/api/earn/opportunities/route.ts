@@ -10,12 +10,14 @@ export interface VettedOpportunity {
   title: string;
   category: string;
   marketVector: string;
-  buyerPriceRange: string; // e.g. "$250 – $650"
-  timeToDeliver: string;   // e.g. "24–48 hours"
+  buyerPriceRange: string; // e.g. "$250 – $650", or pending when unknown
+  timeToDeliver: string;   // e.g. "24–48 hours", or pending when unknown
   buyersFoundThisWeek: number;
   whyHotNow: string;
   deliverablePreview: string[];
 }
+
+const PENDING_MESSAGE = 'pending fresh intel — retry';
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,54 +45,24 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const defaultCurated: VettedOpportunity[] = [
-      {
-        id: 'opp-1',
-        trendId: 'trend-ai-voice-hvac',
-        title: 'Emergency HVAC AI Voice Receptionist',
-        category: 'LOCAL_SERVICES',
-        marketVector: 'After-hours contractor call capture',
-        buyerPriceRange: '$350 – $750',
-        timeToDeliver: '24–48 hours',
-        buyersFoundThisWeek: 18,
-        whyHotNow: 'Emergency HVAC contractors lose ~$1,200/mo on missed night calls.',
-        deliverablePreview: ['Vapi/Retell Voice Bot Script', 'Emergency Dispatch Protocol', 'Contractor Cold Pitch Deck'],
-      },
-      {
-        id: 'opp-2',
-        trendId: 'trend-faceless-shorts',
-        title: '9:16 Faceless Video Content Engine',
-        category: 'AI_CONTENT',
-        marketVector: 'TikTok & Shorts organic algorithm arbitrage',
-        buyerPriceRange: '$200 – $500',
-        timeToDeliver: '12–24 hours',
-        buyersFoundThisWeek: 24,
-        whyHotNow: 'Brands paying high retainers for short-form video volume.',
-        deliverablePreview: ['Remotion TSX Video Project', 'ElevenLabs Audio Track', 'High-Hook Viral Script'],
-      },
-      {
-        id: 'opp-3',
-        trendId: 'trend-gbp-ai-audit',
-        title: 'Google Business Profile AI Domination Pack',
-        category: 'AI_TOOLS',
-        marketVector: 'Local SEO citation and reputation boosting',
-        buyerPriceRange: '$300 – $600',
-        timeToDeliver: '24 hours',
-        buyersFoundThisWeek: 15,
-        whyHotNow: 'Local brick-and-mortar stores urgently upgrading AI review management.',
-        deliverablePreview: ['Audit Scorecard PDF', 'Automated Review Response Prompts', 'Local Geo-Citation Blueprint'],
-      },
-    ];
-
+    // Live-only: empty DB means pending, never curated fakes.
     if (!trends || trends.length === 0) {
-      return NextResponse.json({ ok: true, opportunities: defaultCurated });
+      return NextResponse.json({
+        ok: true,
+        status: 'pending',
+        retry: true,
+        message: PENDING_MESSAGE,
+        opportunities: [],
+      });
     }
 
-    const mapped: VettedOpportunity[] = trends.map((t, idx) => {
+    const mapped: VettedOpportunity[] = trends.map((t) => {
       const task = t.tasks?.[0];
-      const low = task?.estimatedEarningsLow || 250;
-      const high = task?.estimatedEarningsHigh || 650;
-      const buyersCount = Math.floor(12 + ((t.mentionVelocity || 15) % 15));
+      const low = task?.estimatedEarningsLow;
+      const high = task?.estimatedEarningsHigh;
+      const hasBudget = low != null && high != null;
+      // No phantom budget floors: unknown budgets surface as pending, pipeline totals $0.
+      const buyerPriceRange = hasBudget ? `$${low} – $${high}` : PENDING_MESSAGE;
 
       return {
         id: t.id,
@@ -99,9 +71,9 @@ export async function GET(req: NextRequest) {
         title: task?.title || `${t.name} Power Move`,
         category: t.category,
         marketVector: t.whyItMatters || t.newsSummary || 'High-velocity commercial demand',
-        buyerPriceRange: `$${low} – $${high}`,
-        timeToDeliver: task?.timeToFirstDollar || '24–48 hours',
-        buyersFoundThisWeek: buyersCount,
+        buyerPriceRange,
+        timeToDeliver: task?.timeToFirstDollar || PENDING_MESSAGE,
+        buyersFoundThisWeek: 0,
         whyHotNow: t.whyItMatters || 'Surging search and freelance proposal demand detected this week.',
         deliverablePreview: [
           'Turnkey Deliverable Package',
@@ -111,14 +83,13 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // If fewer than 3, fill with default curated items
-    while (mapped.length < 3) {
-      mapped.push(defaultCurated[mapped.length]);
-    }
-
+    // No backfill with curated items: fewer than 3 live rows returns only live rows.
     return NextResponse.json({ ok: true, opportunities: mapped.slice(0, 3) });
   } catch (error: any) {
     console.error('Failed to fetch earn opportunities:', error);
-    return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 });
+    return NextResponse.json(
+      { ok: true, status: 'pending', retry: true, message: PENDING_MESSAGE, opportunities: [] },
+      { status: 200 }
+    );
   }
 }
