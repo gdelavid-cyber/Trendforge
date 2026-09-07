@@ -80,7 +80,10 @@ export class SwarmCoordinator {
     const isDryRun = brainDb?.dryRun ?? false;
 
     // 1. Master Brain Strategic Reasoner & Pre-Flight Checks
+    // Single dispatcher: at most 1 task per pulse (single START_TASK per pulse).
     const decisions = await this.brain.runStrategicCycle();
+    let taskCreatedByDecision = false;
+    let startTaskHandled = false;
 
     for (const d of decisions) {
       if (d.action === 'SPAWN_AGENT' && d.payload?.role) {
@@ -90,12 +93,22 @@ export class SwarmCoordinator {
           d.payload.config || {}
         );
       } else if (d.action === 'START_TASK' && (d.payload?.templateType || d.payload?.templateId)) {
+        if (startTaskHandled) {
+          console.log('[Coordinator] Dropping extra START_TASK — single START_TASK per pulse (at most 1 task per pulse).');
+          continue;
+        }
+        startTaskHandled = true;
         const templateType = (d.payload.templateType || d.payload.templateId || 'FACELESS_VIDEO').toUpperCase() as TemplateType;
         const preflight = await this.brain.evaluatePreFlight({
           templateType,
           tier: d.payload.pricingTier || 'STANDARD',
         });
 
+        console.log(
+          `[Coordinator] START_TASK preflight template=${templateType} tier=${preflight.tier} ` +
+            `cost=${preflight.estimatedCost.toFixed(2)} revenue=${preflight.expectedRevenue.toFixed(2)} ` +
+            `margin=${preflight.marginRatio.toFixed(2)} approved=${preflight.approved} (requires margin>=0.40)`
+        );
         if (preflight.approved) {
           await this.memory.createTask({
             templateId: templateType,
@@ -106,6 +119,11 @@ export class SwarmCoordinator {
             estimatedCost: preflight.estimatedCost,
             salePrice: preflight.expectedRevenue,
           });
+          taskCreatedByDecision = true;
+        } else {
+          console.log(
+            `[Coordinator] START_TASK rejected — margin ${preflight.marginRatio.toFixed(2)} below 0.40 threshold.`
+          );
         }
       }
     }
@@ -114,8 +132,9 @@ export class SwarmCoordinator {
     const activeTasks = await this.memory.getActiveTasks();
     const activeAgents = await this.memory.getActiveAgents();
 
-    // If no active tasks exist, seed one that passed preflight
-    if (activeTasks.length === 0) {
+    // Guarded seed fallback: only seed when the pulse created nothing via
+    // decisions AND no active tasks exist — never a bare seed-if-empty double-create.
+    if (activeTasks.length === 0 && !taskCreatedByDecision) {
       const templateType: TemplateType = brainDb?.survivalMode ? 'LOGO_PACK' : 'FACELESS_VIDEO';
       const preflight = await this.brain.evaluatePreFlight({
         templateType,

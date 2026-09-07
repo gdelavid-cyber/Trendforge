@@ -5,8 +5,8 @@ export interface ExecResult {
   skillId: string;
   skillName: string;
   category: string;
-  status: 'SUCCESS' | 'FAILED';
-  /** true when the result came from a real external call; false = local simulation */
+  status: 'SUCCESS' | 'FAILED' | 'pending';
+  /** true when the result came from a real external call; false = local/pending */
   simulated: boolean;
   computeBurnUsdc: number;
   inputParams: Record<string, any>;
@@ -186,8 +186,8 @@ async function coldEmailSequence(params: Record<string, any>): Promise<any> {
 
 /**
  * Single skill execution. Real implementations live in the `real` map; anything
- * unimplemented falls back to an explicitly-labeled simulation so the DAG still
- * runs end-to-end while we port skills over. Failures of real skills are
+ * unmapped returns pending (never SUCCESS) so callers wait for fresh intel
+ * instead of acting on a faked payload. Failures of real skills are
  * surfaced honestly (status FAILED, error populated) — never faked as success.
  */
 const real: Record<string, (params: Record<string, any>) => Promise<any>> = {
@@ -211,12 +211,13 @@ export async function executeSkill(
       skillId: skillId ?? 'unknown',
       skillName: name,
       category: def?.category ?? 'UTILITY',
-      status: 'SUCCESS',
-      simulated: true,
-      computeBurnUsdc: cost,
+      status: 'pending',
+      simulated: false,
+      computeBurnUsdc: 0,
       inputParams: params,
-      outputSummary: `[SIMULATED] ${name} has no real executor yet`,
-      result: { sampleYield: Math.floor(150 + Math.random() * 350) },
+      outputSummary: 'pending fresh intel — retry',
+      result: null,
+      error: `No real executor mapped for skill '${skillId ?? 'unknown'}' — pending fresh intel — retry`,
     };
   }
 

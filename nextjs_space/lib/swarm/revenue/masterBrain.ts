@@ -277,8 +277,56 @@ Output strict JSON: { decisions: [{ action, payload, reasoning, confidenceScore,
       });
     }
 
-    // Execute urgent kill decisions & log all decisions
+    // Single-brain dispatcher: at most one START_TASK per pulse (single START_TASK per pulse).
+    // Every START_TASK must pass the margin>=0.40 preflight, logged with cost/margin.
+    let startTaskIssued = false;
+    const singleStartDecisions: BrainDecision[] = [];
     for (const d of decisions) {
+      if (d.action !== 'START_TASK') {
+        singleStartDecisions.push(d);
+        continue;
+      }
+      if (startTaskIssued) {
+        console.log('[MasterBrain] Dropping extra START_TASK — single START_TASK per pulse.');
+        continue;
+      }
+      const templateType = String(
+        d.payload?.templateType || d.payload?.templateId || 'FACELESS_VIDEO'
+      ).toUpperCase() as TemplateType;
+      try {
+        const preflight = await this.evaluatePreFlight({
+          templateType,
+          tier: d.payload?.pricingTier || 'STANDARD',
+        });
+        console.log(
+          `[MasterBrain] START_TASK preflight template=${templateType} tier=${preflight.tier} ` +
+            `cost=${preflight.estimatedCost.toFixed(2)} revenue=${preflight.expectedRevenue.toFixed(2)} ` +
+            `margin=${preflight.marginRatio.toFixed(2)} approved=${preflight.approved} (requires margin>=0.40)`
+        );
+        if (!preflight.approved) {
+          console.log(
+            `[MasterBrain] START_TASK rejected — margin ${preflight.marginRatio.toFixed(2)} below 0.40 threshold.`
+          );
+          continue;
+        }
+        d.payload = {
+          ...(d.payload || {}),
+          templateType,
+          pricingTier: preflight.tier,
+          marginRatio: preflight.marginRatio,
+          estimatedCost: preflight.estimatedCost,
+          expectedRevenue: preflight.expectedRevenue,
+        };
+      } catch (err) {
+        console.log('[MasterBrain] START_TASK dropped — preflight failed closed.', err);
+        continue;
+      }
+      startTaskIssued = true;
+      singleStartDecisions.push(d);
+    }
+
+    // Execute urgent kill decisions & log all decisions
+    for (const d of singleStartDecisions) {
       if (d.action === 'KILL_AGENT' && d.payload?.agentId) {
         await this.memory.killAgent(d.payload.agentId, d.reasoning);
       }
@@ -291,7 +339,7 @@ Output strict JSON: { decisions: [{ action, payload, reasoning, confidenceScore,
       });
     }
 
-    return decisions;
+    return singleStartDecisions;
   }
 
   /**

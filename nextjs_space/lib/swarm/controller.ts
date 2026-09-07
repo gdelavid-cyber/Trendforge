@@ -39,11 +39,51 @@ export async function sweepStaleInstances(): Promise<number> {
 }
 
 /**
+ * Pulse lock so revenue/coordinator and AssetJob loops never double-advance.
+ * In-memory guard with TTL; swap for redis (SET NX PX) when multi-instance.
+ */
+let pulseLock = false;
+let pulseLockAt = 0;
+const PULSE_LOCK_TTL_MS = 5 * 60 * 1000;
+
+export function isPulseLocked(): boolean {
+  if (!pulseLock) return false;
+  if (Date.now() - pulseLockAt > PULSE_LOCK_TTL_MS) {
+    pulseLock = false;
+    pulseLockAt = 0;
+    return false;
+  }
+  return true;
+}
+
+export function __resetPulseLockForTests(): void {
+  pulseLock = false;
+  pulseLockAt = 0;
+}
+
+/**
  * Executes one complete swarm pulse cycle.
  * Non-blocking; advances at most 2 active jobs through their current stage transition.
  */
 export async function executeSwarmPulse(dryRun: boolean = false): Promise<SwarmPulseResult> {
   const startTime = Date.now();
+
+  // Pulse lock: never double-advance when two loops fire concurrently.
+  if (isPulseLocked()) {
+    return {
+      success: false,
+      timestamp: new Date().toISOString(),
+      durationMs: Date.now() - startTime,
+      jobsProcessed: 0,
+      details: [{ message: 'Swarm pulse skipped: pulse lock held — loops never double-advance' }],
+      killSwitchActive: false,
+      sweptStaleInstances: 0,
+    };
+  }
+  pulseLock = true;
+  pulseLockAt = Date.now();
+
+  try {
   const details: any[] = [];
 
   // 1. Check Global Kill-Switch
@@ -200,4 +240,7 @@ export async function executeSwarmPulse(dryRun: boolean = false): Promise<SwarmP
     killSwitchActive: false,
     sweptStaleInstances,
   };
+  } finally {
+    pulseLock = false;
+  }
 }
