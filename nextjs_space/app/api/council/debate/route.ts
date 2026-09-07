@@ -47,6 +47,19 @@ export async function POST(request: Request) {
       signalData = await harvestNextCouncilSignal();
     }
 
+    // Exhausted pool or explicit pending: report honestly, never a simulated debate.
+    if ((signalData as any)?.status === 'pending') {
+      return NextResponse.json(
+        {
+          success: true,
+          status: 'pending',
+          message: (signalData as any)?.pendingReason || 'Council signal pool exhausted — pending fresh intel.',
+          session: null,
+        },
+        { status: 202 }
+      );
+    }
+
     const {
       title,
       source = 'Live Multi-Vector Scraper & Harvester',

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/core/db';
 import { getCouncilMemory, deriveCouncilLearning, CouncilLearningProfile } from './council-memory';
 import { validateHighProfitabilityCriteria } from './signal-harvester';
+import { makeLlm } from '@/lib/execution/llm';
+import { emitProgress, emitDone } from '@/lib/activity/emitter';
 
 export interface CouncilSignal {
   title: string;
@@ -51,7 +53,32 @@ export interface CouncilConclusion {
   };
 }
 
-export async function runCouncilDebate(signal: CouncilSignal) {
+/** Parses the SENTIMENT / KEY METRIC / RECOMMENDATION headers of an LLM persona reply. */
+export function parsePersonaReply(text: string): {
+  sentiment: CouncilDebateTurn['sentiment'];
+  perspective: string;
+  keyMetric?: string;
+  recommendation: string;
+} {
+  const raw = (text || '').trim();
+  const pick = (label: string): string | undefined => {
+    const m = raw.match(new RegExp(`^${label}:\\s*(.+)$`, 'im'));
+    return m?.[1]?.trim();
+  };
+  const sentimentRaw = (pick('SENTIMENT') || '').toLowerCase();
+  const sentiment: CouncilDebateTurn['sentiment'] =
+    sentimentRaw.startsWith('bull') ? 'bullish' : sentimentRaw.startsWith('bear') ? 'bearish' : 'neutral';
+  const keyMetric = pick('KEY METRIC');
+  const recommendation = pick('RECOMMENDATION') || 'see analysis';
+  const perspective = raw
+    .split('\n')
+    .filter((line) => !/^\s*(SENTIMENT|KEY METRIC|RECOMMENDATION)\s*:/i.test(line))
+    .join('\n')
+    .trim() || raw;
+  return { sentiment, perspective, keyMetric, recommendation };
+}
+
+export async function runCouncilDebate(signal: CouncilSignal, opts?: { taskId?: string }) {
   // 1. Ingest collective Council Memory & historical intelligence
   const memory: CouncilLearningProfile = await getCouncilMemory();
 
@@ -80,54 +107,125 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     lowerInsight.includes('high risk') ||
     lowerMargin === '5%';
 
-  // 3. Synthesize 6 Specialist Persona Debate using Historical Intelligence
+  // 3. Real LLM debate: one makeLlm() call per specialist persona.
+  // Every turn's perspective is live model output, emitted transparently
+  // per turn so the user can watch the council think.
+  const llm = makeLlm();
+  const logTaskId = opts?.taskId ?? `council:${initialSession.id}`;
 
-  // Turn 1: Deal Finder / Rainmaker (Real-Deal Money Discovery)
-  debateTranscript.push({
-    persona: 'deal_finder',
-    agentName: 'Deal Finder',
-    role: 'Real-Deal Money Discovery Specialist',
-    sentiment: isHighRisk ? 'bearish' : 'bullish',
-    perspective: isHighRisk
-      ? `REJECTED AS UNPROFITABLE/VANITY: "${signal.title}" fails our B2B commercial filter (${profitCheck.rejectionReason || 'No verified cashflow'}). Past council deliberations proved consumer fluff yields 0% retention.`
-      : `VERIFIED CASHFLOW PLAY: Evaluated "${signal.title}". Citing our historical knowledge base (${memory.totalDeliberations} deliberations, ${memory.averageApprovedMarginPercent}% benchmark margin), this matches proven B2B vector "${memory.provenWinningVectors[0]}". Immediate target deal: $450 to $2,500 with zero client acquisition lag.`,
-    keyMetric: isHighRisk ? '$0 Verified Cashflow' : '$450–$2,500 Target Deal Size',
-    recommendation: isHighRisk ? 'Kill vanity play immediately' : 'Prioritize for immediate closing sequence',
-    timestamp: new Date().toISOString(),
-  });
+  const personas: Array<{
+    persona: CouncilDebateTurn['persona'];
+    agentName: string;
+    role: string;
+    brief: string;
+  }> = [
+    {
+      persona: 'deal_finder',
+      agentName: 'Deal Finder',
+      role: 'Real-Deal Money Discovery Specialist',
+      brief:
+        'Verify cashflow: is there a real B2B buyer who pays $450+ upfront for this? Name the deal size and who signs.',
+    },
+    {
+      persona: 'trend_hunter',
+      agentName: 'Trend Hunter',
+      role: 'Market Velocity & Timing Specialist',
+      brief:
+        'Judge timing: is buyer-intent demand for this expanding right now, or is it a churning vanity cycle? Cite the velocity signal.',
+    },
+    {
+      persona: 'unit_economist',
+      agentName: 'Unit Economist',
+      role: 'Margins & Capital Efficiency',
+      brief: `Judge unit economics against a 70% gross-margin floor and sub-48h delivery. Stated margin: ${signal.estimatedMargin || 'unknown'}.`,
+    },
+    {
+      persona: 'operator',
+      agentName: 'Operator',
+      role: 'Execution Friction & Systems Architecture',
+      brief:
+        'Judge buildability: can a single operator deliver this in under 48 hours with standard templates, or does it need fragile custom work?',
+    },
+    {
+      persona: 'contrarian',
+      agentName: 'Contrarian',
+      role: 'Red Team & Risk Officer',
+      brief: `Red-team this play. Historical failure modes to check: ${(memory.cumulativeRiskFlags || []).slice(0, 3).join('; ') || 'none recorded'}. Name the primary failure mode and its defense.`,
+    },
+    {
+      persona: 'closer',
+      agentName: 'Closer',
+      role: 'GTM & Speed to Cash',
+      brief:
+        'Judge speed to cash: who is the first buyer profile and what closes them within 48 hours? If the sales cycle stalls, say so.',
+    },
+  ];
 
-  // Turn 2: Trend Hunter
-  debateTranscript.push({
-    persona: 'trend_hunter',
-    agentName: 'Trend Hunter',
-    role: 'Market Velocity & Timing Specialist',
-    sentiment: isHighRisk ? 'bearish' : 'bullish',
-    perspective: isHighRisk
-      ? `Search demand for "${signal.title}" exhibits high churn and negative consumer sentiment. Zero commercial buyer intent detected.`
-      : `Confirmed high commercial search velocity for "${signal.title}". Buyer intent search queries expanding at +140% YoY, matching our top historical momentum vectors.`,
-    keyMetric: isHighRisk ? '-45% Retention Decay' : '+140% Search Intent',
-    recommendation: isHighRisk ? 'Reject speculative cycle' : 'Strike within 7-day arbitrage window',
-    timestamp: new Date().toISOString(),
-  });
+  async function debateTurn(p: (typeof personas)[number]): Promise<CouncilDebateTurn> {
+    const prompt = [
+      `Signal under debate: "${signal.title}" (source: ${signal.source || 'unknown'}).`,
+      `Insight: ${signal.rawInsight || 'n/a'}`,
+      `Stated margin: ${signal.estimatedMargin || 'unknown'}; velocity: ${signal.estimatedVelocity || 'unknown'}.`,
+      `Council memory: ${memory.totalDeliberations} past deliberations, ${memory.averageApprovedMarginPercent}% benchmark margin, proven vectors: ${(memory.provenWinningVectors || []).slice(0, 3).join('; ')}.`,
+      `Profitability pre-check: ${profitCheck.valid ? 'PASSED real-deal filter' : `FAILED — ${profitCheck.rejectionReason || 'unverified'}`}.`,
+      `Your brief as ${p.role}: ${p.brief}`,
+      'Reply in exactly this shape, headers on their own lines:',
+      'SENTIMENT: bullish | bearish | neutral',
+      'KEY METRIC: <one line>',
+      'RECOMMENDATION: <one line>',
+      'Then 2-4 sentences of analysis. No invented revenue figures — flag what is unverified.',
+    ].join('\n');
 
-  // Turn 3: Unit Economist
+    let text: string;
+    try {
+      text = await llm(
+        [
+          {
+            role: 'system',
+            content: `You are ${p.agentName}, ${p.role} on a B2B money council. Terse, commercial, honest about uncertainty.`,
+          },
+          { role: 'user', content: prompt },
+        ],
+        false
+      );
+    } catch (err: any) {
+      // Honest failure, never a simulated take.
+      text = `SENTIMENT: neutral\nKEY METRIC: pending fresh intel\nRECOMMENDATION: retry this persona\nLLM call failed for ${p.agentName} (${err?.message || 'unknown error'}) — pending fresh intel, no simulated take.`;
+    }
+
+    const parsed = parsePersonaReply(text);
+    const turn: CouncilDebateTurn = {
+      persona: p.persona,
+      agentName: p.agentName,
+      role: p.role,
+      sentiment: parsed.sentiment,
+      perspective: parsed.perspective,
+      keyMetric: parsed.keyMetric,
+      recommendation: parsed.recommendation,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      await emitProgress({
+        taskId: logTaskId,
+        actorId: `council:${p.persona}`,
+        actionDescription: `[${p.agentName}] ${parsed.sentiment}: ${parsed.recommendation}`.slice(0, 500),
+        outputs: { persona: p.persona, sentiment: parsed.sentiment, perspective: parsed.perspective },
+      });
+    } catch {
+      // Transparency logging must never break the debate.
+    }
+
+    return turn;
+  }
+
+  for (const p of personas) {
+    debateTranscript.push(await debateTurn(p));
+  }
+
+  // 4. Adaptive Gatekeeper Assessment (criteria-derived, not templated text)
   const marginNum = parseFloat(String(signal.estimatedMargin || '82.5').replace('%', '')) || 82.5;
   const isAboveHistorical = marginNum >= memory.averageApprovedMarginPercent;
-
-  debateTranscript.push({
-    persona: 'unit_economist',
-    agentName: 'Unit Economist',
-    role: 'Margins & Capital Efficiency',
-    sentiment: isHighRisk ? 'bearish' : 'bullish',
-    perspective: isHighRisk
-      ? `Gross margins severely compressed (${signal.estimatedMargin || '5%'}). Fails our minimum 70% threshold. Delivery costs exceed lifetime value.`
-      : `Gross margin verified at ${marginNum}%, ${isAboveHistorical ? 'exceeding' : 'aligned with'} our historical benchmark of ${memory.averageApprovedMarginPercent}%. Delivery compute is negligible ($0.15–$0.40) against $450+ upfront collections.`,
-    keyMetric: isHighRisk ? '5% Net Margin (Negative CAC)' : `${marginNum}% Verified Margin`,
-    recommendation: isHighRisk ? 'Kill project' : 'Collect $450 setup upfront + recurring retainer',
-    timestamp: new Date().toISOString(),
-  });
-
-  // Turn 4: Operator / Architect
   const mapsToExisting = lowerTitle.includes('video')
     ? 'Method 2: Video Empire'
     : lowerTitle.includes('voice') || lowerTitle.includes('call')
@@ -136,49 +234,6 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     ? 'Method 9: Swarm Pipeline'
     : 'Method 1: Deliverables';
 
-  debateTranscript.push({
-    persona: 'operator',
-    agentName: 'Operator',
-    role: 'Execution Friction & Systems Architecture',
-    sentiment: isHighRisk ? 'bearish' : 'bullish',
-    perspective: isHighRisk
-      ? `Requires fragile custom integrations with high failure rates. Maintenance debt will overwhelm single-operator capacity.`
-      : `Maps cleanly to proven architecture "${mapsToExisting}". Pre-tested templates reduce turnaround to < 48 hours. 1 human operator can easily manage 40+ client pipelines.`,
-    keyMetric: isHighRisk ? 'High Maintenance Debt' : `Turnaround < 48h (${mapsToExisting})`,
-    recommendation: isHighRisk ? 'Do not build' : 'Deploy through standardized delivery template',
-    timestamp: new Date().toISOString(),
-  });
-
-  // Turn 5: Contrarian / Risk Officer
-  const topHistoricalRisk = memory.cumulativeRiskFlags[0] || 'Platform API rate-limiting';
-  debateTranscript.push({
-    persona: 'contrarian',
-    agentName: 'Contrarian',
-    role: 'Red Team & Risk Officer',
-    sentiment: 'bearish',
-    perspective: isHighRisk
-      ? `FATAL FLAW: Merchant processor rejection probability is 95%. Regulatory liability and chargeback velocity will freeze funds.`
-      : `Primary failure mode identified from historical memory: "${topHistoricalRisk}". Defense: enforce hardcoded failover routing and strict client revision limits.`,
-    keyMetric: isHighRisk ? 'Critical Risk: Fatal' : 'Risk Score: Low-Medium (Mitigated)',
-    recommendation: isHighRisk ? 'Hard veto' : 'Mandate SMS failover & clear terms of service',
-    timestamp: new Date().toISOString(),
-  });
-
-  // Turn 6: Closer / GTM
-  debateTranscript.push({
-    persona: 'closer',
-    agentName: 'Closer',
-    role: 'GTM & Speed to Cash',
-    sentiment: isHighRisk ? 'neutral' : 'bullish',
-    perspective: isHighRisk
-      ? `High friction sales cycle. Buyers will stall indefinitely on trust verification and escrow demands.`
-      : `Target buyer profile: Local and regional commercial SMBs ($1M–$5M ARR). Strategy learned from past wins: pitch 7-day risk-free missed call audit to close prospect in 48 hours.`,
-    keyMetric: isHighRisk ? 'Sales Cycle: Stalled' : 'Speed to First Cash: < 48 hours',
-    recommendation: isHighRisk ? 'Pass' : 'Activate outreach pipeline on 15 audited prospects',
-    timestamp: new Date().toISOString(),
-  });
-
-  // 4. Adaptive Gatekeeper Assessment
   const gatekeeperVerdict: GatekeeperVerdict = isHighRisk
     ? {
         score: 52,
@@ -245,8 +300,22 @@ export async function runCouncilDebate(signal: CouncilSignal) {
     },
   });
 
+  try {
+    await emitDone({
+      taskId: logTaskId,
+      actorId: 'council:gatekeeper',
+      actionDescription: `Gatekeeper verdict: ${gatekeeperVerdict.passed ? 'PASS' : 'FILTER'} ${gatekeeperVerdict.score}/100 — ${gatekeeperVerdict.verdictReason}`.slice(0, 500),
+      outputs: { verdict: gatekeeperVerdict, marginPercent: marginNum },
+    });
+  } catch {
+    // Transparency logging must never break the debate.
+  }
+
   return {
     ...updatedSession,
+    turns: debateTranscript,
+    scores: { score: gatekeeperVerdict.score, ...gatekeeperVerdict.breakdown },
+    verdict: gatekeeperVerdict,
     gatekeeperScore: gatekeeperVerdict.score,
     gatekeeperFeedback: gatekeeperVerdict,
     councilLearning: conclusion.councilLearning,

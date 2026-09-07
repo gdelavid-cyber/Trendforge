@@ -8,6 +8,28 @@ export interface CommercialMoneySignal extends CouncilSignal {
   deliveryTimeHours: number;
   monetizationConfidence: number;
   commercialUrgency: string;
+  /** 'pending' when the pool is exhausted — never render as a SUCCESS. */
+  status?: 'ready' | 'pending';
+  pendingReason?: string;
+}
+
+/** Pending sentinel returned when every archetype was debated recently. */
+export function pendingCouncilSignal(reason: string): CommercialMoneySignal {
+  return {
+    title: 'PENDING — council pool exhausted',
+    source: 'signal-harvester',
+    rawInsight: reason,
+    estimatedMargin: '0%',
+    estimatedVelocity: 'pending fresh intel',
+    targetBuyer: 'pending fresh intel',
+    dealSizeRange: 'pending fresh intel',
+    expectedMarginPercent: 0,
+    deliveryTimeHours: 0,
+    monetizationConfidence: 0,
+    commercialUrgency: 'pending fresh intel — retry',
+    status: 'pending',
+    pendingReason: reason,
+  };
 }
 
 // 12 High-Margin Commercial B2B Arbitrage Archetypes ($450–$3,500 deals, 75%+ margins)
@@ -116,6 +138,58 @@ export const HIGH_PROFIT_OPPORTUNITY_MATRIX: CommercialMoneySignal[] = [
     monetizationConfidence: 0.91,
     commercialUrgency: 'Urgent: Insurance renewals require verified audit before policy issuance.',
   },
+  {
+    title: 'Automated Quote Follow-Up & Estimate Chaser for Remodelers',
+    source: 'Reddit r/smallbusiness & Contractor CRM Exports',
+    rawInsight: 'Remodeling contractors send $20k quotes and never follow up; 60% of jobs go to whoever chases first. Automated SMS and email chase sequence for every open estimate.',
+    estimatedMargin: '83%',
+    estimatedVelocity: '24-48 hours',
+    targetBuyer: 'Residential Remodelers & General Contractors ($1M-$8M ARR)',
+    dealSizeRange: '$550 setup + $99/mo retainer',
+    expectedMarginPercent: 83,
+    deliveryTimeHours: 36,
+    monetizationConfidence: 0.9,
+    commercialUrgency: 'High: Every unchased $20k quote is a lost month of crew payroll.',
+  },
+  {
+    title: 'Job-Site Progress Photo Reports for General Contractors',
+    source: 'Houzz Pro Forums & Local Builder Associations',
+    rawInsight: 'GC clients call daily asking what happened on site. Automated photo report portal turns foreman phone pics into a branded weekly client update.',
+    estimatedMargin: '81%',
+    estimatedVelocity: '48 hours',
+    targetBuyer: 'General Contractors & Custom Home Builders',
+    dealSizeRange: '$600 per project flat fee',
+    expectedMarginPercent: 81,
+    deliveryTimeHours: 48,
+    monetizationConfidence: 0.88,
+    commercialUrgency: 'High: Client update calls eat 5+ foreman hours per week.',
+  },
+  {
+    title: 'No-Show Recovery & Waitlist Backfill for Clinics and Med-Spas',
+    source: 'Aesthetic Practice Journals & Clinic Booking Exports',
+    rawInsight: 'Clinics lose 15% of appointments to no-shows. Automated waitlist backfill texts refill cancelled slots within the hour, saving front-desk labor.',
+    estimatedMargin: '88%',
+    estimatedVelocity: '24-48 hours',
+    targetBuyer: 'Private Clinics, Med-Spas & Dental Practices',
+    dealSizeRange: '$400 setup + $25 per recovered booking',
+    expectedMarginPercent: 88,
+    deliveryTimeHours: 36,
+    monetizationConfidence: 0.92,
+    commercialUrgency: 'High: Each empty chair costs the clinic $300+ in lost billings.',
+  },
+  {
+    title: 'Vendor Invoice & Receipt Reconciliation for Bookkeeping Firms',
+    source: 'QuickBooks ProAdvisor Forums & SMB Bookkeeper Slack',
+    rawInsight: 'Bookkeeping firms drown in client shoeboxes of receipts each month-end. Automated invoice matching and categorization clears month-end in hours.',
+    estimatedMargin: '85%',
+    estimatedVelocity: '48 hours',
+    targetBuyer: 'Boutique Bookkeeping & Accounting Firms serving SMBs',
+    dealSizeRange: '$500/month recurring per client',
+    expectedMarginPercent: 85,
+    deliveryTimeHours: 48,
+    monetizationConfidence: 0.9,
+    commercialUrgency: 'High: Month-end close backlog blocks firms from onboarding new retainer clients.',
+  },
 ];
 
 /**
@@ -161,7 +235,7 @@ export async function harvestNextCouncilSignal(preferredTopic?: string): Promise
     // 1. Check recent council sessions to avoid debating the same topic consecutively
     const recentSessions = await prisma.councilSession.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 10,
+      take: 30,
       select: { signal: true },
     });
 
@@ -197,6 +271,7 @@ export async function harvestNextCouncilSignal(preferredTopic?: string): Promise
           deliveryTimeHours: 48,
           monetizationConfidence: trend.monetizationScore || 0.9,
           commercialUrgency: 'Active trend spike detected across search and community telemetry.',
+          status: 'ready',
         };
 
         const check = validateHighProfitabilityCriteria(candidateSignal);
@@ -206,21 +281,24 @@ export async function harvestNextCouncilSignal(preferredTopic?: string): Promise
       }
     }
 
-    // 3. If no fresh DB trend found, rotate from the vetted high-profit opportunity matrix
+    // 3. If no fresh DB trend found, rotate from the vetted high-profit opportunity matrix.
+    // Deterministic order (no random pick): first not-recently-debated entry wins.
     const availablePool = HIGH_PROFIT_OPPORTUNITY_MATRIX.filter(
       (item) => !recentTitles.has(item.title.toLowerCase().trim())
     );
 
     if (availablePool.length > 0) {
-      // Pick random from available to guarantee variety
-      const picked = availablePool[Math.floor(Math.random() * availablePool.length)];
-      return picked;
+      return { ...availablePool[0], status: 'ready' };
     }
 
-    // If all were debated recently, pick the least recently debated one
-    return HIGH_PROFIT_OPPORTUNITY_MATRIX[Math.floor(Math.random() * HIGH_PROFIT_OPPORTUNITY_MATRIX.length)];
+    // Every archetype was debated within the last 30 sessions: report pending,
+    // never a recycled SUCCESS.
+    return pendingCouncilSignal(
+      'All 12 vetted archetypes were debated in the last 30 sessions — pending fresh intel.'
+    );
   } catch (err) {
     console.error('[SignalHarvester] Fallback to primary matrix:', err);
-    return HIGH_PROFIT_OPPORTUNITY_MATRIX[0];
+    // DB unreachable so recency is unknown: deterministic head of matrix, no random.
+    return { ...HIGH_PROFIT_OPPORTUNITY_MATRIX[0], status: 'ready' };
   }
 }
