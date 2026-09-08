@@ -11,6 +11,7 @@ import {
   Zap,
   ShieldCheck,
   TrendingUp,
+  Activity,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { useState } from 'react';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
 import { CouncilBoardroom } from '@/components/council/council-boardroom';
+import { SwarmTelemetryConsole } from '@/components/swarm/SwarmTelemetryConsole';
 
 interface DashboardClientProps {
   user: {
@@ -226,6 +228,17 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
             <div className="text-[11px] text-emerald-400 font-mono mt-1">+210% Search Growth</div>
           </div>
         </div>
+      </div>
+
+      {/* 4. Swarm Telemetry & Autonomous Transparency Console */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-[#00F0FF]" />
+          <h3 className="font-bold text-white text-base font-orbitron uppercase tracking-wider">
+            Live Swarm Telemetry &amp; Autonomous Console
+          </h3>
+        </div>
+        <SwarmTelemetryConsole />
       </div>
 
       {/* Global Modals */}

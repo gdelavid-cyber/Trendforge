@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
 import { AdminClient } from './_components/admin-client';
+import { SwarmTelemetryConsole } from '@/components/swarm/SwarmTelemetryConsole';
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
@@ -28,8 +29,11 @@ export default async function AdminPage() {
   } catch (e) { console.error(e); }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-16">
       <Header />
+      <div className="max-w-[1200px] mx-auto px-4 pt-8">
+        <SwarmTelemetryConsole />
+      </div>
       <AdminClient
         logs={logs.map((l: any) => ({ id: l.id, source: l.source, status: l.status, recordsIngested: l.recordsIngested, errorMessage: l.errorMessage, executedAt: l.executedAt?.toISOString() ?? null, durationMs: l.durationMs }))}
         pendingStories={pendingStories.map((s: any) => ({ id: s.id, earningsAmount: s.earningsAmount, description: s.description, userName: s.user?.name ?? 'Unknown', userEmail: s.user?.email ?? '', taskTitle: s.task?.title ?? 'Unknown' }))}
