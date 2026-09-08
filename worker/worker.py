@@ -266,9 +266,9 @@ def main():
         payload = {"signals": payload_signals} if "ingest" in path else {}
         try:
             r = requests.post(f"{TRENDLY_URL}{path}", json=payload, headers=headers, timeout=120)
-            print(f"[WORKER] {path} → {r.status_code}: {r.text[:300]}")
+            print(f"[WORKER] {path} -> {r.status_code}: {r.text[:300]}")
             if r.status_code not in (200, 201) and "ingest" in path:
-                print(f"[WORKER] Ingest failed, aborting cycle.", file=sys.stderr)
+                print("[WORKER] Ingest failed, aborting cycle.", file=sys.stderr)
                 sys.exit(1)
         except Exception as exc:
             print(f"[WORKER] Request to {path} failed: {exc}", file=sys.stderr)
