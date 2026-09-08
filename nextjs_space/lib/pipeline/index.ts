@@ -367,18 +367,25 @@ export function generateProceduralTrends(count: number, existingNames: Set<strin
 
 // Unified LLM and autonomous fallback dispatcher
 export async function callLLM(messages: { role: string; content: string }[], jsonMode = false, existingNames: Set<string> = new Set()) {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY || process.env.OPENROUTER_API_KEY;
 
   if (apiKey) {
     try {
-      const endpoint = process.env.OPENAI_API_KEY
-        ? 'https://api.openai.com/v1/chat/completions'
-        : 'https://apps.abacus.ai/v1/chat/completions';
+      let endpoint = 'https://apps.abacus.ai/v1/chat/completions';
+      let model = 'gpt-5.4-mini';
+
+      if (process.env.OPENAI_API_KEY) {
+        endpoint = 'https://api.openai.com/v1/chat/completions';
+        model = 'gpt-4o-mini';
+      } else if (process.env.OPENROUTER_API_KEY && !process.env.ABACUSAI_API_KEY) {
+        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct';
+      }
 
       const body: any = {
-        model: process.env.OPENAI_API_KEY ? 'gpt-4o-mini' : 'gpt-5.4-mini',
+        model,
         messages,
-        max_tokens: 4000,
+        max_tokens: 3000,
       };
       if (jsonMode) {
         body.response_format = { type: 'json_object' };
@@ -396,15 +403,25 @@ export async function callLLM(messages: { role: string; content: string }[], jso
       if (response.ok) {
         const data = await response.json();
         return data?.choices?.[0]?.message?.content ?? '';
+      } else {
+        const errText = await response.text();
+        console.warn(`[LLM] Non-OK response (${response.status}):`, errText.slice(0, 200));
       }
     } catch (err: any) {
-      console.warn('External LLM call failed, engaging autonomous trend engine:', err.message);
+      console.warn('[LLM] Call failed, engaging autonomous trend engine:', err.message);
     }
+  } else {
+    console.warn('[LLM] No API key configured (OPENAI_API_KEY / ABACUSAI_API_KEY / OPENROUTER_API_KEY).');
   }
 
   // Fallback generation
   const systemPrompt = messages.find((m) => m.role === 'system')?.content || '';
   const userPrompt = messages.find((m) => m.role === 'user')?.content || '';
+
+  if (systemPrompt.includes('cluster forum posts') || systemPrompt.includes('commercial themes')) {
+    // Clustering pass requires real LLM evaluation — return empty to report PENDING honestly
+    return '';
+  }
 
   if (systemPrompt.includes('trend detection AI')) {
     const trends = generateProceduralTrends(3, existingNames);

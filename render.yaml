@@ -1,0 +1,12 @@
+services:
+  - type: cron
+    name: trendly-scrapling-worker
+    runtime: python
+    schedule: "0 */2 * * *"
+    buildCommand: "cd worker && pip install -r requirements.txt && patchright install chromium"
+    startCommand: "cd worker && python worker.py"
+    envVars:
+      - key: TRENDLY_URL
+        value: https://trendly-platform-chi.vercel.app
+      - key: PIPELINE_API_KEY
+        sync: false   # set in dashboard, never in repo

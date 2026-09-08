@@ -1901,3 +1901,22 @@ model AdminNotification {
   @@index([type, read])
 }
 
+model RawSignal {
+  id           String   @id @default(cuid())
+  source       String   // 'Reddit' | 'HackerNews'
+  externalId   String
+  title        String
+  url          String?
+  body         String?
+  score        Int      @default(0)
+  comments     Int      @default(0)
+  velocity     Float    @default(0)
+  themeId      String?  // set once clustered into a Trend
+  processed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([processed, createdAt])
+  @@index([themeId])
+}
+

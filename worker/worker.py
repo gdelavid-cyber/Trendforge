@@ -61,6 +61,9 @@ def fetch_reddit_posts(subreddits, category_name):
                         title = p.attrib.get("post-title")
                         if not title:
                             continue
+                        post_id = p.attrib.get("id") or p.attrib.get("data-post-id") or ""
+                        if post_id.startswith("t3_"):
+                            post_id = post_id[3:]
                         try:
                             score = int(p.attrib.get("score", 0))
                         except (ValueError, TypeError):
@@ -72,6 +75,7 @@ def fetch_reddit_posts(subreddits, category_name):
                         permalink = p.attrib.get("permalink", "")
                         created_timestamp = p.attrib.get("created-timestamp", "")
                         posts.append({
+                            "id": post_id,
                             "title": title,
                             "score": score,
                             "num_comments": num_comments,
@@ -98,7 +102,20 @@ def fetch_reddit_posts(subreddits, category_name):
             res = requests.get(url, headers=headers, timeout=8)
             if res.status_code == 200:
                 data = res.json()
-                return [child.get("data", {}) for child in data.get("data", {}).get("children", [])]
+                raw_children = data.get("data", {}).get("children", [])
+                for child in raw_children:
+                    cdata = child.get("data", {})
+                    posts.append({
+                        "id": cdata.get("id"),
+                        "title": cdata.get("title"),
+                        "score": cdata.get("score", 0),
+                        "num_comments": cdata.get("num_comments", 0),
+                        "subreddit": cdata.get("subreddit", sub_list.split("+")[0]),
+                        "permalink": cdata.get("permalink", ""),
+                        "created_utc": cdata.get("created_utc"),
+                        "selftext": cdata.get("selftext", ""),
+                    })
+                return posts
         except Exception:
             continue
 
@@ -130,7 +147,7 @@ def scrape_reddit():
             except Exception:
                 created_utc = now
         else:
-            created_utc = p.get("created_utc", now)
+            created_utc = p.get("created_utc") or now
 
         hours_since = max(0.1, (now - created_utc) / 3600.0)
         mention_velocity = round((score + num_comments) / hours_since, 2)
@@ -138,14 +155,29 @@ def scrape_reddit():
         permalink = p.get("permalink", "")
         url = f"https://reddit.com{permalink}" if permalink else "https://reddit.com"
 
+        post_id = p.get("id")
+        if not post_id:
+            parts = [seg for seg in permalink.strip("/").split("/") if seg]
+            if "comments" in parts:
+                idx = parts.index("comments")
+                if idx + 1 < len(parts):
+                    post_id = parts[idx + 1]
+            if not post_id:
+                post_id = str(abs(hash(title)))
+
         signals.append({
+            "source": "Reddit",
+            "externalId": str(post_id),
+            "title": title.strip(),
             "name": title.strip(),
             "sourcePlatforms": ["Reddit", f"r/{subreddit}"],
+            "body": (p.get("selftext") or title).strip()[:2000],
             "description": (p.get("selftext") or title).strip()[:400],
             "url": url,
             "mentionVelocity": mention_velocity,
             "hoursSinceDetection": round(hours_since, 2),
             "score": score,
+            "comments": num_comments,
         })
 
     return signals
@@ -192,13 +224,18 @@ def scrape_hacker_news():
         url = item.get("url") or f"https://news.ycombinator.com/item?id={sid}"
 
         signals.append({
+            "source": "HackerNews",
+            "externalId": str(sid),
+            "title": item["title"].strip(),
             "name": item["title"].strip(),
             "sourcePlatforms": ["HackerNews"],
+            "body": f"HackerNews discussion ({score} points, {descendants} comments): {url}",
             "description": f"HackerNews discussion ({score} points, {descendants} comments): {url}",
             "url": url,
             "mentionVelocity": mention_velocity,
             "hoursSinceDetection": round(hours_since, 2),
             "score": score,
+            "comments": descendants,
         })
 
     return signals
@@ -219,32 +256,28 @@ def main():
 
     print(f"[WORKER] Gathered {len(reddit_signals)} Reddit signals, {len(hn_signals)} HN signals. Payload size: {len(payload_signals)} signals.")
 
-    ingest_endpoint = f"{TRENDLY_URL}/api/pipeline/ingest"
     headers = {
         "Authorization": f"Bearer {PIPELINE_API_KEY}",
         "Content-Type": "application/json",
     }
 
-    try:
-        response = requests.post(
-            ingest_endpoint,
-            headers=headers,
-            json={"signals": payload_signals},
-            timeout=30,
-        )
-    except Exception as exc:
-        print(f"[WORKER] Failed to deliver payload to {ingest_endpoint}: {exc}", file=sys.stderr)
-        sys.exit(1)
+    # Step 3 & 4: Ingest signals into RawSignals, then trigger cluster pass
+    for path in ("/api/pipeline/ingest", "/api/pipeline/cluster"):
+        payload = {"signals": payload_signals} if "ingest" in path else {}
+        try:
+            r = requests.post(f"{TRENDLY_URL}{path}", json=payload, headers=headers, timeout=120)
+            print(f"[WORKER] {path} → {r.status_code}: {r.text[:300]}")
+            if r.status_code not in (200, 201) and "ingest" in path:
+                print(f"[WORKER] Ingest failed, aborting cycle.", file=sys.stderr)
+                sys.exit(1)
+        except Exception as exc:
+            print(f"[WORKER] Request to {path} failed: {exc}", file=sys.stderr)
+            if "ingest" in path:
+                sys.exit(1)
 
-    if response.status_code == 200:
-        data = response.json()
-        print(f"[WORKER] Delivery successful (HTTP 200): {data.get('summary', 'OK')}")
-        print(f"[WORKER] Records ingested: {data.get('recordsIngested', 0)}, Tasks added: {data.get('monetizableMovesAdded', 0)}, News added: {data.get('marketNewsAdded', 0)}")
-        sys.exit(0)
-    else:
-        print(f"[WORKER] Ingestion rejected (HTTP {response.status_code}): {response.text}", file=sys.stderr)
-        sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
+
