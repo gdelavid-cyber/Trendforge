@@ -367,19 +367,30 @@ export function generateProceduralTrends(count: number, existingNames: Set<strin
 
 // Unified LLM and autonomous fallback dispatcher
 export async function callLLM(messages: { role: string; content: string }[], jsonMode = false, existingNames: Set<string> = new Set()) {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY || process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.INFERHUB_API_KEY || process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY || process.env.OPENROUTER_API_KEY;
 
   if (apiKey) {
     try {
       let endpoint = 'https://apps.abacus.ai/v1/chat/completions';
       let model = 'gpt-5.4-mini';
+      let activeKey = apiKey;
 
-      if (process.env.OPENAI_API_KEY) {
+      if (process.env.INFERHUB_API_KEY) {
+        endpoint = process.env.INFERHUB_BASE_URL
+          ? `${process.env.INFERHUB_BASE_URL.replace(/\/$/, '')}/chat/completions`
+          : 'https://api.inferhub.dev/v1/chat/completions';
+        model = process.env.INFERHUB_MODEL || 'ali/deepseek-v4-flash-0731';
+        activeKey = process.env.INFERHUB_API_KEY;
+      } else if (process.env.OPENAI_API_KEY) {
         endpoint = 'https://api.openai.com/v1/chat/completions';
         model = 'gpt-4o-mini';
+        activeKey = process.env.OPENAI_API_KEY;
       } else if (process.env.OPENROUTER_API_KEY && !process.env.ABACUSAI_API_KEY) {
         endpoint = 'https://openrouter.ai/api/v1/chat/completions';
         model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct';
+        activeKey = process.env.OPENROUTER_API_KEY;
+      } else if (process.env.ABACUSAI_API_KEY) {
+        activeKey = process.env.ABACUSAI_API_KEY;
       }
 
       const body: any = {
@@ -391,12 +402,18 @@ export async function callLLM(messages: { role: string; content: string }[], jso
         body.response_format = { type: 'json_object' };
       }
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${activeKey}`,
+      };
+
+      if (process.env.INFERHUB_API_KEY && endpoint.includes('inferhub.dev')) {
+        headers['x-api-key'] = activeKey;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
+        headers,
         body: JSON.stringify(body),
       });
 
@@ -411,7 +428,7 @@ export async function callLLM(messages: { role: string; content: string }[], jso
       console.warn('[LLM] Call failed, engaging autonomous trend engine:', err.message);
     }
   } else {
-    console.warn('[LLM] No API key configured (OPENAI_API_KEY / ABACUSAI_API_KEY / OPENROUTER_API_KEY).');
+    console.warn('[LLM] No API key configured (INFERHUB_API_KEY / OPENAI_API_KEY / ABACUSAI_API_KEY / OPENROUTER_API_KEY).');
   }
 
   // Fallback generation

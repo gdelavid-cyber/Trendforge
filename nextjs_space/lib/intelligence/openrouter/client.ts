@@ -145,6 +145,11 @@ export class OpenRouterClient {
     this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
     this.fallbackProviders = fallbackProviders || [
       {
+        provider: 'inferhub',
+        apiKey: process.env.INFERHUB_API_KEY || '',
+        baseUrl: process.env.INFERHUB_BASE_URL ? `${process.env.INFERHUB_BASE_URL.replace(/\/$/, '')}` : 'https://api.inferhub.dev/v1',
+      },
+      {
         provider: 'anthropic',
         apiKey: process.env.ANTHROPIC_API_KEY || '',
         baseUrl: 'https://api.anthropic.com/v1',
@@ -221,13 +226,19 @@ export class OpenRouterClient {
     for (const provider of this.fallbackProviders) {
       if (provider.apiKey && provider.apiKey.trim().length > 5 && !provider.apiKey.includes('your_')) {
         try {
-          const fallbackModel = MODEL_TIERS[tier].fallback;
+          const fallbackModel = provider.provider === 'inferhub'
+            ? (process.env.INFERHUB_MODEL || 'ali/deepseek-v4-flash-0731')
+            : MODEL_TIERS[tier].fallback;
+          const headers: Record<string, string> = {
+            'Authorization': `Bearer ${provider.apiKey}`,
+            'Content-Type': 'application/json',
+          };
+          if (provider.provider === 'inferhub') {
+            headers['x-api-key'] = provider.apiKey;
+          }
           const response = await fetch(`${provider.baseUrl}/chat/completions`, {
             method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${provider.apiKey}`,
-              'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({
               ...request,
               model: fallbackModel,
