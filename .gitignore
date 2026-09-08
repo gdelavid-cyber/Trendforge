@@ -42,3 +42,6 @@ project_tree.txt
 .vercel
 .env*
 .aider*
+
+worker/.venv/
+.venv/
