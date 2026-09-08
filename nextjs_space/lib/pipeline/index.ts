@@ -348,16 +348,10 @@ export function generateProceduralTrends(count: number, existingNames: Set<strin
 
       if (isDuplicate(trendName, existingNames, 0.6)) continue;
 
-      const velocity = +(12 + Math.random() * 8.5).toFixed(1);
-      const sentiment = +(0.8 + Math.random() * 0.18).toFixed(2);
-      const confidence = +(0.88 + Math.random() * 0.1).toFixed(2);
-
       results.push({
         trend_name: trendName,
-        source_platforms: bp.platforms,
-        mention_velocity: velocity,
-        sentiment_score: sentiment,
-        initial_confidence: confidence,
+        source_platforms: ['SYSTEM_BLUEPRINT'],
+        mention_velocity: 0,
         category: bp.category,
         blueprint: bp,
         target,
@@ -423,7 +417,6 @@ export async function callLLM(messages: { role: string; content: string }[], jso
     if (matchingBlueprint) {
       const targetMatch = matchingBlueprint.targets.find((t) => userPrompt.includes(t)) || matchingBlueprint.targets[0];
       const steps = matchingBlueprint.steps.map((s) => s.replace(/\{TARGET\}/g, targetMatch));
-      const variance = Math.floor(Math.random() * 100);
 
       return JSON.stringify({
         title: `Monetize ${matchingBlueprint.prefix} ${targetMatch}`,
@@ -432,8 +425,8 @@ export async function callLLM(messages: { role: string; content: string }[], jso
         difficulty: 'LOW',
         startup_cost: matchingBlueprint.startupCost,
         time_to_first_dollar: matchingBlueprint.time,
-        earnings_low: matchingBlueprint.baseEarningsLow + variance,
-        earnings_high: matchingBlueprint.baseEarningsHigh + variance * 2,
+        earnings_low: matchingBlueprint.baseEarningsLow,
+        earnings_high: matchingBlueprint.baseEarningsHigh,
         risk_level: 'LOW',
         risk_explanation: 'Minimal startup capital required. Downside limited to setup and outreach time.',
         mitigation_strategy: 'Offer free demonstration or pilot before locking in full retainer.',
