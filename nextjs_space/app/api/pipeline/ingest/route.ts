@@ -67,12 +67,18 @@ export async function POST(request: Request) {
     });
   }
 
-  const [existingTrends, existingTasks] = await Promise.all([
-    prisma.trend.findMany({ select: { name: true, fingerprint: true }, take: 500 }),
-    prisma.task.findMany({ select: { title: true, fingerprint: true }, take: 500 }),
-  ]);
-  const existingTrendNames = new Set(existingTrends.map((t) => t.name.toLowerCase().trim()));
-  const existingTaskTitles = new Set(existingTasks.map((t) => t.title.toLowerCase().trim()));
+  let existingTrendNames = new Set<string>();
+  let existingTaskTitles = new Set<string>();
+  try {
+    const [existingTrends, existingTasks] = await Promise.all([
+      prisma.trend.findMany({ select: { name: true }, take: 500 }),
+      prisma.task.findMany({ select: { title: true }, take: 500 }),
+    ]);
+    existingTrendNames = new Set(existingTrends.map((t) => t.name.toLowerCase().trim()));
+    existingTaskTitles = new Set(existingTasks.map((t) => t.title.toLowerCase().trim()));
+  } catch (dbErr) {
+    console.warn('[INGEST] Pre-check query warning:', dbErr);
+  }
 
   let recordsIngested = 0;
   let monetizableMovesAdded = 0;
@@ -83,16 +89,6 @@ export async function POST(request: Request) {
     const rawName = signal?.name || signal?.title;
     if (!rawName || typeof rawName !== 'string') continue;
     const name = rawName.trim();
-
-    const fp = fingerprint(name);
-    if (fp) {
-      try {
-        const existing = await prisma.trend.findFirst({ where: { fingerprint: fp } });
-        if (existing) continue;
-      } catch {
-        // pre-migration safe
-      }
-    }
 
     if (isDuplicate(name, existingTrendNames, 0.45)) continue;
 
@@ -126,7 +122,6 @@ export async function POST(request: Request) {
       trend = await prisma.trend.create({
         data: {
           name,
-          fingerprint: fp || null,
           sourcePlatforms,
           mentionVelocity,
           sentimentScore,
@@ -146,37 +141,8 @@ export async function POST(request: Request) {
       });
     } catch (err: any) {
       if (err?.code === 'P2002') continue;
-      const msg = String(err?.message || '');
-      if (/fingerprint|Unknown argument/i.test(msg)) {
-        try {
-          trend = await prisma.trend.create({
-            data: {
-              name,
-              sourcePlatforms,
-              mentionVelocity,
-              sentimentScore,
-              confidence,
-              category: classification.category,
-              status: 'ACTIVE',
-              isMonetizable: classification.isMonetizable,
-              monetizationScore: classification.monetizationScore,
-              monetizationRationale: classification.monetizationRationale,
-              newsSummary: classification.newsSummary,
-              whyItMatters: classification.whyItMatters,
-              newsSourceUrl: signal.url || null,
-              detectedAt: new Date(),
-              hoursSinceDetection:
-                typeof signal.hoursSinceDetection === 'number' ? signal.hoursSinceDetection : 0,
-            },
-          });
-        } catch (fallbackErr: any) {
-          errors.push(`Failed to create trend "${name}": ${fallbackErr.message}`);
-          continue;
-        }
-      } else {
-        errors.push(`Failed to create trend "${name}": ${err.message}`);
-        continue;
-      }
+      errors.push(`Failed to create trend "${name}": ${err.message}`);
+      continue;
     }
 
     existingTrendNames.add(name.toLowerCase());
@@ -185,19 +151,6 @@ export async function POST(request: Request) {
     if (classification.isMonetizable && classification.taskProposal) {
       const tp = classification.taskProposal;
       const taskTitle = tp.title.trim();
-      const taskFp = fingerprint(taskTitle);
-
-      if (taskFp) {
-        try {
-          const existingTask = await prisma.task.findFirst({ where: { fingerprint: taskFp } });
-          if (existingTask) {
-            marketNewsAdded++;
-            continue;
-          }
-        } catch {
-          // pre-migration safe
-        }
-      }
 
       if (isDuplicate(taskTitle, existingTaskTitles, 0.45)) {
         marketNewsAdded++;
@@ -213,7 +166,6 @@ export async function POST(request: Request) {
           data: {
             trendId: trend.id,
             title: taskTitle,
-            fingerprint: taskFp || null,
             description: tp.description,
             steps: toStructuredStepsJson(tp.steps),
             difficulty: tp.difficulty,
@@ -240,44 +192,8 @@ export async function POST(request: Request) {
           marketNewsAdded++;
           continue;
         }
-        const msg = String(taskErr?.message || '');
-        if (/fingerprint|Unknown argument/i.test(msg)) {
-          try {
-            newTask = await prisma.task.create({
-              data: {
-                trendId: trend.id,
-                title: taskTitle,
-                description: tp.description,
-                steps: toStructuredStepsJson(tp.steps),
-                difficulty: tp.difficulty,
-                startupCost: tp.startupCost,
-                timeToFirstDollar: tp.timeToFirstDollar,
-                estimatedEarningsLow: tp.estimatedEarningsLow,
-                estimatedEarningsHigh: tp.estimatedEarningsHigh,
-                riskLevel: tp.riskLevel,
-                riskExplanation: tp.riskExplanation,
-                mitigationStrategy: tp.mitigationStrategy,
-                proTip: tp.proTip,
-                category: classification.category,
-                qualityScore: 0.9,
-                weekOf: now,
-                generatedAt: now,
-                expiresAt,
-                trendScore: classification.monetizationScore,
-                isFeatured: true,
-                requiresOptIn: tp.riskLevel === 'HIGH',
-              },
-            });
-          } catch (fallbackTaskErr: any) {
-            errors.push(`Failed to create task "${taskTitle}": ${fallbackTaskErr.message}`);
-            marketNewsAdded++;
-            continue;
-          }
-        } else {
-          errors.push(`Failed to create task "${taskTitle}": ${taskErr.message}`);
-          marketNewsAdded++;
-          continue;
-        }
+        errors.push(`Failed to create task for "${taskTitle}": ${taskErr.message}`);
+        continue;
       }
 
       existingTaskTitles.add(taskTitle.toLowerCase());
