@@ -1,3 +1,6 @@
 scrapling>=0.4.0
+curl-cffi>=0.16.0
+patchright>=1.62.0
 requests>=2.31.0
 python-dotenv>=1.0.0
+

@@ -43,60 +43,66 @@ REDDIT_SCRAPING_CHANNELS = [
 ]
 
 
-def create_scrapling_fetcher():
-    """Attempt to instantiate Scrapling Fetcher; return None if unavailable."""
-    try:
-        from scrapling.fetchers import Fetcher
-        return Fetcher
-    except Exception as e:
-        print(f"[WORKER] Scrapling Fetcher initialization notice: {e}", file=sys.stderr)
-        return None
-
-
 def fetch_reddit_posts(subreddits, category_name):
-    """Fetch Reddit posts using Scrapling Fetcher or requests with stealth headers."""
-    sub_list = "+".join(subreddits)
-    url = f"https://www.reddit.com/r/{sub_list}/hot.json?limit=25"
-    headers = {
-        "User-Agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) TrendlyWorker/4.0 ({category_name})",
-        "Accept": "application/json",
-    }
+    """Fetch Reddit posts using Scrapling StealthyFetcher or fallback HTTP requests."""
+    posts = []
 
-    FetcherClass = create_scrapling_fetcher()
-    if FetcherClass:
-        try:
-            fetcher = FetcherClass()
-            resp = fetcher.get(url, headers=headers, timeout=15)
-            if resp and resp.status == 200:
-                body = resp.text or resp.body
-                data = json.loads(body)
-                return [child.get("data", {}) for child in data.get("data", {}).get("children", [])]
-            elif resp and resp.status in (403, 429):
-                print(f"[WORKER] Reddit HTTP {resp.status}, attempting StealthyFetcher escalation", file=sys.stderr)
-                try:
-                    from scrapling.fetchers import StealthyFetcher
-                    stealth_fetcher = StealthyFetcher()
-                    s_resp = stealth_fetcher.get(url, timeout=20)
-                    if s_resp and s_resp.status == 200:
-                        s_data = json.loads(s_resp.text or s_resp.body)
-                        return [child.get("data", {}) for child in s_data.get("data", {}).get("children", [])]
-                except Exception as s_err:
-                    print(f"[WORKER] StealthyFetcher failed: {s_err}", file=sys.stderr)
-        except Exception as err:
-            print(f"[WORKER] Scrapling Fetcher get failed ({err}), falling back to requests", file=sys.stderr)
-
-    # Fallback to requests
+    # 1. Primary: Scrapling StealthyFetcher with modern shreddit-post extraction
     try:
-        res = requests.get(url, headers=headers, timeout=10)
-        if res.status_code == 200:
-            data = res.json()
-            return [child.get("data", {}) for child in data.get("data", {}).get("children", [])]
-        else:
-            print(f"[WORKER] Reddit fetch returned status {res.status_code}", file=sys.stderr)
-            return []
-    except Exception as exc:
-        print(f"[WORKER] Reddit request error: {exc}", file=sys.stderr)
-        return []
+        from scrapling.fetchers import StealthyFetcher
+        sf = StealthyFetcher()
+        for sub in subreddits[:2]:
+            url = f"https://www.reddit.com/r/{sub}/"
+            try:
+                res = sf.fetch(url, headless=True)
+                if res and res.status == 200:
+                    shreddit_posts = res.css("shreddit-post")
+                    for p in shreddit_posts:
+                        title = p.attrib.get("post-title")
+                        if not title:
+                            continue
+                        try:
+                            score = int(p.attrib.get("score", 0))
+                        except (ValueError, TypeError):
+                            score = 0
+                        try:
+                            num_comments = int(p.attrib.get("comment-count", 0))
+                        except (ValueError, TypeError):
+                            num_comments = 0
+                        permalink = p.attrib.get("permalink", "")
+                        created_timestamp = p.attrib.get("created-timestamp", "")
+                        posts.append({
+                            "title": title,
+                            "score": score,
+                            "num_comments": num_comments,
+                            "subreddit": sub,
+                            "permalink": permalink,
+                            "created_timestamp": created_timestamp,
+                        })
+            except Exception as sub_err:
+                print(f"[WORKER] StealthyFetcher on r/{sub} notice: {sub_err}", file=sys.stderr)
+        if posts:
+            return posts
+    except Exception as e:
+        print(f"[WORKER] Scrapling StealthyFetcher notice: {e}", file=sys.stderr)
+
+    # 2. Secondary fallback: HTTP requests on old.reddit.com / www.reddit.com JSON
+    sub_list = "+".join(subreddits)
+    for base in ["https://old.reddit.com", "https://www.reddit.com"]:
+        url = f"{base}/r/{sub_list}/hot.json?limit=25"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+        }
+        try:
+            res = requests.get(url, headers=headers, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                return [child.get("data", {}) for child in data.get("data", {}).get("children", [])]
+        except Exception:
+            continue
+
+    return posts
 
 
 def scrape_reddit():
@@ -116,7 +122,16 @@ def scrape_reddit():
         if score < 5 and num_comments < 3:
             continue
 
-        created_utc = p.get("created_utc", now)
+        created_ts = p.get("created_timestamp")
+        if created_ts:
+            try:
+                dt = datetime.fromisoformat(created_ts.replace("Z", "+00:00"))
+                created_utc = dt.timestamp()
+            except Exception:
+                created_utc = now
+        else:
+            created_utc = p.get("created_utc", now)
+
         hours_since = max(0.1, (now - created_utc) / 3600.0)
         mention_velocity = round((score + num_comments) / hours_since, 2)
         subreddit = p.get("subreddit", "all")
@@ -137,7 +152,9 @@ def scrape_reddit():
 
 
 def scrape_hacker_news():
-    """Scrape HackerNews Firebase top stories with score > 20."""
+    """Scrape HackerNews Firebase top stories with score > 20 using concurrent workers."""
+    from concurrent.futures import ThreadPoolExecutor
+
     signals = []
     try:
         top_res = requests.get("https://hacker-news.firebaseio.com/v0/topstories.json", timeout=10)
@@ -149,36 +166,40 @@ def scrape_hacker_news():
         print(f"[WORKER] HN topstories error: {exc}", file=sys.stderr)
         return []
 
-    now = time.time()
-    for sid in story_ids:
+    def fetch_item(sid):
         try:
-            item_res = requests.get(f"https://hacker-news.firebaseio.com/v0/item/{sid}.json", timeout=6)
-            if item_res.status_code != 200:
-                continue
-            item = item_res.json()
-            if not item or not item.get("title"):
-                continue
-            score = item.get("score", 0)
-            if score <= 20:
-                continue
-
-            item_time = item.get("time", now)
-            hours_since = max(0.1, (now - item_time) / 3600.0)
-            descendants = item.get("descendants", 0)
-            mention_velocity = round((score + descendants) / hours_since, 2)
-            url = item.get("url") or f"https://news.ycombinator.com/item?id={sid}"
-
-            signals.append({
-                "name": item["title"].strip(),
-                "sourcePlatforms": ["HackerNews"],
-                "description": f"HackerNews discussion ({score} points, {descendants} comments): {url}",
-                "url": url,
-                "mentionVelocity": mention_velocity,
-                "hoursSinceDetection": round(hours_since, 2),
-                "score": score,
-            })
+            r = requests.get(f"https://hacker-news.firebaseio.com/v0/item/{sid}.json", timeout=6)
+            return r.json() if r.status_code == 200 else None
         except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        items = list(filter(None, executor.map(fetch_item, story_ids)))
+
+    now = time.time()
+    for item in items:
+        if not item or not item.get("title"):
             continue
+        score = item.get("score", 0)
+        if score <= 20:
+            continue
+
+        item_time = item.get("time", now)
+        hours_since = max(0.1, (now - item_time) / 3600.0)
+        descendants = item.get("descendants", 0)
+        mention_velocity = round((score + descendants) / hours_since, 2)
+        sid = item.get("id")
+        url = item.get("url") or f"https://news.ycombinator.com/item?id={sid}"
+
+        signals.append({
+            "name": item["title"].strip(),
+            "sourcePlatforms": ["HackerNews"],
+            "description": f"HackerNews discussion ({score} points, {descendants} comments): {url}",
+            "url": url,
+            "mentionVelocity": mention_velocity,
+            "hoursSinceDetection": round(hours_since, 2),
+            "score": score,
+        })
 
     return signals
 
