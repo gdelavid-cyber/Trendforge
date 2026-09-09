@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   CheckCircle2,
@@ -11,6 +12,7 @@ import {
   Flame,
   HelpCircle,
   Layers,
+  Loader2,
   Play,
   Share2,
   Sparkles,
@@ -28,6 +30,7 @@ interface EarnLandingClientProps {
   userEarnings?: number;
   tasks?: Array<{
     id: string;
+    trendId?: string;
     title: string;
     description: string;
     category?: string;
@@ -89,8 +92,32 @@ const TESTIMONIALS = [
 ];
 
 export function EarnLandingClient({ userEarnings = 0, tasks = [] }: EarnLandingClientProps) {
+  const router = useRouter();
   const [highlightedCol, setHighlightedCol] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [runningTaskId, setRunningTaskId] = useState<string | null>(null);
+
+  const handleRunTask = async (t: { id: string; trendId?: string; title: string }) => {
+    setRunningTaskId(t.id);
+    try {
+      const res = await fetch('/api/execution/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: t.id, trendId: t.trendId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.executionId) {
+        toast.success(`Autonomous revenue kit started for "${t.title}"!`);
+        router.push(`/dashboard/my-work/${data.executionId}`);
+      } else {
+        toast.error(data?.error || 'Failed to start execution');
+      }
+    } catch {
+      toast.error('Failed to dispatch execution');
+    } finally {
+      setRunningTaskId(null);
+    }
+  };
 
   const handleDecisionClick = (colId: string) => {
     setHighlightedCol(colId);
@@ -184,15 +211,29 @@ export function EarnLandingClient({ userEarnings = 0, tasks = [] }: EarnLandingC
                   </p>
                 </div>
 
-                <div className="pt-3.5 mt-3.5 border-t border-white/[0.06] flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    ⏱️ {t.timeToFirstDollar || '24-48 hrs'}
-                  </span>
-                  <Link href={`/tasks/${t.id}`}>
-                    <Button size="sm" className="h-8 px-3.5 text-xs font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-black">
-                      <Play className="w-3 h-3 mr-1 fill-black" /> Run Task &rarr;
-                    </Button>
+                <div className="pt-3.5 mt-3.5 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                  <Link
+                    href={`/tasks/${t.id}`}
+                    className="text-[11px] font-mono text-slate-400 hover:text-white underline-offset-2 hover:underline truncate"
+                  >
+                    ⏱️ {t.timeToFirstDollar || '24-48 hrs'} • View Specs
                   </Link>
+                  <Button
+                    size="sm"
+                    disabled={runningTaskId === t.id}
+                    onClick={() => handleRunTask(t)}
+                    className="h-8 px-3.5 text-xs font-mono font-bold bg-emerald-500 hover:bg-emerald-400 text-black cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_20px_rgba(16,185,129,0.45)] shrink-0"
+                  >
+                    {runningTaskId === t.id ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Starting...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3 h-3 mr-1 fill-black" /> Run Task &rarr;
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             ))}

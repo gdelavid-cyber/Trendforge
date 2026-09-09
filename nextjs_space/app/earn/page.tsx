@@ -34,6 +34,7 @@ export default async function EarnLandingPage() {
         userEarnings={totalEarnings} 
         tasks={tasks.map((t: any) => ({
           id: t.id,
+          trendId: t.trendId,
           title: t.title,
           description: t.description,
           category: t.category,

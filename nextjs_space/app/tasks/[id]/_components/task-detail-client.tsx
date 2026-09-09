@@ -271,13 +271,46 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
     }
   };
 
+  const [pipelineStarting, setPipelineStarting] = useState(false);
+
+  const handleRunPipeline = async () => {
+    setPipelineStarting(true);
+    try {
+      const res = await fetch('/api/execution/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: task?.id, trendId: task?.trendId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.executionId) {
+        toast.success('Dispatched turnkey revenue pipeline to My Work!');
+        window.location.href = `/dashboard/my-work/${data.executionId}`;
+      } else {
+        toast.error(data?.error || 'Failed to start pipeline');
+      }
+    } catch {
+      toast.error('Failed to dispatch pipeline');
+    } finally {
+      setPipelineStarting(false);
+    }
+  };
+
   const handleLaunch = async () => {
     try {
       const res = await fetch(`/api/tasks/${task?.id}/launch`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         setUserTask(data?.userTask ?? { status: 'IN_PROGRESS', stepsCompleted: 0 });
-        toast.success('Power Move initiated! Execute the action steps below.');
+        if (data?.executionId) {
+          toast.success('Power Move initiated and dispatched to My Work!', {
+            action: {
+              label: 'View in My Work',
+              onClick: () => { window.location.href = `/dashboard/my-work/${data.executionId}`; },
+            },
+          });
+        } else {
+          toast.success('Power Move initiated! Execute the action steps below.');
+        }
       } else {
         toast.error(data?.error ?? 'Failed to initiate');
       }
@@ -640,6 +673,22 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
 
           <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                disabled={pipelineStarting}
+                onClick={handleRunPipeline}
+                className="bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold uppercase text-xs h-9 px-4 font-mono shadow-[0_0_15px_rgba(16,185,129,0.35)] hover:shadow-[0_0_25px_rgba(16,185,129,0.55)] cursor-pointer"
+              >
+                {pipelineStarting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Starting...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="w-3.5 h-3.5 mr-1.5" /> Run in My Work &rarr;
+                  </>
+                )}
+              </Button>
               <Button
                 size="sm"
                 onClick={() => setIsSwarmModalOpen(true)}
