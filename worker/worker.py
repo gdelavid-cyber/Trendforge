@@ -219,16 +219,28 @@ def main():
         print("WARNING: PIPELINE_API_KEY not set in worker/.env")
         print()
 
+    # One-shot mode for cloud crons (Render/Vercel): exits after a single
+    # cycle instead of looping. Enable via CLI flag or env:
+    #   python worker.py --once   |   WORKER_MODE=oneshot python worker.py
+    ONESHOT = "--once" in sys.argv or os.getenv("WORKER_MODE", "daemon").lower() == "oneshot"
+    if ONESHOT:
+        print("[Worker] One-shot mode: single cycle, then exit.")
+
     cycle = 0
     while True:
         cycle += 1
         try:
             run_harvest_cycle(cycle)
+            if ONESHOT:
+                print("\n[Worker] One-shot cycle complete. Exiting clean.")
+                sys.exit(0)
         except KeyboardInterrupt:
             print("\n\nWorker stopped.")
             sys.exit(0)
         except Exception as e:
             print(f"\n  FATAL ERROR in cycle #{cycle}: {e}")
+            if ONESHOT:
+                sys.exit(1)
             time.sleep(30)
             continue
 
