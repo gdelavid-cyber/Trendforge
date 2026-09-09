@@ -16,14 +16,18 @@ import {
   Radio,
   ShieldCheck,
   ChevronDown,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { CreditBadge } from '@/components/credits/credit-badge';
+import { WorkTicker } from '@/components/layout/work-ticker';
+import { useMyWork } from '@/lib/hooks/use-my-work';
 
 export function Header({ userStats }: { userStats?: any } = {}) {
   const { data: session } = useSession() || {};
+  const { activeCount } = useMyWork();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
@@ -33,6 +37,7 @@ export function Header({ userStats }: { userStats?: any } = {}) {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard/my-work', label: 'My Work', icon: Briefcase, badge: activeCount },
     ...(isAdmin ? [{ href: '/council', label: 'AI Council', icon: Flame }] : []),
     { href: '/earn', label: 'Tasks & Earn', icon: Zap },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
@@ -47,6 +52,7 @@ export function Header({ userStats }: { userStats?: any } = {}) {
 
   return (
     <>
+      <WorkTicker />
       <div className="sticky top-3 z-50 w-full px-3 md:px-6 pointer-events-none">
         <header className="max-w-[1260px] mx-auto rounded-2xl backdrop-blur-2xl bg-[#06060E]/90 border border-white/[0.1] shadow-[0_10px_40px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] transition-all pointer-events-auto">
           <div className="flex items-center justify-between px-4 md:px-6 h-16">
@@ -83,6 +89,11 @@ export function Header({ userStats }: { userStats?: any } = {}) {
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-[#00F0FF]' : ''}`} />
                       <span>{item.label}</span>
+                      {typeof (item as any).badge === 'number' && (item as any).badge > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
+                          {(item as any).badge}
+                        </span>
+                      )}
                     </div>
                   </Link>
                 );
@@ -212,7 +223,12 @@ export function Header({ userStats }: { userStats?: any } = {}) {
                       }`}
                     >
                       <Icon className="w-4 h-4" />
-                      <span>{item.label}</span>
+                      <span className="flex-1">{item.label}</span>
+                      {typeof (item as any).badge === 'number' && (item as any).badge > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
+                          {(item as any).badge}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

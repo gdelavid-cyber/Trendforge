@@ -147,6 +147,7 @@ model User {
   leads                 Lead[]
   coPilotSessions       CoPilotSession[]
   executions            TrendExecution[]
+  activities            UserActivity[]
 
   @@index([role])
   @@index([email])
@@ -1978,9 +1979,16 @@ model TrendExecution {
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
+  lastCheckpoint String?
+  lastActivityAt DateTime             @default(now())
+  userViewedAt   DateTime?
+  pinnedByUser   Boolean              @default(false)
+
   @@index([trendId])
   @@index([status])
   @@index([userId])
+  @@index([userId, lastActivityAt])
+  @@index([userId, status])
 }
 
 enum TrendExecutionStatus {
@@ -2038,4 +2046,21 @@ model ExecutionEvent {
   @@index([executionId])
   @@index([at])
 }
+
+model UserActivity {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionId   String?
+  trendId       String?
+  kind          String   // "execution_started" | "stage_completed" | "awaiting_approval" | "approved" | "kit_ready" | "outreach_sent" | "money_received"
+  title         String
+  detail        String?  @db.Text
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
 

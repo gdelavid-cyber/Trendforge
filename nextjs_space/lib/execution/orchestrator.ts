@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { callLLM, extractJSON } from '@/lib/pipeline';
 import { STAGES, generatePlayableHtml, type StageContext, type StageDefinition } from './stages';
+import { logActivity, updateCheckpoint } from './activity';
 
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [0, 1500, 4000];
@@ -185,9 +186,21 @@ export async function runExecution(executionId: string): Promise<void> {
   if (!execution) throw new Error(`Execution ${executionId} not found`);
   if (execution.status === 'COMPLETED' || execution.status === 'DEGRADED') return;
 
+  // Log "started" on initial run
+  if (execution.status === 'QUEUED') {
+    await logActivity({
+      userId: execution.userId,
+      executionId,
+      trendId: execution.trendId,
+      kind: 'execution_started',
+      title: `Started executing "${execution.trend.name}"`,
+      detail: '6-stage revenue kit in progress',
+    });
+  }
+
   await db.trendExecution.update({
     where: { id: executionId },
-    data: { status: 'RUNNING', startedAt: execution.startedAt ?? new Date() },
+    data: { status: 'RUNNING', startedAt: execution.startedAt ?? new Date(), lastActivityAt: new Date() },
   });
 
   await db.executionEvent.create({
@@ -211,6 +224,8 @@ export async function runExecution(executionId: string): Promise<void> {
   for (const def of STAGES) {
     if (priorOutputs[def.key]) continue;
 
+    await updateCheckpoint(executionId, `Working on: ${def.label}`);
+
     await db.executionStage.upsert({
       where: { executionId_stageKey: { executionId, stageKey: def.key } },
       create: {
@@ -228,6 +243,7 @@ export async function runExecution(executionId: string): Promise<void> {
       data: {
         currentStage: def.key,
         progressPct: Math.round(((def.ordinal - 1) / STAGES.length) * 100),
+        lastActivityAt: new Date(),
       },
     });
 
@@ -259,6 +275,16 @@ export async function runExecution(executionId: string): Promise<void> {
         completedAt: new Date(),
       },
     });
+
+    // Log per-stage completion in user activity feed
+    await logActivity({
+      userId: execution.userId,
+      executionId,
+      trendId: execution.trendId,
+      kind: result.usedFallback ? 'stage_fallback' : 'stage_completed',
+      title: `${def.label} ${result.usedFallback ? 'used fallback' : 'done'}`,
+      detail: `${execution.trend.name} • stage ${def.ordinal}/6`,
+    });
   }
 
   // Ensure playableHtml is explicitly present in preview block
@@ -286,8 +312,21 @@ export async function runExecution(executionId: string): Promise<void> {
       progressPct: 100,
       revenueKit: revenueKit as object,
       completedAt: new Date(),
+      lastCheckpoint: 'Waiting for your approval on outreach',
+      lastActivityAt: new Date(),
       errorMessage: anyFallback ? 'One or more stages used fallback output' : null,
     },
+  });
+
+  await logActivity({
+    userId: execution.userId,
+    executionId,
+    trendId: execution.trendId,
+    kind: 'awaiting_approval',
+    title: `"${execution.trend.name}" is ready`,
+    detail: anyFallback
+      ? 'Revenue kit complete (some stages degraded) — review and approve to unlock'
+      : 'Revenue kit complete — review and approve to unlock',
   });
 
   await db.executionEvent.create({

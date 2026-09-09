@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { logActivity, updateCheckpoint } from '@/lib/execution/activity';
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const execution = await db.trendExecution.findUnique({ where: { id: params.id } });
+  const execution = await db.trendExecution.findUnique({
+    where: { id: params.id },
+    include: { trend: { select: { name: true } } },
+  });
   if (!execution) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (execution.status !== 'AWAITING_APPROVAL')
     return NextResponse.json({ error: `Cannot approve from status ${execution.status}` }, { status: 409 });
@@ -24,7 +28,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const updated = await db.trendExecution.update({
     where: { id: params.id },
-    data: { status: finalStatus, approvedAt: new Date() },
+    data: {
+      status: finalStatus,
+      approvedAt: new Date(),
+      lastCheckpoint: `Approved (${chosenPath}) — ready to run outreach`,
+      lastActivityAt: new Date(),
+    },
   });
 
   // Mark all associated tasks as COMPLETED so they drop off the Ready list immediately
@@ -42,6 +51,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       message: `Deliverable approved by user (${chosenPath}). Ready tasks marked COMPLETED.`,
       data: { chosenPath, finalStatus },
     },
+  });
+
+  await logActivity({
+    userId: execution.userId,
+    executionId: params.id,
+    trendId: execution.trendId,
+    kind: 'approved',
+    title: `Approved "${execution.trend?.name ?? 'execution'}"`,
+    detail: `Kit unlocked (${chosenPath}) — ready to run outreach`,
   });
 
   return NextResponse.json({ success: true, status: updated.status, chosenPath });
