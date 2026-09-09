@@ -1920,3 +1920,18 @@ model RawSignal {
   @@index([themeId])
 }
 
+model InferHubTransfer {
+  id               String   @id @default(cuid())
+  amountUsd        Float
+  publisherBalance Float    // balance BEFORE transfer
+  consumerBalance  Float    // balance AFTER transfer
+  status           String   // "success", "failed", "skipped_below_threshold", "skipped_no_balance"
+  transactionId    String?  // InferHub's returned tx id
+  errorMessage     String?  @db.Text
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+

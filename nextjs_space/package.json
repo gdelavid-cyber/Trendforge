@@ -11,7 +11,10 @@
     "test:watch": "vitest",
     "postinstall": "prisma generate",
     "swarm:seed": "npx tsx scripts/seeds/seed-swarm.ts",
-    "swarm:reset": "npx tsx scripts/resets/reset-swarm-jobs.ts"
+    "swarm:reset": "npx tsx scripts/resets/reset-swarm-jobs.ts",
+    "reinvest": "npx tsx scripts/reinvest-inferhub-earnings.ts",
+    "reinvest:daemon": "npx tsx scripts/reinvest-inferhub-earnings.ts --daemon",
+    "reinvest:dry": "npx tsx scripts/reinvest-inferhub-earnings.ts --dry-run"
   },
   "prisma": {
     "seed": "tsx --require dotenv/config scripts/seeds/safe-seed.ts"

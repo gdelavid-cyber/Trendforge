@@ -1,288 +1,243 @@
 #!/usr/bin/env python3
 """
-Standalone Python Scrapling worker for Trendly pipeline ingestion.
-Pushes measured signals directly into Trendly via /api/pipeline/ingest.
+Trendly Signal Harvesting Worker
+Autonomous Python worker that scrapes target sources and feeds
+normalized signals into the Trendly ingestion pipeline.
 """
 
 import os
 import sys
 import time
-import json
-from datetime import datetime, timezone
+from datetime import datetime
+
 import requests
 from dotenv import load_dotenv
 
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8')
-if hasattr(sys.stderr, 'reconfigure'):
-    sys.stderr.reconfigure(encoding='utf-8')
+# Fix Windows console encoding
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
-TRENDLY_URL = os.getenv("TRENDLY_URL", "http://localhost:3000").rstrip("/")
-PIPELINE_API_KEY = os.getenv("PIPELINE_API_KEY")
+from scrapers import (
+    HackerNewsScraper,
+    ProductHuntScraper,
+    RedditScraper,
+    TwitterScraper,
+)
 
-# 4 Distinct rotating channel pools covering real commercial B2B demand
-# Replicated exactly from lib/pipeline/index.ts
-REDDIT_SCRAPING_CHANNELS = [
-    {
-        "category": "SMB & Contractor Demand",
-        "subreddits": ["smallbusiness", "sweatystartup", "roofing", "HVAC"],
-        "queries": ["software alternative", "hiring someone to", "missed calls", "expensive agency"],
-    },
-    {
-        "category": "Agency & B2B Arbitrage",
-        "subreddits": ["agency", "b2bmarketing", "freelance", "consulting", "sales"],
-        "queries": ["willing to pay", "looking for a service", "lead generation tool", "manual reporting"],
-    },
-    {
-        "category": "Automation & Workflow Bottlenecks",
-        "subreddits": ["SaaS", "automation", "nocode", "SideProject", "artificial"],
-        "queries": ["built a tool for", "workflow bottlenecks", "Stripe checkout", "API integration"],
-    },
-    {
-        "category": "High-Growth Ventures",
-        "subreddits": ["Entrepreneur", "startups", "growthhacking", "digitalmarketing"],
-        "queries": ["hire developer", "outsource manual task", "customer churn", "paying for tool"],
-    },
-]
+# Configuration (API_BASE_URL preferred; TRENDLY_URL kept as legacy fallback)
+API_BASE_URL = os.getenv("API_BASE_URL", os.getenv("TRENDLY_URL", "http://localhost:3000")).rstrip("/")
+PIPELINE_API_KEY = os.getenv("PIPELINE_API_KEY", "")
+INGEST_ENDPOINT = f"{API_BASE_URL}/api/pipeline/ingest"
+CLUSTER_ENDPOINT = f"{API_BASE_URL}/api/pipeline/cluster"
+
+# Optional platform credentials
+TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
+PRODUCTHUNT_TOKEN = os.getenv("PRODUCTHUNT_TOKEN", "")
+
+# Feature flags — flip scrapers off without editing code
+ENABLE_REDDIT = os.getenv("ENABLE_REDDIT", "true").lower() == "true"
+ENABLE_HACKERNEWS = os.getenv("ENABLE_HACKERNEWS", "true").lower() == "true"
+ENABLE_TWITTER = os.getenv("ENABLE_TWITTER", "true").lower() == "true"
+ENABLE_PRODUCTHUNT = os.getenv("ENABLE_PRODUCTHUNT", "true").lower() == "true"
+
+# Polling configuration
+SCRAPE_INTERVAL_SECONDS = int(os.getenv("SCRAPE_INTERVAL", "300"))
+AUTO_CLUSTER = os.getenv("AUTO_CLUSTER", "true").lower() == "true"
+
+# Batch send config — ingest per source instead of one giant blob
+BATCH_PER_SOURCE = os.getenv("BATCH_PER_SOURCE", "true").lower() == "true"
 
 
-def fetch_reddit_posts(subreddits, category_name):
-    """Fetch Reddit posts using Scrapling StealthyFetcher or fallback HTTP requests."""
-    posts = []
+def banner():
+    print("=" * 60)
+    print("  TRENDLY SIGNAL HARVESTING WORKER")
+    print("  Autonomous Market Intelligence Engine")
+    print("=" * 60)
+    print(f"  API Target:       {API_BASE_URL}")
+    print(f"  Interval:         {SCRAPE_INTERVAL_SECONDS}s")
+    print(f"  Auto-Cluster:     {AUTO_CLUSTER}")
+    print(f"  API Key:          {'SET' if PIPELINE_API_KEY else 'MISSING'}")
+    print(f"  Reddit:           {'ON' if ENABLE_REDDIT else 'off'}")
+    print(f"  Hacker News:      {'ON' if ENABLE_HACKERNEWS else 'off'}")
+    print(
+        "  Twitter/X:        "
+        f"{'ON (official API)' if TWITTER_BEARER_TOKEN and ENABLE_TWITTER else 'ON (nitter)' if ENABLE_TWITTER else 'off'}"
+    )
+    print(
+        "  ProductHunt:      "
+        f"{'ON (GraphQL)' if PRODUCTHUNT_TOKEN and ENABLE_PRODUCTHUNT else 'ON (RSS)' if ENABLE_PRODUCTHUNT else 'off'}"
+    )
+    print("=" * 60)
+    print()
 
-    # 1. Primary: Scrapling StealthyFetcher with modern shreddit-post extraction
+
+def ingest_signals(signals, label="mixed"):
+    if not signals:
+        return None
+
     try:
-        from scrapling.fetchers import StealthyFetcher
-        sf = StealthyFetcher()
-        for sub in subreddits[:2]:
-            url = f"https://www.reddit.com/r/{sub}/"
-            try:
-                res = sf.fetch(url, headless=True)
-                if res and res.status == 200:
-                    shreddit_posts = res.css("shreddit-post")
-                    for p in shreddit_posts:
-                        title = p.attrib.get("post-title")
-                        if not title:
-                            continue
-                        post_id = p.attrib.get("id") or p.attrib.get("data-post-id") or ""
-                        if post_id.startswith("t3_"):
-                            post_id = post_id[3:]
-                        try:
-                            score = int(p.attrib.get("score", 0))
-                        except (ValueError, TypeError):
-                            score = 0
-                        try:
-                            num_comments = int(p.attrib.get("comment-count", 0))
-                        except (ValueError, TypeError):
-                            num_comments = 0
-                        permalink = p.attrib.get("permalink", "")
-                        created_timestamp = p.attrib.get("created-timestamp", "")
-                        posts.append({
-                            "id": post_id,
-                            "title": title,
-                            "score": score,
-                            "num_comments": num_comments,
-                            "subreddit": sub,
-                            "permalink": permalink,
-                            "created_timestamp": created_timestamp,
-                        })
-            except Exception as sub_err:
-                print(f"[WORKER] StealthyFetcher on r/{sub} notice: {sub_err}", file=sys.stderr)
-        if posts:
-            return posts
-    except Exception as e:
-        print(f"[WORKER] Scrapling StealthyFetcher notice: {e}", file=sys.stderr)
-
-    # 2. Secondary fallback: HTTP requests on old.reddit.com / www.reddit.com JSON
-    sub_list = "+".join(subreddits)
-    for base in ["https://old.reddit.com", "https://www.reddit.com"]:
-        url = f"{base}/r/{sub_list}/hot.json?limit=25"
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {PIPELINE_API_KEY}",
         }
-        try:
-            res = requests.get(url, headers=headers, timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                raw_children = data.get("data", {}).get("children", [])
-                for child in raw_children:
-                    cdata = child.get("data", {})
-                    posts.append({
-                        "id": cdata.get("id"),
-                        "title": cdata.get("title"),
-                        "score": cdata.get("score", 0),
-                        "num_comments": cdata.get("num_comments", 0),
-                        "subreddit": cdata.get("subreddit", sub_list.split("+")[0]),
-                        "permalink": cdata.get("permalink", ""),
-                        "created_utc": cdata.get("created_utc"),
-                        "selftext": cdata.get("selftext", ""),
-                    })
-                return posts
-        except Exception:
-            continue
+        response = requests.post(
+            INGEST_ENDPOINT,
+            headers=headers,
+            json={"signals": signals},
+            timeout=60,
+        )
 
-    return posts
-
-
-def scrape_reddit():
-    """Scrape Reddit based on 15-minute channel pool rotation."""
-    channel_idx = int(time.time() / (60 * 15)) % len(REDDIT_SCRAPING_CHANNELS)
-    channel = REDDIT_SCRAPING_CHANNELS[channel_idx]
-    posts = fetch_reddit_posts(channel["subreddits"], channel["category"])
-
-    signals = []
-    now = time.time()
-    for p in posts:
-        title = p.get("title")
-        if not title or p.get("over_18"):
-            continue
-        score = p.get("score", 0)
-        num_comments = p.get("num_comments", 0)
-        if score < 5 and num_comments < 3:
-            continue
-
-        created_ts = p.get("created_timestamp")
-        if created_ts:
-            try:
-                dt = datetime.fromisoformat(created_ts.replace("Z", "+00:00"))
-                created_utc = dt.timestamp()
-            except Exception:
-                created_utc = now
+        if response.status_code == 200:
+            data = response.json()
+            print(
+                f"  [Ingest/{label}] OK: {data.get('ingested', data.get('stored', 0))} stored, "
+                f"{data.get('duplicates', 0)} dupes, "
+                f"{data.get('skipped', 0)} skipped"
+            )
+            return data
+        elif response.status_code == 401:
+            print(f"  [Ingest/{label}] ERROR: Unauthorized")
+            return None
         else:
-            created_utc = p.get("created_utc") or now
-
-        hours_since = max(0.1, (now - created_utc) / 3600.0)
-        mention_velocity = round((score + num_comments) / hours_since, 2)
-        subreddit = p.get("subreddit", "all")
-        permalink = p.get("permalink", "")
-        url = f"https://reddit.com{permalink}" if permalink else "https://reddit.com"
-
-        post_id = p.get("id")
-        if not post_id:
-            parts = [seg for seg in permalink.strip("/").split("/") if seg]
-            if "comments" in parts:
-                idx = parts.index("comments")
-                if idx + 1 < len(parts):
-                    post_id = parts[idx + 1]
-            if not post_id:
-                post_id = str(abs(hash(title)))
-
-        signals.append({
-            "source": "Reddit",
-            "externalId": str(post_id),
-            "title": title.strip(),
-            "name": title.strip(),
-            "sourcePlatforms": ["Reddit", f"r/{subreddit}"],
-            "body": (p.get("selftext") or title).strip()[:2000],
-            "description": (p.get("selftext") or title).strip()[:400],
-            "url": url,
-            "mentionVelocity": mention_velocity,
-            "hoursSinceDetection": round(hours_since, 2),
-            "score": score,
-            "comments": num_comments,
-        })
-
-    return signals
+            print(f"  [Ingest/{label}] HTTP {response.status_code}: {response.text[:200]}")
+            return None
+    except requests.exceptions.ConnectionError:
+        print(f"  [Ingest/{label}] ERROR: Cannot connect to {INGEST_ENDPOINT}")
+        return None
+    except Exception as e:
+        print(f"  [Ingest/{label}] ERROR: {e}")
+        return None
 
 
-def scrape_hacker_news():
-    """Scrape HackerNews Firebase top stories with score > 20 using concurrent workers."""
-    from concurrent.futures import ThreadPoolExecutor
-
-    signals = []
+def trigger_clustering():
+    if not AUTO_CLUSTER:
+        return
     try:
-        top_res = requests.get("https://hacker-news.firebaseio.com/v0/topstories.json", timeout=10)
-        if top_res.status_code != 200:
-            print(f"[WORKER] HN topstories returned {top_res.status_code}", file=sys.stderr)
-            return []
-        story_ids = top_res.json()[:20]
-    except Exception as exc:
-        print(f"[WORKER] HN topstories error: {exc}", file=sys.stderr)
+        headers = {"Authorization": f"Bearer {PIPELINE_API_KEY}"}
+        response = requests.post(CLUSTER_ENDPOINT, headers=headers, timeout=60)
+
+        if response.status_code == 200:
+            data = response.json()
+            print(
+                f"  [Cluster] OK: {data.get('signalsProcessed', data.get('signalsExamined', 0))} processed, "
+                f"{data.get('clustersCreated', data.get('trendsCreated', 0))} new trends "
+                f"({data.get('provider', '?')}/{data.get('model', '?')})"
+            )
+        elif response.status_code == 503:
+            print("  [Cluster] LLM unavailable, will retry next cycle")
+        else:
+            print(f"  [Cluster] HTTP {response.status_code}")
+    except Exception as e:
+        print(f"  [Cluster] ERROR: {e}")
+
+
+def run_scraper(name, factory):
+    """Safely run a scraper factory and return its signals."""
+    print(f"\n[Scrape] {name}...")
+    try:
+        scraper = factory()
+        sigs = scraper.scrape()
+        print(f"  {name} total: {len(sigs)} signals")
+        return sigs
+    except Exception as e:
+        print(f"  {name} FAILED: {e}")
         return []
 
-    def fetch_item(sid):
-        try:
-            r = requests.get(f"https://hacker-news.firebaseio.com/v0/item/{sid}.json", timeout=6)
-            return r.json() if r.status_code == 200 else None
-        except Exception:
-            return None
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        items = list(filter(None, executor.map(fetch_item, story_ids)))
+def run_harvest_cycle(cycle_num):
+    print(f"\n{'=' * 50}")
+    print(f"  HARVEST CYCLE #{cycle_num} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'=' * 50}")
 
-    now = time.time()
-    for item in items:
-        if not item or not item.get("title"):
+    total_ingested = 0
+    source_results = []
+
+    scraper_registry = []
+    if ENABLE_REDDIT:
+        scraper_registry.append(("Reddit", "reddit", lambda: RedditScraper(max_per_sub=10)))
+    if ENABLE_HACKERNEWS:
+        scraper_registry.append(("Hacker News", "hackernews", lambda: HackerNewsScraper(max_stories=30)))
+    if ENABLE_TWITTER:
+        scraper_registry.append(
+            (
+                "Twitter/X",
+                "twitter",
+                lambda: TwitterScraper(
+                    max_per_query=8,
+                    bearer_token=TWITTER_BEARER_TOKEN or None,
+                ),
+            )
+        )
+    if ENABLE_PRODUCTHUNT:
+        scraper_registry.append(
+            (
+                "ProductHunt",
+                "producthunt",
+                lambda: ProductHuntScraper(
+                    token=PRODUCTHUNT_TOKEN or None,
+                    max_per_topic=10,
+                ),
+            )
+        )
+
+    for name, label, factory in scraper_registry:
+        sigs = run_scraper(name, factory)
+        if not sigs:
             continue
-        score = item.get("score", 0)
-        if score <= 20:
-            continue
 
-        item_time = item.get("time", now)
-        hours_since = max(0.1, (now - item_time) / 3600.0)
-        descendants = item.get("descendants", 0)
-        mention_velocity = round((score + descendants) / hours_since, 2)
-        sid = item.get("id")
-        url = item.get("url") or f"https://news.ycombinator.com/item?id={sid}"
+        if BATCH_PER_SOURCE:
+            # Ingest immediately per source so failure in one doesn't block others
+            result = ingest_signals(sigs, label=label)
+            if result:
+                total_ingested += result.get("ingested", result.get("stored", 0))
+        else:
+            source_results.extend(sigs)
 
-        signals.append({
-            "source": "HackerNews",
-            "externalId": str(sid),
-            "title": item["title"].strip(),
-            "name": item["title"].strip(),
-            "sourcePlatforms": ["HackerNews"],
-            "body": f"HackerNews discussion ({score} points, {descendants} comments): {url}",
-            "description": f"HackerNews discussion ({score} points, {descendants} comments): {url}",
-            "url": url,
-            "mentionVelocity": mention_velocity,
-            "hoursSinceDetection": round(hours_since, 2),
-            "score": score,
-            "comments": descendants,
-        })
+    # Combined ingestion mode
+    if not BATCH_PER_SOURCE and source_results:
+        print(f"\n[Ingest] Sending {len(source_results)} combined signals...")
+        result = ingest_signals(source_results, label="combined")
+        if result:
+            total_ingested = result.get("ingested", result.get("stored", 0))
 
-    return signals
+    # Cluster
+    if total_ingested > 0:
+        print(f"\n[Cluster] Triggering engine on {total_ingested} new signals...")
+        trigger_clustering()
+    else:
+        print("\n[Cluster] Skipping (no new signals ingested)")
+
+    print(f"\n  Cycle #{cycle_num} complete. Next in {SCRAPE_INTERVAL_SECONDS}s")
 
 
 def main():
+    banner()
     if not PIPELINE_API_KEY:
-        print("[WORKER] ERROR: PIPELINE_API_KEY environment variable is required.", file=sys.stderr)
-        sys.exit(1)
+        print("WARNING: PIPELINE_API_KEY not set in worker/.env")
+        print()
 
-    print(f"[WORKER] Starting scrape cycle at {datetime.now(timezone.utc).isoformat()}")
-    reddit_signals = scrape_reddit()
-    hn_signals = scrape_hacker_news()
-
-    all_signals = reddit_signals + hn_signals
-    # Cap at 60 measured signals per payload
-    payload_signals = all_signals[:60]
-
-    print(f"[WORKER] Gathered {len(reddit_signals)} Reddit signals, {len(hn_signals)} HN signals. Payload size: {len(payload_signals)} signals.")
-
-    headers = {
-        "Authorization": f"Bearer {PIPELINE_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    # Step 3 & 4: Ingest signals into RawSignals, then trigger cluster pass
-    for path in ("/api/pipeline/ingest", "/api/pipeline/cluster"):
-        payload = {"signals": payload_signals} if "ingest" in path else {}
+    cycle = 0
+    while True:
+        cycle += 1
         try:
-            r = requests.post(f"{TRENDLY_URL}{path}", json=payload, headers=headers, timeout=120)
-            print(f"[WORKER] {path} -> {r.status_code}: {r.text[:300]}")
-            if r.status_code not in (200, 201) and "ingest" in path:
-                print("[WORKER] Ingest failed, aborting cycle.", file=sys.stderr)
-                sys.exit(1)
-        except Exception as exc:
-            print(f"[WORKER] Request to {path} failed: {exc}", file=sys.stderr)
-            if "ingest" in path:
-                sys.exit(1)
+            run_harvest_cycle(cycle)
+        except KeyboardInterrupt:
+            print("\n\nWorker stopped.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"\n  FATAL ERROR in cycle #{cycle}: {e}")
+            time.sleep(30)
+            continue
 
-    sys.exit(0)
+        try:
+            time.sleep(SCRAPE_INTERVAL_SECONDS)
+        except KeyboardInterrupt:
+            print("\n\nWorker stopped.")
+            sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
-
