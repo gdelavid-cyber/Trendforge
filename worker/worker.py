@@ -12,6 +12,11 @@ from datetime import datetime, timezone
 import requests
 from dotenv import load_dotenv
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 load_dotenv()
 
 TRENDLY_URL = os.getenv("TRENDLY_URL", "http://localhost:3000").rstrip("/")
