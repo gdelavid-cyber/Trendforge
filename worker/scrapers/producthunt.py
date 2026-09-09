@@ -182,28 +182,47 @@ class ProductHuntScraper(BaseScraper):
         """No-auth fallback: parse the public RSS feed."""
         signals: List[Dict] = []
         try:
-            resp = self.session.get(self.RSS_URL, timeout=15)
+            # Feed-reader disguise: Cloudflare's edge lets known aggregator
+            # UAs through the browser-integrity check. Scoped to this
+            # request only — the GraphQL path needs application/json.
+            rss_headers = {
+                "User-Agent": "Feedly/1.0 (http://feedly.com; 1 subscriber)",
+                "Accept": "application/rss+xml, application/rdf+xml, application/xml;q=0.9, */*;q=0.8",
+            }
+            resp = self.session.get(self.RSS_URL, headers=rss_headers, timeout=15)
             if resp.status_code != 200:
                 print(f"  [PH RSS] HTTP {resp.status_code}")
                 return []
 
             xml = resp.text
 
-            # Each <item> block
+            # RSS 2.0 uses <item>; Atom (what PH actually serves) uses <entry>.
             items = re.findall(r"<item>(.*?)</item>", xml, re.DOTALL)
-            print(f"  [PH RSS] Found {len(items)} items")
+            is_atom = False
+            if not items:
+                items = re.findall(r"<entry>(.*?)</entry>", xml, re.DOTALL)
+                is_atom = True
+            print(f"  [PH RSS] Found {len(items)} items ({'atom' if is_atom else 'rss'})")
 
             for item in items[:60]:
                 try:
-                    title = self._xml_field(item, "title")
-                    link = self._xml_field(item, "link")
-                    desc = self._xml_field(item, "description")
+                    if is_atom:
+                        title = self._xml_field(item, "title")
+                        link_match = re.search(r'<link[^>]*href="([^"]+)"', item)
+                        link = link_match.group(1) if link_match else ""
+                        desc = self._xml_field(item, "summary") or self._xml_field(item, "content")
+                        id_source = link or self._xml_field(item, "id")
+                        slug_match = re.search(r"/posts/([a-z0-9-]+)", id_source)
+                    else:
+                        title = self._xml_field(item, "title")
+                        link = self._xml_field(item, "link")
+                        desc = self._xml_field(item, "description")
+                        slug_match = re.search(r"/posts/([a-z0-9-]+)", link)
 
                     if not title or not link:
                         continue
 
                     # Extract slug as external id
-                    slug_match = re.search(r"/posts/([a-z0-9-]+)", link)
                     external_id = slug_match.group(1) if slug_match else link
 
                     # Strip HTML from description

@@ -44,11 +44,19 @@ class RedditScraper(BaseScraper):
     def _scrape_subreddit(self, subreddit: str) -> List[Dict]:
         signals: List[Dict] = []
         try:
-            url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit={self.max_per_sub}"
-            response = self.session.get(url, timeout=15)
+            # Mobile-client disguise: datacenter IPs get 429s with bot UAs.
+            # raw_json=1 keeps entities unescaped for cleaner titles/bodies.
+            headers = {
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "max-age=0",
+            }
+            url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit={self.max_per_sub}&raw_json=1"
+            response = self.session.get(url, headers=headers, timeout=12)
             if response.status_code == 429:
                 time.sleep(10)
-                response = self.session.get(url, timeout=15)
+                response = self.session.get(url, headers=headers, timeout=12)
             if response.status_code != 200:
                 if self.use_stealth:
                     return self._stealth_scrape(subreddit)

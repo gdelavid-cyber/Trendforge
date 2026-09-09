@@ -21,13 +21,14 @@ class TwitterScraper(BaseScraper):
 
     source = "twitter"
 
-    # Nitter instance rotation (public mirrors)
+    # Nitter instance rotation — public mirrors decay fast (rate-limits,
+    # host shutdowns). Refresh against status.d420.de when yields drop.
     NITTER_INSTANCES = [
-        "https://nitter.privacyredirect.com",
-        "https://nitter.poast.org",
-        "https://nitter.tiekoetter.com",
-        "https://nitter.space",
-        "https://xcancel.com",
+        "https://nitter.net",
+        "https://nitter.cz",
+        "https://nitter.esma.red",
+        "https://nitter.unipg.it",
+        "https://n_itter.3971.duckdns.org",  # residential dns
     ]
 
     # Search queries mapped to categories
