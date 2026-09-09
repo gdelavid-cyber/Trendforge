@@ -227,7 +227,7 @@ export class OpenRouterClient {
       if (provider.apiKey && provider.apiKey.trim().length > 5 && !provider.apiKey.includes('your_')) {
         try {
           const fallbackModel = provider.provider === 'inferhub'
-            ? (process.env.INFERHUB_MODEL || 'ali/deepseek-v4-flash-0731')
+            ? (process.env.INFERHUB_MODEL || 'gemini-3.6-flash')
             : MODEL_TIERS[tier].fallback;
           const headers: Record<string, string> = {
             'Authorization': `Bearer ${provider.apiKey}`,

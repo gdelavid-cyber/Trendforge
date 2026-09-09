@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   const unprocessed = await prisma.rawSignal.findMany({
     where: { processed: false },
     orderBy: { createdAt: 'desc' },
-    take: 120,
+    take: 50,
   });
 
   if (unprocessed.length === 0) {

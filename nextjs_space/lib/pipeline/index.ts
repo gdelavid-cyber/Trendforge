@@ -379,7 +379,7 @@ export async function callLLM(messages: { role: string; content: string }[], jso
         endpoint = process.env.INFERHUB_BASE_URL
           ? `${process.env.INFERHUB_BASE_URL.replace(/\/$/, '')}/chat/completions`
           : 'https://api.inferhub.dev/v1/chat/completions';
-        model = process.env.INFERHUB_MODEL || 'ali/deepseek-v4-flash-0731';
+        model = process.env.INFERHUB_MODEL || 'gemini-3.6-flash';
         activeKey = process.env.INFERHUB_API_KEY;
       } else if (process.env.OPENAI_API_KEY) {
         endpoint = 'https://api.openai.com/v1/chat/completions';
@@ -393,9 +393,21 @@ export async function callLLM(messages: { role: string; content: string }[], jso
         activeKey = process.env.ABACUSAI_API_KEY;
       }
 
+      const formattedMessages = [...messages];
+      if (jsonMode) {
+        const hasJson = formattedMessages.some((m) => m.content && m.content.toLowerCase().includes('json'));
+        if (!hasJson && formattedMessages.length > 0) {
+          const last = formattedMessages[formattedMessages.length - 1];
+          formattedMessages[formattedMessages.length - 1] = {
+            ...last,
+            content: `${last.content}\nOutput valid JSON only.`,
+          };
+        }
+      }
+
       const body: any = {
         model,
-        messages,
+        messages: formattedMessages,
         max_tokens: 3000,
       };
       if (jsonMode) {
