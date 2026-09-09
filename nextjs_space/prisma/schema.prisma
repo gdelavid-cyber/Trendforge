@@ -2125,8 +2125,8 @@ enum BuyerLeadStatus {
 
 model PitchSession {
   id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   leadId        String?  // optional: practice against a real lead
   lead          BuyerLead? @relation(fields: [leadId], references: [id])
   executionId   String?

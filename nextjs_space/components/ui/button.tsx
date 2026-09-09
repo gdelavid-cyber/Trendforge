@@ -24,6 +24,12 @@ const buttonVariants = cva(
           "bg-[#FF6B9D] text-white shadow-[0_0_20px_rgba(255,107,157,0.3)] hover:bg-[#FF6B9D]/90 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,107,157,0.6)]",
         link:
           "text-[#00F0FF] underline-offset-4 hover:underline",
+        cyber:
+          "bg-gradient-to-r from-[#00F0FF] to-[#0088CC] text-black shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(0,240,255,0.6)]",
+        "cyber-blue":
+          "bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:scale-[1.02]",
+        "cyber-yellow":
+          "bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:scale-[1.02]",
       },
       size: {
         default: "h-11 px-7 py-3",
