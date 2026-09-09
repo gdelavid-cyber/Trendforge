@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Bot,
   Radio,
+  Rocket,
 } from 'lucide-react';
 import { TrendCategoryBadge } from '@/components/trends/trend-badge';
 import { Progress } from '@/components/ui/progress';
@@ -29,6 +30,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 import { BrainstormModal } from '@/components/earn/brainstorm-modal';
+import { ExecutionTimeline } from '@/components/execution/execution-timeline';
 
 interface TrendItem {
   id: string;
@@ -59,6 +61,8 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
   const [isDebriefOpen, setIsDebriefOpen] = useState(false);
   const [isBrainstormOpen, setIsBrainstormOpen] = useState(false);
   const [selectedTrend, setSelectedTrend] = useState<{ id: string; name: string; taskId?: string } | null>(null);
+  const [executionIdMap, setExecutionIdMap] = useState<Record<string, string>>({});
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
 
   const handleDeploySwarmFromTrend = (trend: TrendItem) => {
     const firstTaskId = trend.tasks?.[0]?.id;
@@ -68,6 +72,29 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
       taskId: firstTaskId,
     });
     setIsBrainstormOpen(true);
+  };
+
+  const handleExecuteToRevenue = async (trendId: string) => {
+    setLaunchingId(trendId);
+    toast.info('Initiating 6-stage revenue execution pipeline...');
+    try {
+      const res = await fetch('/api/execution/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trendId }),
+      });
+      const data = await res.json();
+      if (data.executionId) {
+        setExecutionIdMap((prev) => ({ ...prev, [trendId]: data.executionId }));
+        toast.success(data.resumed ? 'Resumed revenue execution' : 'Revenue execution pipeline active');
+      } else {
+        toast.error(data.error || 'Failed to start execution');
+      }
+    } catch {
+      toast.error('Network error starting execution');
+    } finally {
+      setLaunchingId(null);
+    }
   };
 
   const monetizableCount = trends.filter((t) => t.isMonetizable).length;
@@ -273,6 +300,20 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
 
                     <Button
                       size="sm"
+                      onClick={() => handleExecuteToRevenue(trend.id)}
+                      disabled={launchingId === trend.id}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold uppercase text-[10px] h-7 px-2.5 font-mono shadow-[0_0_12px_rgba(16,185,129,0.3)] shrink-0"
+                    >
+                      {launchingId === trend.id ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <Rocket className="w-3 h-3 mr-1 fill-current" />
+                      )}
+                      Execute to Revenue
+                    </Button>
+
+                    <Button
+                      size="sm"
                       onClick={() => handleDeploySwarmFromTrend(trend)}
                       className="cyan-gradient text-black font-extrabold uppercase text-[10px] h-7 px-2.5 font-mono shadow-[0_0_12px_rgba(0,240,255,0.3)] shrink-0"
                     >
@@ -280,6 +321,13 @@ export function TrendsClient({ trends: initialTrends }: { trends: TrendItem[] })
                     </Button>
                   </div>
                 </div>
+
+                {/* Live Revenue Execution Timeline */}
+                {executionIdMap[trend.id] && (
+                  <div className="mt-4 mb-2">
+                    <ExecutionTimeline executionId={executionIdMap[trend.id]} />
+                  </div>
+                )}
 
                 {/* Content Section: EITHER Actionable Tasks OR Daily News Briefing */}
                 {isMonetizable ? (

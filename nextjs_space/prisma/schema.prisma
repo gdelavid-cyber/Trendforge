@@ -146,6 +146,7 @@ model User {
   sales                 Sale[]
   leads                 Lead[]
   coPilotSessions       CoPilotSession[]
+  executions            TrendExecution[]
 
   @@index([role])
   @@index([email])
@@ -172,6 +173,8 @@ model Trend {
   createdAt           DateTime       @default(now())
 
   tasks               Task[]
+  signals             RawSignal[]
+  executions          TrendExecution[]
 
   @@index([status])
   @@index([detectedAt])
@@ -1909,9 +1912,12 @@ model RawSignal {
   url          String?
   body         String?
   score        Int      @default(0)
+  upvotes      Int      @default(0)
   comments     Int      @default(0)
   velocity     Float    @default(0)
+  subreddit    String?
   themeId      String?  // set once clustered into a Trend
+  trend        Trend?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
   processed    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
@@ -1933,5 +1939,76 @@ model InferHubTransfer {
 
   @@index([status])
   @@index([createdAt])
+}
+
+model TrendExecution {
+  id            String            @id @default(cuid())
+  trendId       String
+  trend         Trend             @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?             @relation(fields: [userId], references: [id])
+
+  status        TrendExecutionStatus @default(QUEUED)
+  currentStage  String?
+  progressPct   Int                  @default(0)
+
+  // Final assembled deliverable
+  revenueKit    Json?
+
+  startedAt     DateTime?
+  completedAt   DateTime?
+  approvedAt    DateTime?
+  totalCostUsd  Float                @default(0)
+  errorMessage  String?              @db.Text
+
+  stages        ExecutionStage[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([trendId])
+  @@index([status])
+  @@index([userId])
+}
+
+enum TrendExecutionStatus {
+  QUEUED
+  RUNNING
+  AWAITING_APPROVAL
+  COMPLETED
+  DEGRADED        // finished, but >=1 stage used fallback output
+  FAILED
+}
+
+model ExecutionStage {
+  id            String         @id @default(cuid())
+  executionId   String
+  execution     TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  stageKey      String         // "brainstorm" | "offer" | "assets" | "icp" | "outreach" | "close_kit"
+  ordinal       Int
+  status        StageStatus    @default(PENDING)
+
+  output        Json?
+  attempts      Int            @default(0)
+  usedFallback  Boolean        @default(false)
+  provider      String?
+  model         String?
+  latencyMs     Int            @default(0)
+  errorMessage  String?        @db.Text
+
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  @@unique([executionId, stageKey])
+  @@index([executionId])
+  @@index([status])
+}
+
+enum StageStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FALLBACK
+  FAILED
 }
 
