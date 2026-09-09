@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
+import { getReadyTasks } from '@/lib/tasks/ready';
 import { Header } from '@/components/layouts/header';
 import { EarnLandingClient } from './_components/earn-landing-client';
 
@@ -21,12 +22,9 @@ export default async function EarnLandingPage() {
 
   let tasks: any[] = [];
   try {
-    tasks = await prisma.task.findMany({
-      orderBy: { trendScore: 'desc' },
-      take: 6,
-    });
+    tasks = await getReadyTasks(6);
   } catch (e) {
-    console.error('Failed to load tasks for earn page:', e);
+    console.error('Failed to load ready tasks for earn page:', e);
   }
 
   return (
@@ -39,10 +37,10 @@ export default async function EarnLandingPage() {
           title: t.title,
           description: t.description,
           category: t.category,
-          estimatedEarningsLow: t.estimatedEarningsLow,
-          estimatedEarningsHigh: t.estimatedEarningsHigh,
-          timeToFirstDollar: t.timeToFirstDollar,
-          trendScore: t.trendScore,
+          estimatedEarningsLow: t.estimatedEarningsLow ?? t.earningsLow ?? 450,
+          estimatedEarningsHigh: t.estimatedEarningsHigh ?? t.earningsHigh ?? 1850,
+          timeToFirstDollar: t.timeToFirstDollar ?? '24-48 hrs',
+          trendScore: t.trendScore ?? 95,
         }))} 
       />
     </div>

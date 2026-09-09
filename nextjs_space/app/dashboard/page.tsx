@@ -7,6 +7,7 @@ import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
 import { DashboardClient } from './_components/dashboard-client';
 import { userRealIncomeUsdc } from '@/lib/money/ledger';
+import { getReadyTasks } from '@/lib/tasks/ready';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -27,17 +28,7 @@ export default async function DashboardPage() {
       },
     });
 
-    const now = new Date();
-    trendingMoves = await prisma.task.findMany({
-      where: {
-        OR: [
-          { isFeatured: true },
-          { qualityScore: { gte: 80 } },
-        ],
-      },
-      orderBy: { trendScore: 'desc' },
-      take: 6,
-    });
+    trendingMoves = await getReadyTasks(6);
 
     userTasks = await prisma.userTask.findMany({
       where: { userId },
