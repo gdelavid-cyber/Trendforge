@@ -9,6 +9,7 @@ export type ActivityKind =
   | 'kit_ready'
   | 'outreach_scheduled'
   | 'money_received'
+  | 'buyers_discovered'
   | 'execution_failed';
 
 export async function logActivity(params: {

@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { MoneyChoiceGate } from '@/components/execution/money-choice-gate';
 
 interface StageView {
   key: string;
@@ -243,80 +244,12 @@ export function ExecutionTimeline({
         </Card>
       )}
 
-      {/* Sell Fork: Choice of Manual vs AI Assists */}
+      {/* Money Choice Gate: Pre-Qualified Buyers + Practice Pitch Coach */}
       {exec.status === 'AWAITING_APPROVAL' && (
-        <Card className="border-2 border-emerald-500/40 bg-emerald-950/10 shadow-2xl backdrop-blur-md">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold text-emerald-400 flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                Execution Deliverable Ready — Choose Your Sales Route
-              </CardTitle>
-              <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                Decision Required
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Select how you want to execute sales. In both paths, zero messages are ever sent without your explicit review.
-            </p>
-          </CardHeader>
-
-          <CardContent className="pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Path A: User Sells */}
-              <div className="rounded-xl border border-border/70 bg-black/40 p-4 flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-cyan-400" />
-                    <h4 className="text-sm font-bold text-foreground">Path A: Manual Sales (Direct Control)</h4>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    You handle outreach manually using provided scripts, direct links, and daily routines. Complete human control over every contact.
-                  </p>
-                  <ul className="text-[11px] text-muted-foreground/90 space-y-1 list-disc list-inside">
-                    <li>Direct forum / Reddit in-thread reply scripts</li>
-                    <li>Manual copy-paste workflow</li>
-                    <li>Zero automated touching of third-party accounts</li>
-                  </ul>
-                </div>
-                <Button
-                  onClick={() => handleApprove('user')}
-                  disabled={approving !== null}
-                  className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs"
-                >
-                  {approving === 'user' ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : null}
-                  Choose Manual Sales
-                </Button>
-              </div>
-
-              {/* Path B: AI Assists */}
-              <div className="rounded-xl border border-border/70 bg-black/40 p-4 flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-emerald-400" />
-                    <h4 className="text-sm font-bold text-foreground">Path B: AI-Assisted Queue</h4>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    AI queues contextual outreach drafts for you to review, edit, and approve. Strict safety boundaries enforced.
-                  </p>
-                  <ul className="text-[11px] text-muted-foreground/90 space-y-1 list-disc list-inside">
-                    <li>AI drafts tailored message variants from signals</li>
-                    <li>Strict human approval gate on every send</li>
-                    <li>Never sends messages autonomously</li>
-                  </ul>
-                </div>
-                <Button
-                  onClick={() => handleApprove('ai_assists')}
-                  disabled={approving !== null}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs"
-                >
-                  {approving === 'ai_assists' ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : null}
-                  Queue With AI (Require My Approval)
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <MoneyChoiceGate
+          executionId={executionId}
+          leadCount={exec.revenueKit?.buyerLeadCount || 5}
+        />
       )}
 
       {/* Transparency Log (Real-Time Execution Events) */}

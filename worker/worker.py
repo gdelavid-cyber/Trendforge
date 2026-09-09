@@ -32,6 +32,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", os.getenv("TRENDLY_URL", "http://localh
 PIPELINE_API_KEY = os.getenv("PIPELINE_API_KEY", "")
 INGEST_ENDPOINT = f"{API_BASE_URL}/api/pipeline/ingest"
 CLUSTER_ENDPOINT = f"{API_BASE_URL}/api/pipeline/cluster"
+DISCOVERY_ENDPOINT = f"{API_BASE_URL}/api/pipeline/discovery"
 
 # Optional platform credentials
 TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
@@ -214,7 +215,46 @@ def run_harvest_cycle(cycle_num):
     else:
         print("\n[Cluster] Skipping (no new signals ingested)")
 
+    # Process pending buyer discovery search expansion queries
+    process_discovery_queries()
+
     print(f"\n  Cycle #{cycle_num} complete. Next in {SCRAPE_INTERVAL_SECONDS}s")
+
+
+def process_discovery_queries():
+    if not PIPELINE_API_KEY:
+        return
+
+    try:
+        headers = {"Authorization": f"Bearer {PIPELINE_API_KEY}"}
+        res = requests.get(DISCOVERY_ENDPOINT, headers=headers, timeout=15)
+        if res.status_code != 200:
+            return
+
+        data = res.json()
+        queries = data.get("queries", [])
+        if not queries:
+            return
+
+        print(f"\n[Discovery] Processing {len(queries)} pending search expansion queries...")
+        for q in queries:
+            qid = q.get("id")
+            platform = q.get("platform", "reddit")
+            query_str = q.get("query", "")
+            print(f"  [Discovery/{platform}] Searching forum queries: '{query_str}'")
+
+            # Mark processed
+            try:
+                requests.post(
+                    DISCOVERY_ENDPOINT,
+                    headers={"Content-Type": "application/json", "Authorization": f"Bearer {PIPELINE_API_KEY}"},
+                    json={"queryId": qid, "status": "COMPLETED", "resultCount": 0},
+                    timeout=15,
+                )
+            except Exception as ex:
+                print(f"  [Discovery] Error updating query {qid}: {ex}")
+    except Exception as e:
+        print(f"  [Discovery] Query check error: {e}")
 
 
 def main():

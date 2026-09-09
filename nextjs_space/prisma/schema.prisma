@@ -148,6 +148,8 @@ model User {
   coPilotSessions       CoPilotSession[]
   executions            TrendExecution[]
   activities            UserActivity[]
+  buyerLeads            BuyerLead[]
+  pitchSessions         PitchSession[]
 
   @@index([role])
   @@index([email])
@@ -1976,6 +1978,7 @@ model TrendExecution {
 
   stages        ExecutionStage[]
   events        ExecutionEvent[]
+  buyerLeads    BuyerLead[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
@@ -2062,5 +2065,114 @@ model UserActivity {
   @@index([userId, read])
   @@index([userId, createdAt])
 }
+
+model BuyerLead {
+  id            String   @id @default(cuid())
+  executionId   String
+  execution     TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+
+  // Where we found them
+  source        String   // "reddit" | "hackernews" | "twitter" | "producthunt" | "forum"
+  sourceUrl     String   // direct link to their post/comment
+  externalId    String   // post/comment ID for dedupe
+  authorHandle  String   // their username on the platform
+  authorProfileUrl String?
+
+  // What they said
+  postTitle     String?
+  postExcerpt   String   @db.Text  // the actual pain statement, in their words
+  postedAt      DateTime // when THEY posted, not when we found it
+
+  // Ranking signals
+  intentScore   Int      // 0-100, computed
+  intentReasons Json     // ["explicit budget mention", "urgency signal", "asking for solutions"]
+  engagement    Int      @default(0) // upvotes/likes on their post
+  replyCount    Int      @default(0)
+
+  // Contact pathways (never scraped emails — only public channels)
+  contactMethods Json    // [{"channel":"reddit_reply","how":"reply in-thread","effort":"low"}]
+
+  // User workflow
+  status        BuyerLeadStatus @default(NEW)
+  savedToShortlist Boolean @default(false)
+  userNotes     String?    @db.Text
+  pitchedAt     DateTime?
+  outcome       String?    // "no_reply" | "positive" | "objection" | "closed_won" | "closed_lost"
+
+  pitchSessions PitchSession[]
+
+  discoveredAt  DateTime @default(now())
+  lastCheckedAt DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([executionId, intentScore])
+  @@index([userId, status])
+  @@index([discoveredAt])
+}
+
+enum BuyerLeadStatus {
+  NEW           // just discovered
+  REVIEWED      // user has seen it
+  SHORTLISTED   // user starred it
+  PITCHED       // user sent something (self-reported)
+  RESPONDED     // user marked they got a reply
+  CLOSED_WON
+  CLOSED_LOST
+  DISMISSED     // user rejected the lead
+}
+
+model PitchSession {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  leadId        String?  // optional: practice against a real lead
+  lead          BuyerLead? @relation(fields: [leadId], references: [id])
+  executionId   String?
+
+  scenario      String   // "cold_reply" | "discovery_call" | "price_objection" | "custom"
+  buyerPersona  Json     // AI-generated buyer profile they're practicing against
+
+  turns         PitchTurn[]
+
+  score         Int?     // final score 0-100
+  strengths     Json?    // ["clear price anchor", "handled objection well"]
+  weaknesses    Json?    // ["didn't ask discovery questions"]
+
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  @@index([userId])
+}
+
+model PitchTurn {
+  id            String   @id @default(cuid())
+  sessionId     String
+  session       PitchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  ordinal       Int
+  speaker       String   // "user" | "buyer_bot"
+  message       String   @db.Text
+  critique      String?  @db.Text  // realtime feedback on user turns
+  createdAt     DateTime @default(now())
+
+  @@index([sessionId, ordinal])
+}
+
+model DiscoveryQuery {
+  id          String   @id @default(cuid())
+  executionId String
+  userId      String?
+  platform    String   // "reddit" | "twitter" | "hackernews"
+  query       String
+  reason      String?
+  status      String   @default("PENDING") // "PENDING" | "COMPLETED" | "FAILED"
+  runAt       DateTime?
+  resultCount Int?
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+}
+
 
 

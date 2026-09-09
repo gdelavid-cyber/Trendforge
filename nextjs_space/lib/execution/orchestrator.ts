@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { callLLM, extractJSON } from '@/lib/pipeline';
 import { STAGES, generatePlayableHtml, type StageContext, type StageDefinition } from './stages';
 import { logActivity, updateCheckpoint } from './activity';
+import { harvestWarmLeads, requestExpandedDiscovery } from '@/lib/money/buyers/discovery';
 
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [0, 1500, 4000];
@@ -295,12 +296,57 @@ export async function runExecution(executionId: string): Promise<void> {
     }
   }
 
+  // Harvest real pre-qualified buyers and enqueue expansion queries
+  let warmLeadCount = 0;
+  if (execution.userId) {
+    await updateCheckpoint(executionId, 'Finding real buyers who already posted about this');
+
+    const brainstormOut = priorOutputs.brainstorm as any;
+    const researchOut = priorOutputs.research as any;
+
+    const offer = brainstormOut?.offer || {
+      offer_name: execution.trend.name,
+      promise: researchOut?.summary || execution.trend.name,
+      pricing: { primary_usd: 150 },
+    };
+    const icp = researchOut?.icp || {
+      role_titles: ['Operator', 'Founder', 'Professional'],
+      industry: [execution.trend.category],
+      trigger_events: ['Market demand shift'],
+      disqualifiers: [],
+    };
+
+    const warmLeads = await harvestWarmLeads({
+      trendId: execution.trendId,
+      executionId,
+      userId: execution.userId,
+      offer,
+      icp: icp?.icp ?? icp,
+    });
+    warmLeadCount = warmLeads.length;
+
+    const queuedQueries = await requestExpandedDiscovery(
+      { trendId: execution.trendId, executionId, userId: execution.userId, offer, icp: icp?.icp ?? icp },
+      warmLeads.length
+    );
+
+    await logActivity({
+      userId: execution.userId,
+      executionId,
+      trendId: execution.trendId,
+      kind: 'buyers_discovered',
+      title: `Found ${warmLeads.length} pre-qualified buyers`,
+      detail: `${queuedQueries} additional search queries queued for the worker to expand your lead pool`,
+    });
+  }
+
   // Assemble deliverable
   const revenueKit = {
     trend: { id: execution.trend.id, name: execution.trend.name, category: execution.trend.category },
     generatedAt: new Date().toISOString(),
     degraded: anyFallback,
     preview: priorOutputs.preview,
+    buyerLeadCount: warmLeadCount,
     ...priorOutputs,
   };
 
@@ -312,7 +358,7 @@ export async function runExecution(executionId: string): Promise<void> {
       progressPct: 100,
       revenueKit: revenueKit as object,
       completedAt: new Date(),
-      lastCheckpoint: 'Waiting for your approval on outreach',
+      lastCheckpoint: `Found ${warmLeadCount} buyers — ready to pitch`,
       lastActivityAt: new Date(),
       errorMessage: anyFallback ? 'One or more stages used fallback output' : null,
     },
