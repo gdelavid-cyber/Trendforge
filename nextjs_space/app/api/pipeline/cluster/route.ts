@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
 import { validatePipelineKey, fingerprint, isDuplicate } from '@/lib/pipeline';
 import { getSessionUser, requireAdminUser } from '@/lib/core/route-auth';
+import { themeSlug } from '@/lib/tasks/ready';
 
 const MIN_SUPPORT = 3; // a theme needs 3+ posts to count as a trend
 
@@ -80,9 +81,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: 'Unparseable classifier output.' }, { status: 502 });
   }
 
-  const existing = await prisma.trend.findMany({ select: { name: true } });
-  const existingNames = new Set(existing.map((t) => t.name.toLowerCase()));
-
   let trendsCreated = 0;
   const usedIndices = new Set<number>();
 
@@ -92,7 +90,9 @@ export async function POST(request: Request) {
 
     const name = (theme.name || '').trim();
     if (!name) continue;
-    if (isDuplicate(name, existingNames, 0.45)) continue;
+
+    const category = theme.category ?? 'OTHER';
+    const slug = themeSlug(name, category);
 
     const backing = support.map((i) => unprocessed[i]).filter(Boolean);
     if (backing.length < MIN_SUPPORT) continue;
@@ -103,32 +103,52 @@ export async function POST(request: Request) {
     );
     const platforms = [...new Set(backing.map((s) => s.source))];
 
-    const trend = await prisma.trend.create({
-      data: {
-        name,
-        fingerprint: fingerprint(name),
-        sourcePlatforms: platforms,
-        mentionVelocity: velocity,
-        sentimentScore: 0,
-        confidence: 0.85,
-        monetizationScore: theme.isMonetizable ? 0.85 : 0.4,
-        category: theme.category ?? 'OTHER',
-        status: 'ACTIVE',
-        isMonetizable: Boolean(theme.isMonetizable),
-        monetizationRationale: theme.rationale ?? null,
-        newsSummary: `${backing.length} posts across ${platforms.join(', ')} reference this theme.`,
-        newsSourceUrl: backing[0]?.url ?? null,
-      },
+    const existingTrend = await prisma.trend.findUnique({
+      where: { slug },
     });
+
+    let trendId: string;
+    if (existingTrend) {
+      // Re-cluster refreshes Trend.updatedAt; if the theme is the same, bump velocity, don't insert a twin
+      const updatedTrend = await prisma.trend.update({
+        where: { id: existingTrend.id },
+        data: {
+          mentionVelocity: { increment: velocity },
+          updatedAt: new Date(),
+          status: 'ACTIVE',
+          sourcePlatforms: Array.from(new Set([...existingTrend.sourcePlatforms, ...platforms])),
+        },
+      });
+      trendId = updatedTrend.id;
+    } else {
+      const trend = await prisma.trend.create({
+        data: {
+          name,
+          slug,
+          fingerprint: fingerprint(name),
+          sourcePlatforms: platforms,
+          mentionVelocity: velocity,
+          sentimentScore: 0,
+          confidence: 0.85,
+          monetizationScore: theme.isMonetizable ? 0.85 : 0.4,
+          category,
+          status: 'ACTIVE',
+          isMonetizable: Boolean(theme.isMonetizable),
+          monetizationRationale: theme.rationale ?? null,
+          newsSummary: `${backing.length} posts across ${platforms.join(', ')} reference this theme.`,
+          newsSourceUrl: backing[0]?.url ?? null,
+        },
+      });
+      trendId = trend.id;
+      trendsCreated++;
+    }
 
     await prisma.rawSignal.updateMany({
       where: { id: { in: backing.map((b) => b.id) } },
-      data: { themeId: trend.id, processed: true },
+      data: { themeId: trendId, processed: true },
     });
 
     support.forEach((idx) => usedIndices.add(idx));
-    existingNames.add(name.toLowerCase());
-    trendsCreated++;
   }
 
   // signals that supported no theme are still processed — they just weren't trends

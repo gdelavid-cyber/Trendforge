@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { callLLM, extractJSON } from '@/lib/pipeline';
-import { STAGES, type StageContext, type StageDefinition } from './stages';
+import { STAGES, generatePlayableHtml, type StageContext, type StageDefinition } from './stages';
 
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [0, 1500, 4000];
@@ -17,11 +17,21 @@ interface StageResult {
 
 /**
  * Runs one stage with: retry -> JSON repair -> schema repair -> fallback.
- * This function CANNOT throw. It always returns a usable output.
+ * Emits real-time ExecutionEvent rows for transparency logging.
  */
-async function runStage(def: StageDefinition, ctx: StageContext): Promise<StageResult> {
+async function runStage(executionId: string, def: StageDefinition, ctx: StageContext): Promise<StageResult> {
   const started = Date.now();
   let lastError = '';
+
+  await db.executionEvent.create({
+    data: {
+      executionId,
+      actor: 'system',
+      stageKey: def.key,
+      message: `Stage initiated: ${def.label}`,
+      data: { description: def.description, ordinal: def.ordinal },
+    },
+  }).catch(() => {});
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     if (BACKOFF_MS[attempt - 1]) {
@@ -31,7 +41,6 @@ async function runStage(def: StageDefinition, ctx: StageContext): Promise<StageR
     try {
       const { system, user } = def.buildPrompt(ctx);
 
-      // On retry, tell the model what it got wrong
       const repairSuffix = lastError
         ? `\n\nYour previous response was rejected: ${lastError}. Fix that specifically.`
         : '';
@@ -47,6 +56,14 @@ async function runStage(def: StageDefinition, ctx: StageContext): Promise<StageR
       const content = typeof raw === 'string' ? raw : (raw as any)?.content ?? '';
       if (!content) {
         lastError = 'empty LLM response';
+        await db.executionEvent.create({
+          data: {
+            executionId,
+            actor: 'system',
+            stageKey: def.key,
+            message: `Attempt ${attempt} returned empty response. Retrying...`,
+          },
+        }).catch(() => {});
         continue;
       }
 
@@ -54,10 +71,17 @@ async function runStage(def: StageDefinition, ctx: StageContext): Promise<StageR
       try {
         parsed = JSON.parse(extractJSON(content));
       } catch {
-        // JSON repair: grab the outermost brace pair and retry parse
         const m = content.match(/\{[\s\S]*\}/);
         if (!m) {
           lastError = 'output was not JSON';
+          await db.executionEvent.create({
+            data: {
+              executionId,
+              actor: 'system',
+              stageKey: def.key,
+              message: `Attempt ${attempt} failed JSON parsing. Retrying with syntax repair...`,
+            },
+          }).catch(() => {});
           continue;
         }
         try {
@@ -71,6 +95,14 @@ async function runStage(def: StageDefinition, ctx: StageContext): Promise<StageR
       const check = def.validate(parsed);
       if (!check.ok) {
         lastError = check.reason || 'failed schema validation';
+        await db.executionEvent.create({
+          data: {
+            executionId,
+            actor: 'system',
+            stageKey: def.key,
+            message: `Attempt ${attempt} schema check rejected: ${lastError}`,
+          },
+        }).catch(() => {});
         continue;
       }
 
@@ -80,35 +112,66 @@ async function runStage(def: StageDefinition, ctx: StageContext): Promise<StageR
           ? 'OpenAI'
           : 'AbacusAI';
       const model = process.env.INFERHUB_MODEL || 'gemini-3.6-flash';
+      const latencyMs = Date.now() - started;
+
+      await db.executionEvent.create({
+        data: {
+          executionId,
+          actor: 'llm',
+          stageKey: def.key,
+          message: `Stage verified: ${def.label} produced via ${provider} (${latencyMs}ms)`,
+          data: { attempts: attempt, provider, model, latencyMs },
+        },
+      }).catch(() => {});
 
       return {
         output: parsed as Record<string, unknown>,
         usedFallback: false,
         provider,
         model,
-        latencyMs: Date.now() - started,
+        latencyMs,
         attempts: attempt,
       };
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
       console.error(`[Exec] ${def.key} attempt ${attempt} failed:`, lastError);
+      await db.executionEvent.create({
+        data: {
+          executionId,
+          actor: 'system',
+          stageKey: def.key,
+          message: `Attempt ${attempt} network/inference error: ${lastError}`,
+        },
+      }).catch(() => {});
     }
   }
 
-  // Guarantee point: every stage produces output, even with zero LLM availability.
-  console.warn(`[Exec] ${def.key} exhausted retries, using fallback. Last error: ${lastError}`);
+  // Fallback guarantee point
+  const latencyMs = Date.now() - started;
+  console.warn(`[Exec] ${def.key} exhausted retries, using deterministic fallback. Last error: ${lastError}`);
+  const fallbackOutput = def.fallback(ctx);
+
+  await db.executionEvent.create({
+    data: {
+      executionId,
+      actor: 'fallback',
+      stageKey: def.key,
+      message: `Fallback engaged for ${def.label}: synthesized signal-based deliverable`,
+      data: { error: lastError, attempts: MAX_ATTEMPTS, latencyMs },
+    },
+  }).catch(() => {});
+
   return {
-    output: def.fallback(ctx),
+    output: fallbackOutput,
     usedFallback: true,
-    latencyMs: Date.now() - started,
+    latencyMs,
     attempts: MAX_ATTEMPTS,
     error: lastError,
   };
 }
 
 /**
- * Runs (or resumes) a full execution. Idempotent — completed stages are skipped,
- * so this is safe to call repeatedly after a serverless timeout or crash.
+ * Runs (or resumes) a full execution work graph across all 6 stages.
  */
 export async function runExecution(executionId: string): Promise<void> {
   const execution = await db.trendExecution.findUnique({
@@ -127,7 +190,15 @@ export async function runExecution(executionId: string): Promise<void> {
     data: { status: 'RUNNING', startedAt: execution.startedAt ?? new Date() },
   });
 
-  // Rehydrate any already-finished stages so resume works
+  await db.executionEvent.create({
+    data: {
+      executionId,
+      actor: 'system',
+      stageKey: null,
+      message: `Execution pipeline active for trend "${execution.trend.name}" (6 stages)`,
+    },
+  }).catch(() => {});
+
   const priorOutputs: Record<string, unknown> = {};
   for (const s of execution.stages) {
     if ((s.status === 'COMPLETED' || s.status === 'FALLBACK') && s.output) {
@@ -138,7 +209,7 @@ export async function runExecution(executionId: string): Promise<void> {
   let anyFallback = execution.stages.some((s) => s.usedFallback);
 
   for (const def of STAGES) {
-    if (priorOutputs[def.key]) continue; // already done
+    if (priorOutputs[def.key]) continue;
 
     await db.executionStage.upsert({
       where: { executionId_stageKey: { executionId, stageKey: def.key } },
@@ -161,7 +232,15 @@ export async function runExecution(executionId: string): Promise<void> {
     });
 
     const ctx: StageContext = { trend: execution.trend, priorOutputs };
-    const result = await runStage(def, ctx);
+    const result = await runStage(executionId, def, ctx);
+
+    // If this is stage 5 (preview), ensure playableHtml is generated and attached
+    if (def.key === 'preview') {
+      const pOut = result.output;
+      if (!pOut.playableHtml) {
+        pOut.playableHtml = generatePlayableHtml(pOut);
+      }
+    }
 
     priorOutputs[def.key] = result.output;
     if (result.usedFallback) anyFallback = true;
@@ -182,11 +261,20 @@ export async function runExecution(executionId: string): Promise<void> {
     });
   }
 
-  // Assemble the deliverable
+  // Ensure playableHtml is explicitly present in preview block
+  if (priorOutputs.preview) {
+    const prevObj = priorOutputs.preview as Record<string, unknown>;
+    if (!prevObj.playableHtml) {
+      prevObj.playableHtml = generatePlayableHtml(prevObj);
+    }
+  }
+
+  // Assemble deliverable
   const revenueKit = {
     trend: { id: execution.trend.id, name: execution.trend.name, category: execution.trend.category },
     generatedAt: new Date().toISOString(),
     degraded: anyFallback,
+    preview: priorOutputs.preview,
     ...priorOutputs,
   };
 
@@ -201,13 +289,18 @@ export async function runExecution(executionId: string): Promise<void> {
       errorMessage: anyFallback ? 'One or more stages used fallback output' : null,
     },
   });
+
+  await db.executionEvent.create({
+    data: {
+      executionId,
+      actor: 'system',
+      stageKey: null,
+      message: 'Work graph complete. Playable preview generated. Awaiting user sales fork approval.',
+      data: { degraded: anyFallback },
+    },
+  }).catch(() => {});
 }
 
-/**
- * Sweeper: finds executions stuck in RUNNING past a timeout and resumes them.
- * Call from a cron. This is the second half of the completion guarantee —
- * a serverless kill mid-run cannot orphan an execution.
- */
 export async function resumeStalled(staleMinutes = 5): Promise<number> {
   const cutoff = new Date(Date.now() - staleMinutes * 60_000);
   const stalled = await db.trendExecution.findMany({

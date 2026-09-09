@@ -170,7 +170,9 @@ model Trend {
   newsSourceUrl       String?
   detectedAt          DateTime       @default(now())
   hoursSinceDetection Float          @default(0)
+  slug                String?        @unique
   createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @default(now()) @updatedAt
 
   tasks               Task[]
   signals             RawSignal[]
@@ -181,6 +183,7 @@ model Trend {
   @@index([category])
   @@index([isMonetizable])
   @@index([fingerprint])
+  @@index([slug])
 }
 
 model Task {
@@ -214,6 +217,7 @@ model Task {
   generatedAt           DateTime       @default(now())
   expiresAt             DateTime?
   trendScore            Float          @default(0)
+  status                TaskStatus     @default(PENDING)
 
   userTasks             UserTask[]
   successStories        SuccessStory[]
@@ -226,12 +230,20 @@ model Task {
   salesKits             SalesKit[]
 
   @@index([trendId])
+  @@index([status])
   @@index([difficulty])
   @@index([category])
   @@index([weekOf])
   @@index([isFeatured])
   @@index([isVerified])
   @@index([fingerprint])
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  ARCHIVED
 }
 
 model UserTask {
@@ -1962,6 +1974,7 @@ model TrendExecution {
   errorMessage  String?              @db.Text
 
   stages        ExecutionStage[]
+  events        ExecutionEvent[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
@@ -1984,7 +1997,7 @@ model ExecutionStage {
   executionId   String
   execution     TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
 
-  stageKey      String         // "brainstorm" | "offer" | "assets" | "icp" | "outreach" | "close_kit"
+  stageKey      String         // "research" | "brainstorm" | "work_plan" | "produce" | "preview" | "sell_fork"
   ordinal       Int
   status        StageStatus    @default(PENDING)
 
@@ -2010,5 +2023,19 @@ enum StageStatus {
   COMPLETED
   FALLBACK
   FAILED
+}
+
+model ExecutionEvent {
+  id          String         @id @default(cuid())
+  executionId String
+  execution   TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  at          DateTime       @default(now())
+  actor       String         // "system" | "llm" | "user" | "fallback"
+  stageKey    String?
+  message     String
+  data        Json?
+
+  @@index([executionId])
+  @@index([at])
 }
 

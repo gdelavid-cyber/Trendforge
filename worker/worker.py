@@ -44,8 +44,10 @@ ENABLE_TWITTER = os.getenv("ENABLE_TWITTER", "true").lower() == "true"
 ENABLE_PRODUCTHUNT = os.getenv("ENABLE_PRODUCTHUNT", "true").lower() == "true"
 
 # Polling configuration
-SCRAPE_INTERVAL_SECONDS = int(os.getenv("SCRAPE_INTERVAL", "300"))
+SCRAPE_INTERVAL_SECONDS = int(os.getenv("SCRAPE_INTERVAL", "180"))
 AUTO_CLUSTER = os.getenv("AUTO_CLUSTER", "true").lower() == "true"
+USE_STEALTH = os.getenv("USE_STEALTH", "true").lower() == "true"
+WORKER_MODE = os.getenv("WORKER_MODE", "daemon").lower()
 
 # Batch send config — ingest per source instead of one giant blob
 BATCH_PER_SOURCE = os.getenv("BATCH_PER_SOURCE", "true").lower() == "true"
@@ -57,7 +59,9 @@ def banner():
     print("  Autonomous Market Intelligence Engine")
     print("=" * 60)
     print(f"  API Target:       {API_BASE_URL}")
+    print(f"  Worker Mode:      {WORKER_MODE}")
     print(f"  Interval:         {SCRAPE_INTERVAL_SECONDS}s")
+    print(f"  Stealth Route:    {'ON (Scrapling)' if USE_STEALTH else 'off'}")
     print(f"  Auto-Cluster:     {AUTO_CLUSTER}")
     print(f"  API Key:          {'SET' if PIPELINE_API_KEY else 'MISSING'}")
     print(f"  Reddit:           {'ON' if ENABLE_REDDIT else 'off'}")
@@ -157,7 +161,7 @@ def run_harvest_cycle(cycle_num):
 
     scraper_registry = []
     if ENABLE_REDDIT:
-        scraper_registry.append(("Reddit", "reddit", lambda: RedditScraper(max_per_sub=10)))
+        scraper_registry.append(("Reddit", "reddit", lambda: RedditScraper(max_per_sub=10, use_stealth=USE_STEALTH)))
     if ENABLE_HACKERNEWS:
         scraper_registry.append(("Hacker News", "hackernews", lambda: HackerNewsScraper(max_stories=30)))
     if ENABLE_TWITTER:

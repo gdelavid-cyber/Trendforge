@@ -24,6 +24,8 @@ WRITING RULES (non-negotiable):
 - Write like a competent peer typing quickly. Varied sentence length. Contractions. Occasional lowercase.
 - Be concrete: real numbers, real tool names, real timeframes. Never hedge with "various" or "several".
 - No em-dashes used as dramatic pauses. No tricolon lists ("faster, cheaper, better").
+- Physical action discipline: No abstract steps like "research the market" or "plan strategy".
+  Every action must specify an exact tool, URL, or physical deliverable.
 `;
 
 function signalDigest(ctx: StageContext, n = 12): string {
@@ -31,7 +33,7 @@ function signalDigest(ctx: StageContext, n = 12): string {
     .slice(0, n)
     .map(
       (s) =>
-        `- [${s.source}${s.subreddit ? `/${s.subreddit}` : ''}, ${s.upvotes ?? s.score ?? 0}↑ ${s.comments}💬] ${s.title}`
+        `- [${s.source}${s.subreddit ? `/${s.subreddit}` : ''}, ${s.upvotes ?? s.score ?? 0}↑ ${s.comments}💬] ${s.title}${s.url ? ` (${s.url})` : ''}`
     )
     .join('\n');
 }
@@ -40,16 +42,378 @@ function sourceSpread(ctx: StageContext): string[] {
   return Array.from(new Set(ctx.trend.signals.map((s) => s.source)));
 }
 
-// ---------------------------------------------------------------- 1. BRAINSTORM
+function extractSignalUrls(ctx: StageContext): string[] {
+  return ctx.trend.signals
+    .map((s) => s.url)
+    .filter((u): u is string => typeof u === 'string' && u.startsWith('http'));
+}
+
+/**
+ * Generates an interactive, zero-dependency HTML5 slideshow/karaoke video preview player.
+ * Embedded directly inside an iframe srcDoc.
+ */
+export function generatePlayableHtml(previewData: unknown): string {
+  const data = (previewData ?? {}) as {
+    storyboard_frames?: Array<{
+      frame_num: number;
+      duration_sec: number;
+      headline: string;
+      subtitle: string;
+      visual_cue: string;
+      audio_script: string;
+    }>;
+    voiceover_script?: string;
+  };
+
+  const frames =
+    Array.isArray(data.storyboard_frames) && data.storyboard_frames.length > 0
+      ? data.storyboard_frames
+      : [
+          {
+            frame_num: 1,
+            duration_sec: 4,
+            headline: 'The Problem You Feel Every Day',
+            subtitle: 'Manual workflows draining hours of billable focus',
+            visual_cue: 'Terminal screen with error logs and manual data entry bottleneck',
+            audio_script: 'If you are tired of spending hours manually piecing together fragmented tools, this changes today.',
+          },
+          {
+            frame_num: 2,
+            duration_sec: 5,
+            headline: 'The Engineered Solution',
+            subtitle: 'Automated ingestion and real-time execution in one pipeline',
+            visual_cue: 'Clean telemetry dashboard lighting up with live processed signals',
+            audio_script: 'We built a purpose-driven engine that eliminates the friction entirely without complex migrations.',
+          },
+          {
+            frame_num: 3,
+            duration_sec: 4,
+            headline: 'Zero Upfront Risk',
+            subtitle: 'Fixed scope. Working deliverable or zero charge.',
+            visual_cue: 'Checklist of verified results and instant handover documentation',
+            audio_script: 'Fixed timeline, verified output, and you pay only after the deliverable is verified working.',
+          },
+        ];
+
+  const totalDuration = frames.reduce((acc, f) => acc + (f.duration_sec || 4), 0);
+  const safeJson = JSON.stringify(frames).replace(/</g, '\\u003c');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #090d16; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .player-container { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; }
+    .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; position: relative; background: radial-gradient(circle at 50% 40%, #172554 0%, #090d16 100%); overflow: hidden; text-align: center; }
+    .stage::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px); background-size: 24px 24px; pointer-events: none; }
+    .frame-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; z-index: 2; }
+    .headline { font-size: 24px; font-weight: 800; max-width: 640px; line-height: 1.25; margin-bottom: 8px; color: #ffffff; text-shadow: 0 2px 12px rgba(0,0,0,0.6); z-index: 2; }
+    .subtitle { font-size: 14px; font-weight: 500; color: #94a3b8; max-width: 540px; margin-bottom: 16px; z-index: 2; }
+    .visual-box { width: 92%; max-width: 580px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 12px 18px; margin-bottom: 14px; backdrop-filter: blur(10px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: left; z-index: 2; }
+    .visual-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 4px; }
+    .visual-cue { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; color: #38bdf8; line-height: 1.4; }
+    .karaoke-box { width: 92%; max-width: 640px; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 16px; z-index: 2; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+    .karaoke-text { font-size: 14px; line-height: 1.5; color: #64748b; font-weight: 500; }
+    .karaoke-word { display: inline; transition: color 0.15s ease, font-weight 0.15s ease; }
+    .karaoke-word.lit { color: #f8fafc; font-weight: 700; text-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
+    .controls { height: 56px; background: #080c14; border-top: 1px solid #1e293b; display: flex; align-items: center; padding: 0 16px; gap: 14px; z-index: 10; }
+    .play-btn { width: 34px; height: 34px; border-radius: 50%; background: #38bdf8; border: none; color: #090d16; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; font-weight: bold; transition: transform 0.15s, background 0.15s; }
+    .play-btn:hover { background: #7dd3fc; transform: scale(1.05); }
+    .time { font-family: monospace; font-size: 11px; color: #94a3b8; min-width: 65px; }
+    .progress-bar { flex: 1; height: 6px; background: #1e293b; border-radius: 3px; position: relative; cursor: pointer; }
+    .progress-fill { height: 100%; background: #38bdf8; width: 0%; border-radius: 3px; }
+    .frame-tabs { display: flex; gap: 6px; margin-left: auto; }
+    .frame-tab { padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: #94a3b8; cursor: pointer; }
+    .frame-tab.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+  </style>
+</head>
+<body>
+  <div class="player-container">
+    <div class="stage">
+      <div class="frame-badge" id="badge">SCENE 1 / ${frames.length}</div>
+      <div class="headline" id="headline"></div>
+      <div class="subtitle" id="subtitle"></div>
+      <div class="visual-box">
+        <div class="visual-label">Storyboard Visual Cue</div>
+        <div class="visual-cue" id="visualCue"></div>
+      </div>
+      <div class="karaoke-box">
+        <div class="karaoke-text" id="karaokeText"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="play-btn" id="playBtn">▶</button>
+      <div class="time" id="timeDisplay">0:00 / 0:${totalDuration.toString().padStart(2, '0')}</div>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="frame-tabs" id="frameTabs"></div>
+    </div>
+  </div>
+
+  <script>
+    const frames = ${safeJson};
+    let currentFrameIdx = 0;
+    let isPlaying = false;
+    let elapsedSec = 0;
+    let timer = null;
+    const totalSec = ${totalDuration};
+
+    let cum = 0;
+    const ranges = frames.map(f => {
+      const start = cum;
+      cum += (f.duration_sec || 4);
+      return { start, end: cum, frame: f };
+    });
+
+    const playBtn = document.getElementById('playBtn');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const progressFill = document.getElementById('progressFill');
+    const progressBar = document.getElementById('progressBar');
+    const badge = document.getElementById('badge');
+    const headline = document.getElementById('headline');
+    const subtitle = document.getElementById('subtitle');
+    const visualCue = document.getElementById('visualCue');
+    const karaokeText = document.getElementById('karaokeText');
+    const frameTabs = document.getElementById('frameTabs');
+
+    frames.forEach((f, i) => {
+      const b = document.createElement('button');
+      b.className = 'frame-tab' + (i === 0 ? ' active' : '');
+      b.textContent = 'S' + (i + 1);
+      b.onclick = () => jumpToFrame(i);
+      frameTabs.appendChild(b);
+    });
+
+    function renderFrame(idx, subSec) {
+      currentFrameIdx = idx;
+      const f = frames[idx];
+      badge.textContent = 'SCENE ' + (idx + 1) + ' / ' + frames.length + ' (' + f.duration_sec + 's)';
+      headline.textContent = f.headline;
+      subtitle.textContent = f.subtitle;
+      visualCue.textContent = f.visual_cue;
+
+      const words = (f.audio_script || '').split(/\\s+/);
+      const frac = Math.min(1, Math.max(0, subSec / (f.duration_sec || 4)));
+      const litCount = Math.floor(words.length * frac);
+
+      karaokeText.innerHTML = words.map((w, wi) => 
+        '<span class="karaoke-word ' + (wi <= litCount ? 'lit' : '') + '">' + w + ' </span>'
+      ).join('');
+
+      Array.from(frameTabs.children).forEach((t, i) => {
+        t.className = 'frame-tab' + (i === idx ? ' active' : '');
+      });
+    }
+
+    function updateTimeUI() {
+      const curM = Math.floor(elapsedSec / 60);
+      const curS = Math.floor(elapsedSec % 60);
+      const totM = Math.floor(totalSec / 60);
+      const totS = Math.floor(totalSec % 60);
+      timeDisplay.textContent = curM + ':' + curS.toString().padStart(2, '0') + ' / ' + totM + ':' + totS.toString().padStart(2, '0');
+      const pct = Math.min(100, (elapsedSec / totalSec) * 100);
+      progressFill.style.width = pct + '%';
+    }
+
+    function tick() {
+      if (!isPlaying) return;
+      elapsedSec += 0.1;
+      if (elapsedSec >= totalSec) {
+        elapsedSec = totalSec;
+        pause();
+      }
+      let targetIdx = 0;
+      let frameSubSec = 0;
+      for (let i = 0; i < ranges.length; i++) {
+        if (elapsedSec >= ranges[i].start && elapsedSec <= ranges[i].end) {
+          targetIdx = i;
+          frameSubSec = elapsedSec - ranges[i].start;
+          break;
+        }
+      }
+      renderFrame(targetIdx, frameSubSec);
+      updateTimeUI();
+    }
+
+    function play() {
+      if (elapsedSec >= totalSec) elapsedSec = 0;
+      isPlaying = true;
+      playBtn.textContent = '⏸';
+      timer = setInterval(tick, 100);
+    }
+
+    function pause() {
+      isPlaying = false;
+      playBtn.textContent = '▶';
+      if (timer) clearInterval(timer);
+    }
+
+    function jumpToFrame(i) {
+      elapsedSec = ranges[i].start;
+      renderFrame(i, 0);
+      updateTimeUI();
+    }
+
+    playBtn.onclick = () => {
+      if (isPlaying) pause(); else play();
+    };
+
+    progressBar.onclick = (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(1, clickX / rect.width));
+      elapsedSec = pct * totalSec;
+      let targetIdx = 0;
+      for (let i = 0; i < ranges.length; i++) {
+        if (elapsedSec >= ranges[i].start && elapsedSec <= ranges[i].end) {
+          targetIdx = i;
+          break;
+        }
+      }
+      renderFrame(targetIdx, elapsedSec - ranges[targetIdx].start);
+      updateTimeUI();
+    };
+
+    renderFrame(0, 0);
+    updateTimeUI();
+  </script>
+</body>
+</html>`;
+}
+
+// ---------------------------------------------------------------- 1. RESEARCH
+
+const research: StageDefinition = {
+  key: 'research',
+  ordinal: 1,
+  label: 'Research & Evidence',
+  description: 'Evidence brief, competitor breakdown, and operational boundaries',
+  temperature: 0.4,
+  buildPrompt: (ctx) => ({
+    system: `You are a forensic market research analyst. You extract verifiable market signals, breakdown existing competitors, and identify hard operational boundaries (what to do vs what never to do).
+
+${STYLE_RULES}
+
+Output JSON only:
+{
+  "evidence_brief": {
+    "summary": string,
+    "volume_analysis": string,
+    "core_pain_points": string[],
+    "market_timing": string
+  },
+  "competitors": [
+    {
+      "name": string,
+      "url": string,
+      "what_they_do": string,
+      "pricing_estimate": string,
+      "critical_flaw": string
+    }
+  ],
+  "do_and_dont": {
+    "do": string[],
+    "dont": string[]
+  },
+  "open_questions": [
+    {
+      "question": string,
+      "answered_by_evidence": string
+    }
+  ]
+}
+
+Ensure at least 2 competitors are analyzed with realistic URLs, pricing, and critical flaws. Provide at least 3 concrete DOs and 3 concrete DONTs.`,
+    user: `Trend: "${ctx.trend.name}"
+Category: ${ctx.trend.category}
+Corroborating sources: ${sourceSpread(ctx).join(', ')} (${ctx.trend.signals.length} signals)
+
+Raw signal evidence:
+${signalDigest(ctx, 15)}
+
+Perform the research analysis. Extract genuine pain points from those quotes.`,
+  }),
+  validate: (o) => {
+    const d = o as {
+      evidence_brief?: { summary?: string; core_pain_points?: unknown[] };
+      competitors?: unknown[];
+      do_and_dont?: { do?: unknown[]; dont?: unknown[] };
+    };
+    if (!d.evidence_brief?.summary || !Array.isArray(d.evidence_brief.core_pain_points))
+      return { ok: false, reason: 'missing evidence_brief.summary or core_pain_points' };
+    if (!Array.isArray(d.competitors) || d.competitors.length < 1)
+      return { ok: false, reason: 'need >=1 competitor' };
+    if (!Array.isArray(d.do_and_dont?.do) || !Array.isArray(d.do_and_dont?.dont))
+      return { ok: false, reason: 'missing do_and_dont lists' };
+    return { ok: true };
+  },
+  fallback: (ctx) => ({
+    evidence_brief: {
+      summary: `Market demand for ${ctx.trend.name} is evidenced by ${ctx.trend.signals.length} verified signals across ${sourceSpread(ctx).join(', ')}. Users consistently report operational friction, manual data overhead, and poor tooling integration.`,
+      volume_analysis: `${ctx.trend.signals.length} active threads across ${sourceSpread(ctx).length} communities in the current 72h harvest window.`,
+      core_pain_points: [
+        `Manual repetitive execution in ${ctx.trend.category} causing lost hours`,
+        'Existing solutions charge enterprise rates without providing simple turnkey results',
+        'Lack of clear handover documentation and verified SLAs',
+      ],
+      market_timing: 'High intent: users are publicly seeking solutions now before standardizing workflows.',
+    },
+    competitors: [
+      {
+        name: 'Legacy Custom Agencies',
+        url: 'https://google.com/search?q=' + encodeURIComponent(`${ctx.trend.category} agency`),
+        what_they_do: 'Bill hourly for manual integration sprints with vague deliverables',
+        pricing_estimate: '$3,000 - $8,000 upfront',
+        critical_flaw: 'Slow turnaround (4-8 weeks), non-transparent scopes, zero money-back guarantee',
+      },
+      {
+        name: 'Generic SaaS Plugins',
+        url: 'https://zapier.com/apps',
+        what_they_do: 'Low-code connector recipes that still require extensive configuration',
+        pricing_estimate: '$49 - $199/month',
+        critical_flaw: 'Breaks on edge cases, requires buyer to configure and debug their own system',
+      },
+    ],
+    do_and_dont: {
+      do: [
+        'Quote the buyer\'s exact language back to them in your initial outreach',
+        'Offer a 100% money-back guarantee with zero upfront deposit for the first 3 clients',
+        'Provide a 10-day fixed delivery sprint with clear scope boundaries',
+      ],
+      dont: [
+        'Never sell "consulting" or open-ended hourly retainers',
+        'Never automate message sending without human approval gates',
+        'Never claim features before they are tested against real user inputs',
+      ],
+    },
+    open_questions: [
+      {
+        question: 'Will buyers pay for an external sprint vs building internally?',
+        answered_by_evidence: 'Yes, because the signals indicate teams lack bandwidth to triage this themselves.',
+      },
+    ],
+    _degraded: true,
+  }),
+};
+
+// ---------------------------------------------------------------- 2. BRAINSTORM
 
 const brainstorm: StageDefinition = {
   key: 'brainstorm',
-  ordinal: 1,
-  label: 'Brainstorm',
-  description: 'Generate and score multiple monetization angles',
-  temperature: 0.7,
-  buildPrompt: (ctx) => ({
-    system: `You are a ruthless business analyst. You generate multiple distinct monetization angles for a market signal, then score them honestly. You kill weak ideas rather than dressing them up.
+  ordinal: 2,
+  label: 'Brainstorm & Angles',
+  description: '4 monetization angles with cited URLs, kill risks, and physical next actions',
+  temperature: 0.65,
+  buildPrompt: (ctx) => {
+    const urls = extractSignalUrls(ctx).slice(0, 10);
+    return {
+      system: `You are a pragmatic product strategist. You generate 4 monetization angles for a verified market trend.
+Every angle must include real cited URLs from the source evidence, a hard kill risk, and at least 5 concrete physical next actions (e.g. "Register account at https://...", "Deploy template to Vercel", "Send 5 verified DMs").
 
 ${STYLE_RULES}
 
@@ -67,166 +431,258 @@ Output JSON only:
       "competition_density": "empty" | "thin" | "crowded" | "saturated",
       "why_now": string,
       "kill_risk": string,
-      "score": number
+      "score": number,
+      "cited_urls": string[],
+      "next_actions": string[]
     }
   ],
   "recommended_index": number,
   "recommendation_reason": string
 }
 
-Generate exactly 4 angles. Score 0-100 weighting: speed to revenue 40%, margin 30%, competition gap 20%, evidence strength 10%. Be willing to score something under 30 if it deserves it.`,
-    user: `Trend: "${ctx.trend.name}"
+CRITICAL CONSTRAINTS:
+- Generate exactly 4 angles.
+- cited_urls in the recommended angle MUST contain at least 3 URLs from the provided signal URLs.
+- next_actions in the recommended angle MUST contain at least 5 physical, concrete actions. No abstract planning.`,
+      user: `Trend: "${ctx.trend.name}"
 Category: ${ctx.trend.category}
-Why it clustered: ${ctx.trend.monetizationRationale || 'n/a'}
-Corroborating sources: ${sourceSpread(ctx).join(', ')} (${ctx.trend.signals.length} signals)
+Verified Signal URLs:
+${urls.length > 0 ? urls.join('\n') : 'https://reddit.com/r/smallbusiness\nhttps://news.ycombinator.com\nhttps://producthunt.com'}
 
-Raw evidence:
-${signalDigest(ctx)}
+Signal text:
+${signalDigest(ctx, 10)}
 
-Give me 4 monetization angles and tell me which one to actually do.`,
-  }),
+Generate the 4 angles with cited URLs and physical next actions.`,
+    };
+  },
   validate: (o) => {
-    const d = o as { angles?: unknown[]; recommended_index?: number };
+    const d = o as {
+      angles?: Array<{ cited_urls?: unknown[]; next_actions?: unknown[] }>;
+      recommended_index?: number;
+    };
     if (!Array.isArray(d.angles) || d.angles.length < 2)
       return { ok: false, reason: 'need >=2 angles' };
-    if (typeof d.recommended_index !== 'number')
-      return { ok: false, reason: 'missing recommended_index' };
-    if (d.recommended_index < 0 || d.recommended_index >= d.angles.length)
+    if (typeof d.recommended_index !== 'number' || d.recommended_index < 0 || d.recommended_index >= d.angles.length)
       return { ok: false, reason: 'recommended_index out of range' };
+    
+    const chosen = d.angles[d.recommended_index];
+    const allUrls = d.angles.flatMap((a) => (Array.isArray(a.cited_urls) ? a.cited_urls : []));
+    if (allUrls.length < 3)
+      return { ok: false, reason: 'need >=3 cited_urls across angles' };
+    if (!Array.isArray(chosen.next_actions) || chosen.next_actions.length < 5)
+      return { ok: false, reason: 'recommended angle requires >=5 concrete next_actions' };
     return { ok: true };
   },
-  fallback: (ctx) => ({
-    angles: [
-      {
-        name: `Done-for-you ${ctx.trend.name} service`,
-        one_liner: `Manually solve ${ctx.trend.name} for people already complaining about it publicly.`,
-        who_pays: 'Individuals and small teams posting about this problem',
-        what_they_pay_for: 'Their time back and a working result they did not have to build',
-        model: 'one-off',
-        price_point_usd: 500,
-        speed_to_revenue_days: 7,
-        competition_density: 'thin',
-        why_now: `${ctx.trend.signals.length} independent posts across ${sourceSpread(ctx).join(', ')} in the current window`,
-        kill_risk: 'Does not scale without hiring; validate willingness to pay before systematizing',
-        score: 62,
-      },
-      {
-        name: `${ctx.trend.name} productized subscription`,
-        one_liner: 'Same outcome, delivered on a recurring basis at a fixed monthly price.',
-        who_pays: 'Teams with the problem continuously rather than once',
-        what_they_pay_for: 'Ongoing handling without a hire',
-        model: 'subscription',
-        price_point_usd: 149,
-        speed_to_revenue_days: 21,
-        competition_density: 'thin',
-        why_now: 'Recurring complaint pattern suggests recurring need',
-        kill_risk: 'Higher build cost before first dollar',
-        score: 54,
-      },
-    ],
-    recommended_index: 0,
-    recommendation_reason:
-      'Fallback generated without model inference. Service-first is chosen because it reaches revenue fastest and validates demand before build cost. Re-run this stage when inference is available.',
-    _degraded: true,
-  }),
+  fallback: (ctx) => {
+    const signalUrls = extractSignalUrls(ctx);
+    const validUrls = signalUrls.length >= 3 ? signalUrls.slice(0, 3) : [
+      'https://reddit.com/r/smallbusiness',
+      'https://news.ycombinator.com',
+      'https://producthunt.com',
+    ];
+
+    return {
+      angles: [
+        {
+          name: `Done-for-you ${ctx.trend.name} Sprint`,
+          one_liner: `Solve ${ctx.trend.name} for teams actively posting complaints, delivered in a 7-day sprint.`,
+          who_pays: 'Operators and founders experiencing this manual bottleneck',
+          what_they_pay_for: 'Turnkey resolution without having to hire or waste internal dev hours',
+          model: 'one-off',
+          price_point_usd: 1250,
+          speed_to_revenue_days: 7,
+          competition_density: 'thin',
+          why_now: `${ctx.trend.signals.length} corroborating signals in the last harvest window`,
+          kill_risk: 'High touch fulfillment; must productize scope into standard steps after client #3',
+          score: 82,
+          cited_urls: validUrls,
+          next_actions: [
+            'Create a free Stripe account at https://dashboard.stripe.com/register for invoice generation',
+            'Draft the 3-step one-pager summarizing the fix and export to PDF or web link',
+            'Post direct value reply to 3 cited signal threads offering the free diagnostic breakdown',
+            'Collect confirmation and send Stripe payment link for 50% kickoff deposit',
+            'Deliver completed handover document with 14 days of async support',
+          ],
+        },
+        {
+          name: `${ctx.trend.name} Managed Retainer`,
+          one_liner: 'Continuous weekly maintenance and optimization for businesses with recurring volume.',
+          who_pays: 'Growing companies with recurring instances of this problem',
+          what_they_pay_for: 'Peace of mind and guaranteed same-day response SLA',
+          model: 'retainer',
+          price_point_usd: 499,
+          speed_to_revenue_days: 14,
+          competition_density: 'thin',
+          why_now: 'Consistent weekly recurring pain points mentioned in forum discussions',
+          kill_risk: 'Scope creep; requires strict SLA definitions',
+          score: 68,
+          cited_urls: validUrls,
+          next_actions: [
+            'Set up Calendly booking link at https://calendly.com for 20-minute scope triage',
+            'Create a recurring Stripe subscription product titled "Monthly Support"',
+            'Reach out to founders who engaged with the one-pager sprint',
+            'Deliver weekly digest report showing hours saved and errors prevented',
+            'Establish automated alerting via Slack or Discord webhook',
+          ],
+        },
+      ],
+      recommended_index: 0,
+      recommendation_reason:
+        'Fixed-scope sprint reaches revenue fastest (7 days) and validates willingness to pay with zero build overhead.',
+      _degraded: true,
+    };
+  },
 };
 
-// ---------------------------------------------------------------- 2. OFFER
+// ---------------------------------------------------------------- 3. WORK PLAN
 
-const offer: StageDefinition = {
-  key: 'offer',
-  ordinal: 2,
-  label: 'Offer Design',
-  description: 'Lock the winning angle into a concrete, priced offer',
+const workPlan: StageDefinition = {
+  key: 'work_plan',
+  ordinal: 3,
+  label: 'Work Plan & Tooling',
+  description: 'Required tools, honest account guidance, timeline, and execution steps',
   temperature: 0.4,
-  buildPrompt: (ctx) => {
-    const bs = ctx.priorOutputs.brainstorm as {
-      angles: Array<Record<string, unknown>>;
-      recommended_index: number;
-    };
-    const chosen = bs?.angles?.[bs?.recommended_index ?? 0] ?? {};
-    return {
-      system: `You turn a rough business angle into a specific, sellable offer with a price, a scope, and a guarantee. You are allergic to vagueness.
+  buildPrompt: (ctx) => ({
+    system: `You are an operations architect. You translate a chosen business angle into a concrete work plan.
+Be totally honest about tooling boundaries: the user creates their own accounts and inputs their own keys. The agent configures templates and drafts assets.
 
 ${STYLE_RULES}
 
 Output JSON only:
 {
-  "offer_name": string,
-  "promise": string,
-  "deliverables": [{"item": string, "detail": string}],
-  "explicitly_not_included": string[],
-  "pricing": {
-    "model": string,
-    "primary_usd": number,
-    "tiers": [{"name": string, "price_usd": number, "for_whom": string, "includes": string[]}]
-  },
-  "delivery_timeline_days": number,
-  "guarantee": string,
-  "cost_to_deliver_usd": number,
-  "gross_margin_pct": number,
-  "minimum_viable_scope": string,
-  "first_ten_customers_plan": string
+  "tools": [
+    {
+      "name": string,
+      "purpose": string,
+      "cost_usd_per_mo": number,
+      "url": string
+    }
+  ],
+  "accounts_you_create": [
+    {
+      "service": string,
+      "url": string,
+      "user_action": string,
+      "agent_action": string
+    }
+  ],
+  "estimated_hours_to_launch": number,
+  "blockers_to_clear": string[],
+  "step_by_step_plan": [
+    {
+      "step": number,
+      "title": string,
+      "duration_hours": number,
+      "owner": "user" | "agent",
+      "instructions": string
+    }
+  ]
 }
 
-The guarantee must be specific and actually honorable, not "satisfaction guaranteed". Margin must be arithmetically consistent with price and cost.`,
-      user: `Chosen angle:
-${JSON.stringify(chosen, null, 2)}
+Provide at least 2 required accounts with exact signup links, and at least 4 numbered steps.`,
+    user: `Brainstorm angle:
+${JSON.stringify(ctx.priorOutputs.brainstorm ?? {}, null, 2)}
 
-Source trend: "${ctx.trend.name}" (${ctx.trend.category})
-Evidence:
-${signalDigest(ctx, 8)}
+Trend: "${ctx.trend.name}" (${ctx.trend.category})
 
-Design the offer. Price it so it is obviously worth it to the buyer and still 70%+ margin to me.`,
-    };
-  },
+Build the operational work plan. Be precise on links and user vs agent duties.`,
+  }),
   validate: (o) => {
-    const d = o as { offer_name?: string; pricing?: { primary_usd?: number }; deliverables?: unknown[] };
-    if (!d.offer_name) return { ok: false, reason: 'missing offer_name' };
-    if (!d.pricing || typeof d.pricing.primary_usd !== 'number')
-      return { ok: false, reason: 'missing pricing.primary_usd' };
-    if (!Array.isArray(d.deliverables) || d.deliverables.length === 0)
-      return { ok: false, reason: 'need >=1 deliverable' };
+    const d = o as {
+      tools?: unknown[];
+      accounts_you_create?: unknown[];
+      step_by_step_plan?: unknown[];
+    };
+    if (!Array.isArray(d.accounts_you_create) || d.accounts_you_create.length < 1)
+      return { ok: false, reason: 'missing accounts_you_create' };
+    if (!Array.isArray(d.step_by_step_plan) || d.step_by_step_plan.length < 2)
+      return { ok: false, reason: 'need >=2 steps in step_by_step_plan' };
     return { ok: true };
   },
   fallback: (ctx) => ({
-    offer_name: `${ctx.trend.name} — Fixed-Scope Sprint`,
-    promise: `A working solution to ${ctx.trend.name} delivered in 10 business days, or you do not pay.`,
-    deliverables: [
-      { item: 'Discovery call', detail: '45 minutes, recorded, with a written scope doc after' },
-      { item: 'Built solution', detail: 'Implemented and handed over with documentation' },
-      { item: 'Handover session', detail: '30 minutes walkthrough plus 14 days of email support' },
+    tools: [
+      {
+        name: 'Stripe',
+        purpose: 'Process client payments and issue invoices via direct links',
+        cost_usd_per_mo: 0,
+        url: 'https://stripe.com',
+      },
+      {
+        name: 'Vercel',
+        purpose: 'Host landing page and playable preview artifacts',
+        cost_usd_per_mo: 0,
+        url: 'https://vercel.com',
+      },
+      {
+        name: 'Notion / Google Docs',
+        purpose: 'Deliver the client handover document and scope confirmation',
+        cost_usd_per_mo: 0,
+        url: 'https://notion.so',
+      },
     ],
-    explicitly_not_included: ['Ongoing maintenance after 14 days', 'Third-party tool subscription costs'],
-    pricing: {
-      model: 'fixed-fee',
-      primary_usd: 1500,
-      tiers: [
-        { name: 'Sprint', price_usd: 1500, for_whom: 'One clear problem', includes: ['Discovery', 'Build', 'Handover'] },
-        { name: 'Sprint + Retainer', price_usd: 1500, for_whom: 'Ongoing need', includes: ['Everything in Sprint', '$400/mo support'] },
-      ],
-    },
-    delivery_timeline_days: 10,
-    guarantee: 'If it is not working by day 10, you pay nothing and keep whatever was built.',
-    cost_to_deliver_usd: 300,
-    gross_margin_pct: 80,
-    minimum_viable_scope: 'Solve the single most-mentioned variant of the problem from the source signals.',
-    first_ten_customers_plan:
-      'Reply directly to the people whose posts generated this trend. They are pre-qualified by having publicly stated the problem.',
+    accounts_you_create: [
+      {
+        service: 'Stripe',
+        url: 'https://dashboard.stripe.com/register',
+        user_action: 'Create account, activate payouts with bank account, generate payment link',
+        agent_action: 'Agent formats product name, price tiers, and invoice memo copy',
+      },
+      {
+        service: 'Reddit / Platform Account',
+        url: 'https://reddit.com/register',
+        user_action: 'Log in with your existing aged account to send human replies',
+        agent_action: 'Agent drafts tailored response copy; user copies and pastes with approval',
+      },
+    ],
+    estimated_hours_to_launch: 4,
+    blockers_to_clear: [
+      'Stripe account verification required for live customer card payments',
+      'Target lead verification: verify posters are still active in target subreddits',
+    ],
+    step_by_step_plan: [
+      {
+        step: 1,
+        title: 'Account Verification & Payment Link',
+        duration_hours: 0.5,
+        owner: 'user',
+        instructions: 'Open Stripe dashboard, click Create Payment Link for $1,250, copy the generated URL.',
+      },
+      {
+        step: 2,
+        title: 'Generate Production Deliverables',
+        duration_hours: 1.0,
+        owner: 'agent',
+        instructions: 'Assemble one-pager markdown, landing copy, and karaoke video script.',
+      },
+      {
+        step: 3,
+        title: 'Targeted Outreach Review',
+        duration_hours: 1.0,
+        owner: 'user',
+        instructions: 'Review drafted replies to the 3 cited signal threads. Make sure names and references match.',
+      },
+      {
+        step: 4,
+        title: 'Send & Close First Discovery',
+        duration_hours: 1.5,
+        owner: 'user',
+        instructions: 'Post responses, share the free asset with responders, and book first 15-minute scope review.',
+      },
+    ],
     _degraded: true,
   }),
 };
 
-// ---------------------------------------------------------------- 3. ASSETS
+// ---------------------------------------------------------------- 4. PRODUCE
 
-const assets: StageDefinition = {
-  key: 'assets',
-  ordinal: 3,
-  label: 'Sales Assets',
-  description: 'Landing page, demo script, proof artifacts',
+const produce: StageDefinition = {
+  key: 'produce',
+  ordinal: 4,
+  label: 'Production Deliverables',
+  description: 'Landing copy, one-pager markdown, and full video package',
   temperature: 0.55,
   buildPrompt: (ctx) => ({
-    system: `You write conversion copy that does not sound like conversion copy. Plain, specific, confident.
+    system: `You write concrete sales and marketing deliverables. Plain, authoritative, concise.
 
 ${STYLE_RULES}
 
@@ -244,372 +700,398 @@ Output JSON only:
     "cta_primary": string,
     "cta_secondary": string
   },
-  "demo_script": {
-    "duration_minutes": number,
-    "beats": [{"minute": number, "what_you_show": string, "what_you_say": string}]
-  },
-  "free_value_asset": {
-    "title": string,
-    "format": string,
-    "outline": string[],
-    "why_it_earns_the_reply": string
+  "one_pager_markdown": string,
+  "video_package": {
+    "voiceover_script": string,
+    "timed_scenes": [
+      {
+        "scene_num": number,
+        "duration_sec": number,
+        "visual_description": string,
+        "narration": string,
+        "on_screen_text": string
+      }
+    ],
+    "storyboard": [
+      {
+        "frame_num": number,
+        "title": string,
+        "layout": string,
+        "prompt_for_visual": string
+      }
+    ]
   }
 }
 
-The free_value_asset is the thing you give away in cold outreach to earn a reply. It must be genuinely useful standalone and take you under 60 minutes to produce.`,
-    user: `Offer:
-${JSON.stringify(ctx.priorOutputs.offer, null, 2)}
+The one_pager_markdown must be complete markdown ready to save as a file or paste into Notion.
+The timed_scenes must contain at least 3 distinct scenes with duration, narration, and on-screen text.`,
+    user: `Offer & Work Plan:
+${JSON.stringify({ brainstorm: ctx.priorOutputs.brainstorm, work_plan: ctx.priorOutputs.work_plan }, null, 2)}
 
-Original pain, in their words:
-${signalDigest(ctx, 10)}
+Trend: "${ctx.trend.name}" (${ctx.trend.category})
+Signal evidence:
+${signalDigest(ctx, 8)}
 
-Write the assets. Mirror their actual vocabulary from those posts.`,
+Generate the landing page, full one-pager markdown, and video package.`,
   }),
   validate: (o) => {
-    const d = o as { landing_page?: { headline?: string }; free_value_asset?: { title?: string } };
-    if (!d.landing_page?.headline) return { ok: false, reason: 'missing landing_page.headline' };
-    if (!d.free_value_asset?.title) return { ok: false, reason: 'missing free_value_asset' };
-    return { ok: true };
-  },
-  fallback: (ctx) => {
-    const off = ctx.priorOutputs.offer as { offer_name?: string; promise?: string; pricing?: { primary_usd?: number } };
-    return {
-      landing_page: {
-        headline: off?.promise || `${ctx.trend.name}, handled.`,
-        subhead: 'Fixed price. Fixed timeline. You do not pay if it does not work.',
-        problem_section: `People keep running into ${ctx.trend.name}. We saw ${ctx.trend.signals.length} separate posts about it in the last window.`,
-        solution_section: off?.offer_name || 'A fixed-scope engagement that solves it and hands it over.',
-        how_it_works: [
-          { step: 1, text: '45 minute call to scope it' },
-          { step: 2, text: 'We build it in 10 business days' },
-          { step: 3, text: 'Handover plus 14 days of support' },
-        ],
-        proof_elements: ['Written scope before any payment', 'Pay-on-delivery guarantee'],
-        pricing_section: `$${off?.pricing?.primary_usd ?? 1500} fixed.`,
-        faq: [
-          { q: 'What if it does not work?', a: 'You do not pay and you keep what was built.' },
-          { q: 'How fast?', a: '10 business days from the scope call.' },
-        ],
-        cta_primary: 'Book the scope call',
-        cta_secondary: 'Send me the sample first',
-      },
-      demo_script: {
-        duration_minutes: 12,
-        beats: [
-          { minute: 0, what_you_show: 'Their own words on screen', what_you_say: 'This is the post that got you on my list.' },
-          { minute: 2, what_you_show: 'The broken current state', what_you_say: 'Here is what this costs you weekly.' },
-          { minute: 5, what_you_show: 'Working solution', what_you_say: 'Here is the same thing, fixed.' },
-          { minute: 10, what_you_show: 'Price and timeline', what_you_say: 'Fixed fee, 10 days, no payment until it works.' },
-        ],
-      },
-      free_value_asset: {
-        title: `${ctx.trend.name}: the 3 workarounds people are actually using`,
-        format: 'One-page PDF',
-        outline: ['The problem in one paragraph', 'Workaround A with tradeoffs', 'Workaround B', 'Workaround C', 'When each breaks down'],
-        why_it_earns_the_reply: 'It is useful whether or not they hire anyone, which is what makes it worth opening.',
-      },
-      _degraded: true,
+    const d = o as {
+      landing_page?: { headline?: string };
+      one_pager_markdown?: string;
+      video_package?: { timed_scenes?: unknown[] };
     };
-  },
-};
-
-// ---------------------------------------------------------------- 4. ICP
-
-const icp: StageDefinition = {
-  key: 'icp',
-  ordinal: 4,
-  label: 'Buyer Targeting',
-  description: 'Define who buys and where to find them',
-  temperature: 0.4,
-  buildPrompt: (ctx) => ({
-    system: `You define a buyer profile and the exact public places to find them. You output SEARCH STRATEGIES, not contact lists — the operator sources contacts themselves through compliant channels.
-
-${STYLE_RULES}
-
-Output JSON only:
-{
-  "icp": {
-    "role_titles": string[],
-    "company_size": string,
-    "industry": string[],
-    "trigger_events": string[],
-    "disqualifiers": string[]
-  },
-  "warm_first": {
-    "explanation": string,
-    "source_signal_urls": string[]
-  },
-  "discovery_channels": [
-    {"channel": string, "search_query": string, "expected_volume_per_week": number, "notes": string}
-  ],
-  "qualification_checklist": string[],
-  "compliance_notes": {
-    "consent_basis": string,
-    "required_disclosures": string[],
-    "suppression_rules": string[]
-  }
-}
-
-warm_first.source_signal_urls must be drawn from the actual signal URLs provided — these are people who publicly stated the problem, which is the highest-intent list that exists and requires no scraping.`,
-    user: `Offer:
-${JSON.stringify(ctx.priorOutputs.offer, null, 2)}
-
-Actual signal URLs (people who publicly described this pain):
-${ctx.trend.signals.slice(0, 15).map((s) => s.url).filter(Boolean).join('\n')}
-
-Who buys this, and where do I find more of them?`,
-  }),
-  validate: (o) => {
-    const d = o as { icp?: { role_titles?: unknown }; discovery_channels?: unknown[] };
-    if (!d.icp?.role_titles) return { ok: false, reason: 'missing icp.role_titles' };
-    if (!Array.isArray(d.discovery_channels) || d.discovery_channels.length === 0)
-      return { ok: false, reason: 'need >=1 discovery channel' };
+    if (!d.landing_page?.headline) return { ok: false, reason: 'missing landing_page.headline' };
+    if (typeof d.one_pager_markdown !== 'string' || d.one_pager_markdown.length < 50)
+      return { ok: false, reason: 'missing or short one_pager_markdown' };
+    if (!d.video_package?.timed_scenes || !Array.isArray(d.video_package.timed_scenes) || d.video_package.timed_scenes.length < 2)
+      return { ok: false, reason: 'need >=2 timed_scenes in video_package' };
     return { ok: true };
   },
   fallback: (ctx) => ({
-    icp: {
-      role_titles: ['Founder', 'Operations Manager', 'Head of Growth', 'Owner'],
-      company_size: '1-50 employees',
-      industry: [ctx.trend.category],
-      trigger_events: ['Publicly posted about this exact problem', 'Recently hired for an adjacent role'],
-      disqualifiers: ['Already bought a competing solution in the last 90 days', 'No budget authority'],
+    landing_page: {
+      headline: `${ctx.trend.name}: Solved in 7 Days Without Internal Overhead`,
+      subhead: 'Fixed price. Guaranteed delivery. Pay only when the workflow is verified running.',
+      problem_section: `Teams in ${ctx.trend.category} lose dozens of hours every month wrestling with manual bottlenecks. Recent public discussions across multiple communities highlight the exact same friction.`,
+      solution_section: `We provide a focused, 7-day engineering sprint that resolves ${ctx.trend.name} completely and hands over full ownership to your team.`,
+      how_it_works: [
+        { step: 1, text: '20-minute scope alignment to audit your current workflow' },
+        { step: 2, text: 'We build and configure the solution in 7 business days' },
+        { step: 3, text: 'Handover session, full documentation, and 14 days of direct support' },
+      ],
+      proof_elements: [
+        'Written scope document before any engagement kickoff',
+        'Zero upfront charge for pilot partners; pay on verified completion',
+      ],
+      pricing_section: '$1,250 fixed one-time sprint fee.',
+      faq: [
+        { q: 'What if it does not fit our tech stack?', a: 'We audit your stack during the 20-minute scope call. If it is not a direct fit, we tell you immediately.' },
+        { q: 'Who owns the code and setup?', a: 'You own 100% of the deliverables and documentation from day one.' },
+      ],
+      cta_primary: 'Claim Sprint Slot',
+      cta_secondary: 'Read Free Technical Breakdown',
     },
-    warm_first: {
-      explanation:
-        'The highest-intent list is the people whose posts created this trend. They stated the problem publicly and unprompted. Reply in-thread or via the platform first, before any cold channel.',
-      source_signal_urls: ctx.trend.signals.slice(0, 15).map((s) => s.url).filter(Boolean) as string[],
-    },
-    discovery_channels: [
-      { channel: 'Reddit search', search_query: `"${ctx.trend.name}" site:reddit.com`, expected_volume_per_week: 15, notes: 'Reply in-thread with value, do not DM cold' },
-      { channel: 'LinkedIn', search_query: `${ctx.trend.category} operations manager`, expected_volume_per_week: 25, notes: 'Connect with a note referencing a specific post of theirs' },
-    ],
-    qualification_checklist: [
-      'Have they described this problem in their own words in the last 90 days?',
-      'Do they have budget authority or direct access to it?',
-      'Is the cost of the problem to them clearly above the offer price?',
-    ],
-    compliance_notes: {
-      consent_basis: 'Legitimate interest for B2B business contacts; obtain opt-in for anything else',
-      required_disclosures: ['Real sender name', 'Real business address', 'One-click unsubscribe in every email'],
-      suppression_rules: ['Remove on any negative reply', 'Never contact twice after a no', 'Honor unsubscribe within 24h'],
+    one_pager_markdown: `# ${ctx.trend.name} — Technical Architecture & Execution Brief
+
+## Executive Summary
+This document outlines the turnkey resolution for ${ctx.trend.name} in ${ctx.trend.category}. 
+Designed for fast execution, low maintenance overhead, and immediate ROI within 7 business days.
+
+## The Core Problem
+- Manual repetitive triage wasting senior engineer and operator hours.
+- Fragile legacy workarounds that break silently under load.
+- Disconnected tooling creating data silos across platforms.
+
+## The 7-Day Sprint Scope
+1. **Day 1-2: Audit & Protocol Mapping** — Inspect endpoints, schema requirements, and authentication mechanisms.
+2. **Day 3-5: Engine Build & Integration** — Deploy core logic, automated error recovery, and webhook dispatchers.
+3. **Day 6: Telemetry & Load Validation** — Test against peak volume scenarios with zero data drop.
+4. **Day 7: Handover & Documentation** — Complete walkthrough recording, credential handover, and emergency checklist.
+
+## Pricing & Terms
+- **Fee:** $1,250 fixed fee.
+- **Guarantee:** 100% money-back if not delivered to agreed acceptance criteria within 7 business days.
+`,
+    video_package: {
+      voiceover_script: 'Every week, teams waste hours manually handling this bottleneck. Here is how we solved it in a 7-day sprint with zero internal dev hiring.',
+      timed_scenes: [
+        {
+          scene_num: 1,
+          duration_sec: 4,
+          visual_description: 'Screen recording showing manual error triage and frustrated engineer comments',
+          narration: 'If you are tired of spending hours manually piecing together fragmented tools, this changes today.',
+          on_screen_text: 'Manual overhead: 12 hrs/week lost',
+        },
+        {
+          scene_num: 2,
+          duration_sec: 5,
+          visual_description: 'Clean modern dashboard streaming processed events in real time',
+          narration: 'We built an automated pipeline that eliminates the manual triage entirely without complex migrations.',
+          on_screen_text: 'Automated 7-Day Turnkey Solution',
+        },
+        {
+          scene_num: 3,
+          duration_sec: 4,
+          visual_description: 'Handover checklist showing completed deliverables and verified results',
+          narration: 'Fixed scope, verified output, and you pay only after the deliverable is verified working.',
+          on_screen_text: '100% Guaranteed. Fixed Price.',
+        },
+      ],
+      storyboard: [
+        {
+          frame_num: 1,
+          title: 'The Manual Frustration',
+          layout: 'Split screen: terminal errors on left, clock ticking on right',
+          prompt_for_visual: 'Dark mode terminal interface displaying painful manual workflow bottlenecks',
+        },
+        {
+          frame_num: 2,
+          title: 'The Automated Solution',
+          layout: 'Hero telemetry screen with glowing success badges',
+          prompt_for_visual: 'Modern high-contrast analytics dashboard with real-time signal processing',
+        },
+        {
+          frame_num: 3,
+          title: 'The Guaranteed Handover',
+          layout: 'Centered offer card with 7-day sprint timeline',
+          prompt_for_visual: 'Clean pricing card with 100% money-back guarantee badge and fast delivery icon',
+        },
+      ],
     },
     _degraded: true,
   }),
 };
 
-// ---------------------------------------------------------------- 5. OUTREACH
+// ---------------------------------------------------------------- 5. PREVIEW
 
-const outreach: StageDefinition = {
-  key: 'outreach',
+const preview: StageDefinition = {
+  key: 'preview',
   ordinal: 5,
-  label: 'Outreach Sequences',
-  description: 'Drafted messages, personalization slots, follow-ups',
-  temperature: 0.6,
+  label: 'Playable Video Preview',
+  description: 'Karaoke/slideshow interactive preview player and shot list',
+  temperature: 0.5,
   buildPrompt: (ctx) => ({
-    system: `You write cold outreach that gets replies because it leads with something already done for the recipient, not because it is clever.
+    system: `You construct a playable video preview package for a productized sprint.
+Include storyboard frames, a shot list, full voiceover script, and clean slide content.
 
 ${STYLE_RULES}
 
-Additional rules:
-- Under 90 words for email body. Under 50 for LinkedIn.
-- Open with a specific observation about THEM, never about you.
-- The ask is always small and reversible ("want me to send it?" not "book a 30 min call").
-- Personalization slots use {{double_brace}} and must be things a human can fill in 20 seconds.
-- Every email includes a real signoff and an unsubscribe line.
-
 Output JSON only:
 {
-  "sequences": [
+  "storyboard_frames": [
     {
-      "channel": "email" | "linkedin" | "in_thread_reply",
-      "steps": [
-        {
-          "step": number,
-          "send_day": number,
-          "subject": string,
-          "body": string,
-          "personalization_slots": [{"token": string, "how_to_fill": string, "example": string}],
-          "goal": string
-        }
-      ]
+      "frame_num": number,
+      "duration_sec": number,
+      "headline": string,
+      "subtitle": string,
+      "visual_cue": string,
+      "audio_script": string
     }
   ],
-  "daily_send_cap": number,
-  "cap_rationale": string,
-  "reply_handling": {"positive": string, "objection": string, "negative": string, "no_reply_after_sequence": string}
+  "shot_list": [
+    {
+      "shot_num": number,
+      "camera_angle": string,
+      "subject": string,
+      "timing_sec": number
+    }
+  ],
+  "voiceover_script": string
 }
 
-daily_send_cap must be conservative (under 30) with a rationale about deliverability, not volume.`,
-    user: `Offer: ${JSON.stringify(ctx.priorOutputs.offer, null, 2)}
-Free value asset: ${JSON.stringify((ctx.priorOutputs.assets as Record<string, unknown>)?.free_value_asset, null, 2)}
-Buyer: ${JSON.stringify((ctx.priorOutputs.icp as Record<string, unknown>)?.icp, null, 2)}
+Provide at least 3 storyboard frames with realistic timings (3-6 seconds each) and punchy audio scripts.`,
+    user: `Deliverables:
+${JSON.stringify(ctx.priorOutputs.produce ?? {}, null, 2)}
 
-Their actual language:
-${signalDigest(ctx, 8)}
+Trend: "${ctx.trend.name}" (${ctx.trend.category})
 
-Write the sequences. Lead with the free asset.`,
+Construct the video preview frames.`,
   }),
   validate: (o) => {
-    const d = o as { sequences?: Array<{ steps?: unknown[] }>; daily_send_cap?: number };
-    if (!Array.isArray(d.sequences) || d.sequences.length === 0)
-      return { ok: false, reason: 'no sequences' };
-    if (!d.sequences.every((s) => Array.isArray(s.steps) && s.steps.length > 0))
-      return { ok: false, reason: 'sequence with no steps' };
-    if (typeof d.daily_send_cap !== 'number') return { ok: false, reason: 'missing daily_send_cap' };
+    const d = o as { storyboard_frames?: unknown[]; shot_list?: unknown[] };
+    if (!Array.isArray(d.storyboard_frames) || d.storyboard_frames.length < 2)
+      return { ok: false, reason: 'need >=2 storyboard_frames' };
     return { ok: true };
   },
   fallback: (ctx) => {
-    const fva = (ctx.priorOutputs.assets as { free_value_asset?: { title?: string } })?.free_value_asset;
-    return {
-      sequences: [
-        {
-          channel: 'in_thread_reply',
-          steps: [
+    const prod = (ctx.priorOutputs.produce ?? {}) as {
+      video_package?: {
+        voiceover_script?: string;
+        timed_scenes?: Array<{
+          scene_num: number;
+          duration_sec: number;
+          visual_description: string;
+          narration: string;
+          on_screen_text: string;
+        }>;
+      };
+    };
+
+    const scenes = prod.video_package?.timed_scenes;
+    const frames =
+      scenes && scenes.length > 0
+        ? scenes.map((s, i) => ({
+            frame_num: s.scene_num || i + 1,
+            duration_sec: s.duration_sec || 4,
+            headline: s.on_screen_text || `Scene ${i + 1}`,
+            subtitle: `Step ${i + 1} in the turnkey solution`,
+            visual_cue: s.visual_description,
+            audio_script: s.narration,
+          }))
+        : [
             {
-              step: 1,
-              send_day: 0,
-              subject: '(n/a - forum reply)',
-              body: `saw your post about {{their_specific_problem}}. i put together a one-pager on the three workarounds people are using for this — happy to drop the link if useful, no strings.`,
-              personalization_slots: [
-                { token: '{{their_specific_problem}}', how_to_fill: 'Quote 4-6 words from their actual post', example: 'syncing invoices between two systems' },
-              ],
-              goal: 'Get permission to send the asset',
-            },
-          ],
-        },
-        {
-          channel: 'email',
-          steps: [
-            {
-              step: 1,
-              send_day: 0,
-              subject: `{{their_problem_in_3_words}}`,
-              body: `{{first_name}} — you mentioned {{their_specific_problem}} on {{where}}.\n\nI wrote up "${fva?.title ?? 'a short breakdown'}" covering how a few people are handling it. It's one page, no pitch.\n\nWant me to send it over?\n\n{{your_name}}\n{{your_business}} · {{your_address}}\nReply STOP and I won't contact you again.`,
-              personalization_slots: [
-                { token: '{{first_name}}', how_to_fill: 'Their first name', example: 'Dana' },
-                { token: '{{their_specific_problem}}', how_to_fill: 'Quote from their post', example: 'losing 6 hours a week to manual scheduling' },
-                { token: '{{where}}', how_to_fill: 'Platform + subreddit/thread', example: 'r/smallbusiness' },
-              ],
-              goal: 'Permission-based reply',
+              frame_num: 1,
+              duration_sec: 4,
+              headline: `Stop Wasting Hours on ${ctx.trend.name}`,
+              subtitle: 'The bottleneck costing your team momentum every single week',
+              visual_cue: 'Terminal showing continuous manual friction and error retry logs',
+              audio_script: `If your team is losing hours to ${ctx.trend.name}, you are not alone. It is one of the most complained about bottlenecks this month.`,
             },
             {
-              step: 2,
-              send_day: 4,
-              subject: 'Re: {{their_problem_in_3_words}}',
-              body: `Sent it anyway in case it's useful: {{asset_link}}\n\nIf {{their_specific_problem}} is still costing you time, I do fixed-scope work on exactly this. Happy to say more or happy to leave you alone.\n\n{{your_name}}\nReply STOP to opt out.`,
-              personalization_slots: [
-                { token: '{{asset_link}}', how_to_fill: 'Link to the hosted one-pager', example: 'https://...' },
-              ],
-              goal: 'Deliver value, soft offer',
+              frame_num: 2,
+              duration_sec: 5,
+              headline: 'Automated 7-Day Sprint',
+              subtitle: 'Full turnkey deployment with zero internal engineering required',
+              visual_cue: 'Clean telemetry dashboard lighting up with live processed signals',
+              audio_script: 'We built a tested, direct integration that solves it end-to-end and delivers full documentation in seven days.',
             },
-          ],
-        },
+            {
+              frame_num: 3,
+              duration_sec: 4,
+              headline: 'Fixed Price. Pay On Delivery.',
+              subtitle: '100% money-back guarantee with zero upfront commitment',
+              visual_cue: 'Verified handover document and checklist with instant download link',
+              audio_script: 'Fixed $1,250 fee, seven days, and you pay only after the deliverable is verified working.',
+            },
+          ];
+
+    const fallbackData = {
+      storyboard_frames: frames,
+      shot_list: [
+        { shot_num: 1, camera_angle: 'Screen capture, tight zoom', subject: 'Bottleneck logs', timing_sec: 4 },
+        { shot_num: 2, camera_angle: 'Wide desktop angle', subject: 'Automated dashboard', timing_sec: 5 },
+        { shot_num: 3, camera_angle: 'Static clean graphic', subject: 'Handover guarantee', timing_sec: 4 },
       ],
-      daily_send_cap: 20,
-      cap_rationale:
-        'Under 25/day per mailbox keeps you inside normal human sending patterns. Above that, ESP reputation systems start sampling you and deliverability degrades permanently, which costs far more than the extra volume gains.',
-      reply_handling: {
-        positive: 'Send the asset immediately, then ask one qualifying question. Do not pitch in the same message.',
-        objection: 'Acknowledge the specific objection, give one concrete counter, offer to leave it. Never argue twice.',
-        negative: 'One-line thanks, add to suppression list permanently.',
-        no_reply_after_sequence: 'Stop. Add to a 6-month re-approach list, not a re-send list.',
-      },
+      voiceover_script:
+        prod.video_package?.voiceover_script ||
+        frames.map((f) => f.audio_script).join(' '),
       _degraded: true,
+    };
+
+    return {
+      ...fallbackData,
+      playableHtml: generatePlayableHtml(fallbackData),
     };
   },
 };
 
-// ---------------------------------------------------------------- 6. CLOSE KIT
+// ---------------------------------------------------------------- 6. SELL FORK
 
-const closeKit: StageDefinition = {
-  key: 'close_kit',
+const sellFork: StageDefinition = {
+  key: 'sell_fork',
   ordinal: 6,
-  label: 'Close Kit',
-  description: 'Call script, objections, proposal, payment setup',
+  label: 'Sales Fork (User vs AI)',
+  description: 'Choice between manual execution and AI-assisted queued sales with approval gate',
   temperature: 0.45,
-  buildPrompt: (ctx) => ({
-    system: `You prepare everything needed to convert a reply into a paid invoice.
+  buildPrompt: (ctx) => {
+    const urls = extractSignalUrls(ctx).slice(0, 5);
+    return {
+      system: `You prepare the sales execution fork for the operator.
+There are two explicit paths:
+Path A: The human operator sells manually (direct links, manual routines, full control).
+Path B: AI assists by queuing tailored outreach drafts, with a HARD APPROVAL GATE.
+The AI will NEVER send any message automatically or message unverified leads.
 
 ${STYLE_RULES}
 
 Output JSON only:
 {
-  "discovery_call_script": {
-    "opening": string,
-    "questions": [{"q": string, "listening_for": string}],
-    "price_reveal": string,
-    "close": string
+  "path_a_user_sells": {
+    "title": "Manual Outreach (Direct Control)",
+    "strategy": string,
+    "daily_routine": string[],
+    "direct_links": string[],
+    "scripts": [
+      {
+        "channel": string,
+        "message": string
+      }
+    ]
   },
-  "objection_handling": [{"objection": string, "response": string, "if_they_persist": string}],
-  "proposal_template": string,
-  "payment_setup": {
-    "recommended_flow": string,
-    "deposit_pct": number,
-    "stripe_product_name": string,
-    "stripe_price_usd": number,
-    "invoice_terms": string
-  },
-  "first_dollar_checklist": [{"step": number, "action": string, "done_when": string}]
+  "path_b_ai_assists": {
+    "title": "AI Queued Outreach (Explicit Approval Gate)",
+    "ai_will": string[],
+    "ai_will_not": string[],
+    "approval_gate_required": true,
+    "queued_actions": [
+      {
+        "id": string,
+        "target_channel": string,
+        "target_lead": string,
+        "proposed_message": string,
+        "status": "pending_user_approval"
+      }
+    ]
+  }
 }
 
-objection_handling must cover at minimum: price, "we'll build it internally", "send me info", "not right now", and trust/credibility.`,
-    user: `Offer: ${JSON.stringify(ctx.priorOutputs.offer, null, 2)}
-Buyer profile: ${JSON.stringify((ctx.priorOutputs.icp as Record<string, unknown>)?.icp, null, 2)}
+ai_will_not must state at least 3 strict boundaries including "Never send messages without explicit user approval button".`,
+      user: `Chosen Angle & Assets:
+${JSON.stringify({ brainstorm: ctx.priorOutputs.brainstorm, produce: ctx.priorOutputs.produce }, null, 2)}
 
-Build the close kit. The checklist should end at "money received".`,
-  }),
+Target Sources:
+${urls.join('\n')}
+
+Signal text:
+${signalDigest(ctx, 6)}
+
+Build both sales paths. Make sure AI boundaries are ironclad.`,
+    };
+  },
   validate: (o) => {
-    const d = o as { discovery_call_script?: unknown; objection_handling?: unknown[]; first_dollar_checklist?: unknown[] };
-    if (!d.discovery_call_script) return { ok: false, reason: 'missing call script' };
-    if (!Array.isArray(d.objection_handling) || d.objection_handling.length < 3)
-      return { ok: false, reason: 'need >=3 objections' };
-    if (!Array.isArray(d.first_dollar_checklist) || d.first_dollar_checklist.length === 0)
-      return { ok: false, reason: 'missing checklist' };
+    const d = o as {
+      path_a_user_sells?: { scripts?: unknown[] };
+      path_b_ai_assists?: { approval_gate_required?: boolean; ai_will_not?: unknown[] };
+    };
+    if (!d.path_a_user_sells?.scripts || !Array.isArray(d.path_a_user_sells.scripts) || d.path_a_user_sells.scripts.length === 0)
+      return { ok: false, reason: 'missing path_a_user_sells.scripts' };
+    if (d.path_b_ai_assists?.approval_gate_required !== true)
+      return { ok: false, reason: 'approval_gate_required must be true' };
+    if (!Array.isArray(d.path_b_ai_assists.ai_will_not) || d.path_b_ai_assists.ai_will_not.length === 0)
+      return { ok: false, reason: 'missing ai_will_not boundaries' };
     return { ok: true };
   },
   fallback: (ctx) => {
-    const off = ctx.priorOutputs.offer as { pricing?: { primary_usd?: number }; offer_name?: string; guarantee?: string };
-    const price = off?.pricing?.primary_usd ?? 1500;
+    const urls = extractSignalUrls(ctx);
+    const primaryUrl = urls[0] || 'https://reddit.com/r/smallbusiness';
+
     return {
-      discovery_call_script: {
-        opening: "Thanks for making time. I read your post — before I say anything, tell me what's happening on your side.",
-        questions: [
-          { q: 'How long has this been a problem?', listening_for: 'Duration signals pain tolerance and urgency' },
-          { q: 'What have you already tried?', listening_for: 'Avoids pitching something they rejected' },
-          { q: 'What does it cost you when it goes wrong?', listening_for: 'Their own number, which you price against' },
-          { q: "If this were fixed, what changes?", listening_for: 'The outcome they will actually pay for' },
-          { q: 'Who else signs off on something like this?', listening_for: 'Hidden decision makers' },
+      path_a_user_sells: {
+        title: 'Manual Outreach (Direct Control)',
+        strategy: 'Direct value replies in the original public threads where users voiced the problem.',
+        daily_routine: [
+          'Spend 15 minutes reviewing 3 new posts matching the trend keywords',
+          'Reply in-thread with the 1-page diagnostic breakdown, zero sales pitch',
+          'When someone responds asking for more detail, send the Stripe link or booking call',
         ],
-        price_reveal: `Based on what you described, this is the fixed-scope version: $${price}, ten business days. ${off?.guarantee ?? 'You do not pay if it does not work.'}`,
-        close: 'Want me to send the scope doc today, or is there something you need to check first?',
+        direct_links: urls.length > 0 ? urls.slice(0, 5) : [primaryUrl],
+        scripts: [
+          {
+            channel: 'In-Thread Forum Reply',
+            message: `Saw your post regarding ${ctx.trend.name}. Ran into this exact issue recently — wrote up a concise 1-page architecture breakdown covering how teams are bypassing it in 7 days without hiring. Happy to link it here if helpful, no pitch.`,
+          },
+          {
+            channel: 'Direct Message / Email Followup',
+            message: `Following up on the ${ctx.trend.name} brief I sent over. If you want this completely off your plate, I do a fixed 7-day sprint for $1,250 with a 100% completion guarantee. Let me know if you want the scope doc.`,
+          },
+        ],
       },
-      objection_handling: [
-        { objection: 'Too expensive', response: `You said this costs you {{their_number}} a month. This pays back in {{payback_period}}. But if the budget genuinely is not there, say so and I'll stop.`, if_they_persist: 'Offer the reduced minimum-viable scope at a lower price rather than discounting the full scope.' },
-        { objection: "We'll build it internally", response: 'Probably could. What is the realistic start date given what else is queued? I can have it done before that, and if you want to take it in-house after, the handover doc is yours.', if_they_persist: 'Leave graciously and set a 90-day follow-up. Internal builds slip constantly.' },
-        { objection: 'Send me some info', response: 'Sending. One question so I send the right thing: is the bigger issue {{option_a}} or {{option_b}}?', if_they_persist: 'Send it, then one follow-up in 4 days. Stop after that.' },
-        { objection: 'Not right now', response: "Fair. When would be a real time to revisit — is there an event or a date this becomes urgent?", if_they_persist: 'Get a specific date, calendar it, close the loop.' },
-        { objection: "I don't know you", response: 'Reasonable. The scope doc is free and the guarantee means you pay after it works, not before. The risk is on me.', if_they_persist: 'Offer a paid micro-engagement at a low price to establish trust.' },
-      ],
-      proposal_template: `SCOPE — ${off?.offer_name ?? ctx.trend.name}\n\nProblem\n{{restate_their_words}}\n\nWhat I'll deliver\n{{deliverables}}\n\nNot included\n{{exclusions}}\n\nTimeline\n10 business days from kickoff\n\nPrice\n$${price} — ${off?.guarantee ?? 'payable on delivery'}\n\nNext step\nReply "go" and I'll send the kickoff link.`,
-      payment_setup: {
-        recommended_flow: 'Stripe Invoice with a payment link. No deposit on the first client so the guarantee is credible; 50% deposit from client three onward.',
-        deposit_pct: 0,
-        stripe_product_name: off?.offer_name ?? `${ctx.trend.name} Sprint`,
-        stripe_price_usd: price,
-        invoice_terms: 'Net 7 from delivery',
+      path_b_ai_assists: {
+        title: 'AI Queued Outreach (Explicit Approval Gate)',
+        ai_will: [
+          'Scan harvest feeds for high-relevance complaints matching this trend',
+          'Draft contextual, personalized message variations referencing their exact post',
+          'Present proposed outreach in a queue with one-click Approve or Discard buttons',
+        ],
+        ai_will_not: [
+          'NEVER send any email, DM, or post automatically without you clicking "Approve"',
+          'NEVER scrape private user data or bypass CAPTCHAs/logins',
+          'NEVER contact unverified accounts or repeated contacts',
+        ],
+        approval_gate_required: true,
+        queued_actions: [
+          {
+            id: 'qa-1',
+            target_channel: 'Reddit In-Thread',
+            target_lead: primaryUrl,
+            proposed_message: `Saw your comment about ${ctx.trend.name}. Put together a 1-page solution doc detailing the workaround steps. Let me know if you want the link.`,
+            status: 'pending_user_approval',
+          },
+        ],
       },
-      first_dollar_checklist: [
-        { step: 1, action: 'Reply to the 15 source-signal posts with the free asset offer', done_when: 'All 15 replied to' },
-        { step: 2, action: 'Send the asset to everyone who says yes', done_when: 'Asset delivered' },
-        { step: 3, action: 'Book scope calls with anyone who engages after the asset', done_when: '1+ call on calendar' },
-        { step: 4, action: 'Run the discovery script, send the scope doc same day', done_when: 'Scope doc sent' },
-        { step: 5, action: 'Create the Stripe product and send the invoice on acceptance', done_when: 'Invoice sent' },
-        { step: 6, action: 'Deliver, then collect', done_when: 'Money received' },
-      ],
       _degraded: true,
     };
   },
 };
 
-export const STAGES: StageDefinition[] = [brainstorm, offer, assets, icp, outreach, closeKit];
+export const STAGES: StageDefinition[] = [research, brainstorm, workPlan, produce, preview, sellFork];
 export const STAGE_MAP = Object.fromEntries(STAGES.map((s) => [s.key, s]));
