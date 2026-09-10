@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { harvestLiveSignalsAndTasks } from '@/lib/pipeline/live-scrapling';
 
 const READY_MAX_AGE_HOURS = 72;
 
@@ -41,8 +42,12 @@ export async function getReadyTasks(limit = 40) {
   });
 
   // Self-heal: If fewer than requested ready tasks exist in the active 72h window,
-  // spawn tasks for the freshest active monetizable trends so the ready board is never empty or frozen.
+  // trigger live-scrapling harvest and spawn tasks for freshest active trends.
   if (tasks.length < limit) {
+    try {
+      await harvestLiveSignalsAndTasks();
+    } catch {}
+
     const existingTrendIds = new Set(tasks.map((t) => t.trendId));
     const freshTrends = await db.trend.findMany({
       where: {

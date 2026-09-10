@@ -111,11 +111,21 @@ export default function MyWorkPage() {
                         <Progress value={e.progressPct} className="h-1.5 bg-muted/40" />
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-white/[0.04]">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground pt-2 border-t border-white/[0.04]">
                         <AgeBadge date={e.lastActivityAt} />
                         {e.status === 'AWAITING_APPROVAL' && (
                           <span className="text-amber-400 font-bold font-mono text-[11px] flex items-center gap-1">
-                            Review & approve &rarr;
+                            👉 Next Step: Review Buyers & Practice Pitch &rarr;
+                          </span>
+                        )}
+                        {e.status === 'COMPLETED' && (
+                          <span className="text-emerald-400 font-bold font-mono text-[11px] flex items-center gap-1">
+                            ✓ Kit Ready: Pitch Pre-Qualified Buyers &rarr;
+                          </span>
+                        )}
+                        {e.status === 'RUNNING' && (
+                          <span className="text-cyan-400 font-bold font-mono text-[11px] flex items-center gap-1">
+                            ⚡ Autonomous Engine Running (Stage {e.stagesDone}/6)
                           </span>
                         )}
                       </div>

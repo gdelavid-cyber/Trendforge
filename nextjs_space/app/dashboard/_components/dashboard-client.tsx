@@ -12,10 +12,14 @@ import {
   ShieldCheck,
   TrendingUp,
   Activity,
+  Loader2,
+  RefreshCw,
+  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
 import { CouncilBoardroom } from '@/components/council/council-boardroom';
@@ -39,8 +43,42 @@ interface DashboardClientProps {
 export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const [isDebriefOpen, setIsDebriefOpen] = useState(false);
+  const [tasks, setTasks] = useState(trendingMoves);
+  const [scraping, setScraping] = useState(false);
   const realIncomeUsdc = user?.realIncomeUsdc ?? 0;
   const completedCount = user?.completedCount ?? 0;
+
+  const handleScrapeFresh = async () => {
+    setScraping(true);
+    try {
+      const res = await fetch('/api/tasks/scrape-fresh', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.freshTasks?.length) {
+        setTasks(
+          data.freshTasks.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description,
+            difficulty: t.difficulty,
+            riskLevel: t.riskLevel,
+            startupCost: t.startupCost,
+            estimatedEarningsLow: t.estimatedEarningsLow,
+            estimatedEarningsHigh: t.estimatedEarningsHigh,
+            timeToFirstDollar: t.timeToFirstDollar,
+            category: t.category,
+            trendScore: t.trendScore,
+          }))
+        );
+        toast.success(data.message || 'Scrapling harvested fresh signals and updated tasks!');
+      } else {
+        toast.info(data.message || 'Scrapling check completed');
+      }
+    } catch {
+      toast.error('Failed to run live scraper');
+    } finally {
+      setScraping(false);
+    }
+  };
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 py-8 space-y-8">
@@ -135,26 +173,53 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
 
       {/* 3. Today's High-Margin Money Tasks */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold font-orbitron text-white uppercase tracking-wider flex items-center gap-2">
-              <Flame className="w-5 h-5 text-amber-400" />
-              Today's Money Making Tasks
-            </h2>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-bold font-orbitron text-white uppercase tracking-wider flex items-center gap-2">
+                <Flame className="w-5 h-5 text-amber-400" />
+                Today's Money Making Tasks
+              </h2>
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                Scrapling Live Sync
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 font-sans">
               Continuously scraped and vetted for high cash margins. Click any task to start closing.
             </p>
           </div>
-          <Link
-            href="/earn"
-            className="text-xs text-[#00F0FF] hover:underline flex items-center gap-1 font-mono"
-          >
-            All Earn Options <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={scraping}
+              onClick={handleScrapeFresh}
+              className="border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 text-xs font-mono uppercase h-8 px-3 hover:bg-[#00F0FF]/20"
+            >
+              {scraping ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                  Scraping Live Signals...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                  Scrape Fresh Moves
+                </>
+              )}
+            </Button>
+            <Link
+              href="/earn"
+              className="text-xs text-[#00F0FF] hover:underline flex items-center gap-1 font-mono"
+            >
+              All Earn Options <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {trendingMoves.slice(0, 6).map((task, idx) => (
+          {tasks.slice(0, 6).map((task, idx) => (
             <motion.div
               key={task.id}
               initial={{ opacity: 0, y: 10 }}

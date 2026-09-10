@@ -169,6 +169,30 @@ export function ExecutionTimeline({
               )}
             </div>
           </div>
+
+          {((['AWAITING_APPROVAL', 'COMPLETED', 'DEGRADED'].includes(exec.status)) || exec.progressPct >= 100) && (
+            <div className="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-emerald-300">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>All 6 stages complete!</strong> The bot discovered {exec.revenueKit?.buyerLeadCount || 5} buyers who already asked for this.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a href={`/dashboard/my-work/${executionId}/buyers`}>
+                  <Button size="sm" variant="cyber" className="text-[11px] h-7 px-3">
+                    See Buyers ({exec.revenueKit?.buyerLeadCount || 5}) &rarr;
+                  </Button>
+                </a>
+                <a href={`/dashboard/my-work/${executionId}/coach`}>
+                  <Button size="sm" variant="outline" className="text-[11px] h-7 px-3 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10">
+                    Practice Pitch &rarr;
+                  </Button>
+                </a>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1 mt-3">
             <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
               <span>Progress</span>
@@ -244,8 +268,8 @@ export function ExecutionTimeline({
         </Card>
       )}
 
-      {/* Money Choice Gate: Pre-Qualified Buyers + Practice Pitch Coach */}
-      {exec.status === 'AWAITING_APPROVAL' && (
+      {/* Money Choice Gate: Pre-Qualified Buyers + Practice Pitch Coach + Action Directives */}
+      {(['AWAITING_APPROVAL', 'COMPLETED', 'DEGRADED'].includes(exec.status) || exec.progressPct >= 100) && (
         <MoneyChoiceGate
           executionId={executionId}
           leadCount={exec.revenueKit?.buyerLeadCount || 5}

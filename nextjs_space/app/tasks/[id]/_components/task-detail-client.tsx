@@ -870,11 +870,49 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
                 <span className="text-muted-foreground">{stepsCompleted}/{totalSteps} steps completed</span>
               </div>
               <Progress value={progress} className="h-3 mb-4 bg-dark-navy" />
-              <Link href={`/launch/${task?.id}`}>
-                <Button variant="outline" size="sm" className="border-white/10 text-white rounded h-9 flex items-center gap-1.5">
-                  Open Sandbox Console <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
+
+              {(stepsCompleted >= totalSteps || userTask?.status === 'COMPLETED') && (
+                <div className="mt-4 p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-400 font-mono font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4" />
+                    ACTION STEPS FINISHED — WHAT TO DO NEXT
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    You completed the tactical blueprint steps! To auto-generate your product assets, personalized outreach sequences, and discover real pre-qualified buyers:
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      onClick={handleRunPipeline}
+                      disabled={pipelineStarting}
+                      className="bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-bold text-xs h-8 px-3.5"
+                    >
+                      {pipelineStarting ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Launching...
+                        </>
+                      ) : (
+                        <>
+                          <Rocket className="w-3.5 h-3.5 mr-1.5" /> Dispatch Turnkey Pipeline in My Work &rarr;
+                        </>
+                      )}
+                    </Button>
+                    <Link href="/dashboard/my-work">
+                      <Button variant="outline" size="sm" className="border-white/20 text-white font-mono text-xs h-8">
+                        View Active Pipeline
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 mt-4">
+                <Link href={`/launch/${task?.id}`}>
+                  <Button variant="outline" size="sm" className="border-white/10 text-white rounded h-9 flex items-center gap-1.5">
+                    Open Sandbox Console <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>
