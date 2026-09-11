@@ -180,6 +180,8 @@ model Trend {
   tasks               Task[]
   signals             RawSignal[]
   executions          TrendExecution[]
+  marketingCampaigns  MarketingCampaign[]
+  publicOpportunityPages PublicOpportunityPage[]
 
   @@index([status])
   @@index([detectedAt])
@@ -554,6 +556,7 @@ enum AgentStatus {
   DYING
   DEAD
   REPRODUCING
+  IDLE
 }
 
 enum CosmeticCategory {
@@ -1077,7 +1080,134 @@ model WithdrawalRequest {
 }
 
 // ============================================================================
-// AUTONOMOUS END-TO-END WORKFLOW & SALES PIPELINE SYSTEM
+// PROMOTIONAL SALESFORCE / GROWTH SWARM
+// ============================================================================
+
+enum MarketingAgentRole {
+  SEO_SYNTHESIZER      // Creates /opportunities/[slug] programmatic SEO pages
+  CONTENT_VIRALIST     // Drafts viral Twitter threads, LinkedIn carousel posts
+  PERMISSIONLESS_SDR   // Drafts targeted outreach & public snapshot reports (/p/[slug])
+  GROWTH_DIRECTOR      // Evaluates ROI, manages agent budgets & attribution
+}
+
+enum CampaignStatus {
+  DRAFTED
+  PENDING_APPROVAL // Waiting for Admin to click Approve
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+model AdminGrowthSetting {
+  id                    String   @id @default("global_growth_settings")
+  autoOrchestrate       Boolean  @default(true)
+  requireAdminApproval  Boolean  @default(true) // If true, campaigns wait in queue for Admin click
+  autoPublishPages      Boolean  @default(true)
+  maxDailyCampaigns     Int      @default(15)
+  minSignalSupportGate  Int      @default(3)
+  dailyBudgetCapUsd     Float    @default(10.00)
+  updatedAt             DateTime @updatedAt
+}
+
+model MarketingAgent {
+  id               String               @id @default(cuid())
+  name             String               // e.g. "SEO Synthesizer", "Viral Content Creator"
+  role             MarketingAgentRole
+  description      String
+  status           AgentStatus          @default(IDLE)
+
+  // Financial & Performance Ledger
+  computeBudgetUsd Float               @default(5.00)
+  totalSpentUsd    Float               @default(0.00)
+  conversionsCount Int                 @default(0)
+  mrrGeneratedUsd  Float               @default(0.00)
+
+  campaigns        MarketingCampaign[]
+  logs             MarketingAgentLog[]
+
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([role])
+  @@index([status])
+}
+
+model MarketingCampaign {
+  id             String          @id @default(cuid())
+  agentId        String
+  agent          MarketingAgent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  title          String
+  targetChannel  String          // "twitter_thread", "linkedin_carousel", "public_snapshot", "seo_page"
+  status         CampaignStatus  @default(DRAFTED)
+
+  headline       String
+  bodyText       String          @db.Text
+  targetUrl      String
+  metaData       Json?           // Slides, tweets array, keywords
+
+  // Telemetry
+  views          Int             @default(0)
+  clicks         Int             @default(0)
+  conversions    Int             @default(0)
+  mrrDrivenUsd   Float           @default(0.00)
+
+  trendId        String?
+  trend          Trend?          @relation(fields: [trendId], references: [id])
+
+  createdAt      DateTime        @default(now())
+  publishedAt    DateTime?
+
+  @@index([status])
+  @@index([targetChannel])
+  @@index([agentId])
+}
+
+model PublicOpportunityPage {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  title              String
+  metaDescription    String
+  category           String
+  intentScore        Int
+  painSummary        String   @db.Text
+  signalCount        Int
+  sourceSpread       Int
+  estimatedMarketUsd Float    @default(0)
+  isPublished        Boolean  @default(true)
+
+  trendId            String   @unique
+  trend              Trend    @relation(fields: [trendId], references: [id], onDelete: Cascade)
+
+  organicViews       Int      @default(0)
+  conversions        Int      @default(0)
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([isPublished])
+}
+
+model MarketingAgentLog {
+  id          String         @id @default(cuid())
+  agentId     String
+  agent       MarketingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  level       String         // "info", "warn", "error"
+  action      String         // "generated_page", "drafted_thread", "budget_deducted"
+  costUsd     Float          @default(0.00)
+  message     String         @db.Text
+
+  createdAt   DateTime       @default(now())
+
+  @@index([agentId])
+}
+
+// ============================================================================
+// AUTONOMOUS REVENUE SWARM v2 (MAXIMIZE REVENUE OR DIE)
 // ============================================================================
 
 enum ExecutionStatus {

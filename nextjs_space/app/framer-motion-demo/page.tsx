@@ -21,7 +21,7 @@ import {
   AnimatePresenceDemo,
   LayoutAnimation,
   CombinedDemo,
-} from "framer-motion-principles";
+} from "@/app/_components/framer-motion-principles";
 
 const DemoPage = () => {
   return (
