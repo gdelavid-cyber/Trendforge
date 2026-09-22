@@ -29,8 +29,9 @@ export const REAL_CREDIT_TYPES: string[] = [
 
 export interface MoveResult {
   ok: boolean;
-  reason?: 'duplicate';
+  reason?: 'duplicate' | 'blocked';
   balance: number;
+  confidence?: number;
 }
 
 async function move(params: {
@@ -42,6 +43,29 @@ async function move(params: {
   note?: string;
 }): Promise<MoveResult> {
   const { agentId, userId, type, ref, note } = params;
+
+  // Jev Honesty Verification Gate
+  let verificationProb = 1.0;
+  let verificationConf = 1.0;
+  try {
+    const { askJev: askJevGateway } = await import('../intelligence/decision/jev');
+    const res = await askJevGateway(
+      { agentId, userId, type, amountUsdc: params.amountUsdc, ref, note },
+      {
+        is_verifiable_operation: { type: 'noul', description: 'Is this a verifiable operation, or should it be reported as blocked?' },
+        confidence: { type: 'score', description: 'Confidence in transaction audit trail 0-100', min: 0, max: 100 },
+      }
+    );
+    if (res.decision) {
+      verificationProb = res.decision?.is_verifiable_operation?.probability ?? 1.0;
+      verificationConf = res.decision?.is_verifiable_operation?.confidence ?? 1.0;
+      if (verificationConf < 0.85 || verificationProb < 0.85) {
+        const agent = await prisma.web4Agent.findUnique({ where: { id: agentId }, select: { walletBalance: true } });
+        return { ok: false, reason: 'blocked' as const, balance: agent?.walletBalance ?? 0, confidence: verificationConf };
+      }
+    }
+  } catch {}
+
   // Cent invariant: every ledger value is whole cents. Float64 holds integer
   // cents exactly (no drift to $90T), so rounding once here — rather than
   // migrating every money column — permanently ends dust accumulation.

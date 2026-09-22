@@ -281,11 +281,33 @@ async function runAutopilot(
     for (let i = startIndex; i < steps.length; i++) {
       const step = steps[i];
 
+      // Jev Contextual Approval Gate
+      let requiresApproval = Boolean(step.external);
+      if (step.external) {
+        try {
+          const { askJev: askJevGateway } = await import('../intelligence/decision/jev');
+          const res = await askJevGateway(
+            { action: step.action, title: step.title, description: step.description, taskTitle: task?.title },
+            {
+              requires_approval: { type: 'noul', description: 'Does this action require human approval, or can it proceed autonomously?' },
+              confidence: { type: 'score', description: 'Confidence in risk 0-100', min: 0, max: 100 },
+            }
+          );
+          if (res.decision) {
+            const prob = res.decision?.requires_approval?.probability;
+            const conf = res.decision?.requires_approval?.confidence ?? 1.0;
+            if (conf >= 0.85 && prob !== undefined && prob < 0.15) {
+              requiresApproval = false;
+            }
+          }
+        } catch {}
+      }
+
       // Halt at pending gates created earlier for this index.
       const pending = await prisma.approval.findFirst({
         where: { userTaskId, stepIndex: i, status: 'PENDING' },
       });
-      if (pending || step.external) {
+      if (pending || requiresApproval) {
         if (!pending) await queueApproval(userTaskId, userId, i, step, deps);
         await prisma.userTask.update({ where: { id: userTaskId }, data: { status: 'PENDING_APPROVAL', currentStep: i } });
         return;

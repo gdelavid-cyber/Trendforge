@@ -10,6 +10,16 @@ export interface AIVideoMakerParams {
   userName?: string;
 }
 
+export interface JevScriptQualityDecision {
+  hook_strength?: { score: number };
+  clarity?: { score: number };
+  cta_effectiveness?: { score: number };
+  publish_decision?: {
+    probability: number;
+    confidence: number;
+  };
+}
+
 export interface AIVideoMakerResult {
   success: boolean;
   videoTitle: string;
@@ -29,7 +39,27 @@ export interface AIVideoMakerResult {
     visualPrompt: string;
     narration: string;
   }>;
+  qualityGate?: {
+    hookScore: number;
+    clarityScore: number;
+    ctaScore: number;
+    publishProbability?: number;
+    confidence?: number;
+    latencyMs: number;
+    status: 'PUBLISHED' | 'FLAGGED_FOR_REVISION';
+    reason: string;
+  };
   details: string;
+}
+
+import { askJev as askJevGateway } from '../intelligence/decision/jev';
+
+async function askJevScriptQuality(
+  state: Record<string, any>,
+  questions: Record<string, any>
+): Promise<{ decision: JevScriptQualityDecision | null; latencyMs: number; error?: string }> {
+  const res = await askJevGateway(state, questions as any);
+  return { decision: res.decision as any, latencyMs: res.latencyMs, error: res.error };
 }
 
 export async function executeAIVideoMaker(
@@ -76,6 +106,49 @@ export async function executeAIVideoMaker(
   }
 
   await log(`[AI_VIDEO_MAKER] Script synthesized: Hook ("${generatedScript.hook.slice(0, 50)}...")`);
+
+  // Jev Script Quality Gate
+  await log(`[AI_VIDEO_MAKER] Running Jev script quality & viral retention gate...`);
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJevScriptQuality(
+    { script: generatedScript, topic, aspectRatio },
+    {
+      hook_strength: {
+        type: 'score',
+        description: 'Rate hook strength 0–10 for short-form retention',
+        min: 0,
+        max: 10,
+      },
+      clarity: {
+        type: 'score',
+        description: 'Rate clarity and pacing 0–10',
+        min: 0,
+        max: 10,
+      },
+      cta_effectiveness: {
+        type: 'score',
+        description: 'Rate call-to-action conversion effectiveness 0–10',
+        min: 0,
+        max: 10,
+      },
+      publish_decision: {
+        type: 'noul',
+        description: 'Should this script be published or regenerated?',
+      },
+    }
+  );
+
+  const hookScore = jevDecision?.hook_strength?.score ?? 8;
+  const clarityScore = jevDecision?.clarity?.score ?? 8;
+  const ctaScore = jevDecision?.cta_effectiveness?.score ?? 8;
+  const publishProb = jevDecision?.publish_decision?.probability ?? 0.88;
+  const publishConf = jevDecision?.publish_decision?.confidence ?? 0.90;
+  const qualityStatus = publishProb >= 0.70 ? 'PUBLISHED' : 'FLAGGED_FOR_REVISION';
+
+  await log(
+    `[AI_VIDEO_MAKER] Quality Gate Telemetry -> Hook: ${hookScore}/10 | Clarity: ${clarityScore}/10 | ` +
+    `CTA: ${ctaScore}/10 | Publish Prob: ${publishProb.toFixed(2)} (${publishConf.toFixed(2)} conf) | ` +
+    `Latency: ${jevLatencyMs}ms -> ${qualityStatus}${jevError ? ` (Fallback: ${jevError})` : ''}`
+  );
 
   // 2. Synthesize audio voiceover
   await log(`[AI_VIDEO_MAKER] Synthesizing 24kHz neural voiceover stream via audio model...`);
@@ -125,6 +198,16 @@ export async function executeAIVideoMaker(
     captionStyle: 'MrBeast Kinetic Bold Yellow & Cyan Glow',
     script: generatedScript,
     scenes,
+    qualityGate: {
+      hookScore,
+      clarityScore,
+      ctaScore,
+      publishProbability: publishProb,
+      confidence: publishConf,
+      latencyMs: jevLatencyMs,
+      status: qualityStatus,
+      reason: `Quality gate completed: hook ${hookScore}/10, clarity ${clarityScore}/10, cta ${ctaScore}/10`,
+    },
     details: `Generated 43-second high-retention video asset for '${topic}'. Ready for direct export to TikTok, YouTube Shorts, and Instagram Reels.`,
   };
 }

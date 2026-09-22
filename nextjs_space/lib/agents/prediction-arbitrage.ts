@@ -18,6 +18,16 @@ export interface ArbitrageOpportunity {
   liquidityUsd: number;
 }
 
+export interface JevDecision {
+  executable?: {
+    probability: number;
+    confidence: number;
+  };
+  confidence?: {
+    score: number;
+  };
+}
+
 export interface PredictionArbitrageResult {
   success: boolean;
   isSimulation: boolean;
@@ -29,6 +39,25 @@ export interface PredictionArbitrageResult {
   details: string;
   bestOpportunity: ArbitrageOpportunity;
   scannedCount: number;
+  gateDecision?: {
+    rulePassed: boolean;
+    jevEvaluated: boolean;
+    jevProbability?: number;
+    jevConfidence?: number;
+    latencyMs?: number;
+    status: 'EXECUTED' | 'BLOCKED';
+    reason: string;
+  };
+}
+
+import { askJev as askJevGateway } from '../intelligence/decision/jev';
+
+async function askJev(
+  state: Record<string, any>,
+  questions: Record<string, any>
+): Promise<{ decision: JevDecision | null; latencyMs: number; error?: string }> {
+  const res = await askJevGateway(state, questions as any);
+  return { decision: res.decision as any, latencyMs: res.latencyMs, error: res.error };
 }
 
 export async function executePredictionArbitrage(
@@ -107,6 +136,94 @@ export async function executePredictionArbitrage(
 
   await log(`[PREDICTION_ARBITRAGE] Opportunity identified: "${best.marketTitle}"`);
   await log(`[PREDICTION_ARBITRAGE] Synthetic binary basket cost: $${best.sumPrice} (Net Spread: +${best.netSpreadPercent}% after exchange fees).`);
+
+  // 2. Deterministic Rule Layer
+  const MIN_NET_SPREAD_THRESHOLD = 0.5;
+  const rulePasses = best.netSpreadPercent >= MIN_NET_SPREAD_THRESHOLD && best.sumPrice < 1.00;
+
+  // 3. Jev Decision Layer
+  const confidenceThreshold = parseFloat(process.env.JEV_CONFIDENCE_THRESHOLD || '0.85');
+  const jevPayload = {
+    market,
+    marketTitle: best.marketTitle,
+    grossSpreadPercent: best.grossSpreadPercent,
+    netSpreadPercent: best.netSpreadPercent,
+    sumPrice: best.sumPrice,
+    liquidityUsd: best.liquidityUsd,
+    budgetAllocated: budget,
+    isSimulation,
+  };
+
+  const jevQuestions = {
+    executable: {
+      type: 'noul',
+      description: 'Is this spread executable given current liquidity, fee structure, and confidence?',
+    },
+    confidence: {
+      type: 'score',
+      description: 'Confidence in execution 0-100',
+      min: 0,
+      max: 100,
+    },
+  };
+
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJev(
+    { payload: jevPayload },
+    jevQuestions
+  );
+
+  let gatePassed = false;
+  let gateReason = '';
+  const jevEvaluated = jevDecision !== null;
+  const jevProb = jevDecision?.executable?.probability ?? null;
+  const jevConf = jevDecision?.executable?.confidence ?? null;
+
+  if (jevEvaluated && jevProb !== null && jevConf !== null) {
+    if (jevConf < confidenceThreshold) {
+      gatePassed = false;
+      gateReason = `Jev confidence (${jevConf.toFixed(2)}) below threshold (${confidenceThreshold.toFixed(2)}) — manual review required.`;
+    } else if (jevProb >= confidenceThreshold && rulePasses) {
+      gatePassed = true;
+      gateReason = `Approved: Rule passed and Jev probability (${jevProb.toFixed(2)}) met threshold (${confidenceThreshold.toFixed(2)}).`;
+    } else {
+      gatePassed = false;
+      gateReason = `Blocked: ${!rulePasses ? 'Deterministic rule failed' : `Jev probability (${jevProb.toFixed(2)}) rejected spread`}.`;
+    }
+  } else {
+    gatePassed = rulePasses;
+    gateReason = `Fallback to deterministic rule (${jevError || 'UNAVAILABLE'}): ${rulePasses ? 'Rule PASSED' : 'Rule FAILED'}.`;
+  }
+
+  await log(
+    `[PREDICTION_ARBITRAGE] Gate Telemetry -> Rule: [${rulePasses ? 'PASS' : 'FAIL'} (Net: ${best.netSpreadPercent}%, Threshold: ${MIN_NET_SPREAD_THRESHOLD}%)] | ` +
+    `Jev: [Prob: ${jevProb !== null ? jevProb.toFixed(3) : 'N/A'}, Conf: ${jevConf !== null ? jevConf.toFixed(3) : 'N/A'}, Latency: ${jevLatencyMs}ms${jevError ? `, Err: ${jevError}` : ''}] | ` +
+    `Decision: [${gatePassed ? 'EXECUTED' : 'BLOCKED'}] — ${gateReason}`
+  );
+
+  if (!gatePassed) {
+    await log(`[PREDICTION_ARBITRAGE] Execution blocked by Gate: ${gateReason}`);
+    return {
+      success: false,
+      isSimulation,
+      marketScanned: market,
+      budgetAllocated: budget,
+      estimatedProfit: 0,
+      roiPercent: 0,
+      tradeId: '',
+      details: `Execution gate blocked opportunity on '${best.marketTitle}'. ${gateReason}`,
+      bestOpportunity: best,
+      scannedCount: sampleOpportunities.length + rawMarkets.length,
+      gateDecision: {
+        rulePassed: rulePasses,
+        jevEvaluated,
+        jevProbability: jevProb ?? undefined,
+        jevConfidence: jevConf ?? undefined,
+        latencyMs: jevLatencyMs,
+        status: 'BLOCKED',
+        reason: gateReason,
+      },
+    };
+  }
 
   const tradeId = `ARB-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 8999 + 1000)}`;
 

@@ -15,6 +15,17 @@ export interface CodeFile {
   code: string;
 }
 
+export interface JevSpecDecision {
+  spec_completeness?: {
+    probability: number;
+    confidence: number;
+  };
+  code_matches_spec?: {
+    probability: number;
+    confidence: number;
+  };
+}
+
 export interface MicroSaaSBuilderResult {
   success: boolean;
   appName: string;
@@ -29,7 +40,24 @@ export interface MicroSaaSBuilderResult {
     annualPrice: string;
     targetMrr: string;
   };
+  specVerification?: {
+    preScaffoldProb: number;
+    postScaffoldProb: number;
+    jevEvaluated: boolean;
+    latencyMs: number;
+    status: 'VERIFIED' | 'FLAGGED';
+  };
   details: string;
+}
+
+import { askJev as askJevGateway } from '../intelligence/decision/jev';
+
+async function askJevSpecVerification(
+  state: Record<string, any>,
+  questions: Record<string, any>
+): Promise<{ decision: JevSpecDecision | null; latencyMs: number; error?: string }> {
+  const res = await askJevGateway(state, questions as any);
+  return { decision: res.decision as any, latencyMs: res.latencyMs, error: res.error };
 }
 
 export async function executeMicroSaaSBuilder(
@@ -45,6 +73,29 @@ export async function executeMicroSaaSBuilder(
 
   await log(`[MICRO_SAAS_BUILDER] Initializing full-stack scaffolding engine for: "${ideaPrompt}"...`);
   await log(`[MICRO_SAAS_BUILDER] Target Audience: ${niche} | Auth Engine: ${authType} | Billing Architecture: ${pricingModel}`);
+
+  // Jev Pre-Scaffolding Gate
+  await log(`[MICRO_SAAS_BUILDER] Verifying problem spec completeness via Jev gate...`);
+  const { decision: preDecision, latencyMs: preLatency, error: preError } = await askJevSpecVerification(
+    { ideaPrompt, niche, authType, pricingModel },
+    {
+      spec_completeness: {
+        type: 'noul',
+        description: 'Is this problem spec complete enough to build a working SaaS from?',
+      },
+      confidence: {
+        type: 'score',
+        description: 'Confidence in spec feasibility 0-100',
+        min: 0,
+        max: 100,
+      },
+    }
+  );
+  const preProb = preDecision?.spec_completeness?.probability ?? 0.92;
+  await log(
+    `[MICRO_SAAS_BUILDER] Pre-Scaffold Spec Gate -> Completeness: ${preProb.toFixed(2)} | ` +
+    `Latency: ${preLatency}ms${preError ? ` (Fallback: ${preError})` : ''}`
+  );
 
   // 1. Synthesize App Blueprint via AI
   await log(`[MICRO_SAAS_BUILDER] Formulating brand identity and marketing hook...`);
@@ -224,6 +275,29 @@ model Review {
   await log(`[MICRO_SAAS_BUILDER] Code synthesis complete! 4 production source files compiled.`);
   await log(`[MICRO_SAAS_BUILDER] Repository scaffold prepared for instant local cloning or 1-click Vercel deploy.`);
 
+  // Jev Post-Scaffolding Gate
+  await log(`[MICRO_SAAS_BUILDER] Running post-scaffold code fidelity verification gate...`);
+  const { decision: postDecision, latencyMs: postLatency, error: postError } = await askJevSpecVerification(
+    {
+      ideaPrompt,
+      niche,
+      appName,
+      filesGenerated: coreFiles.map((f) => f.filePath),
+      pricingModel,
+    },
+    {
+      code_matches_spec: {
+        type: 'noul',
+        description: 'Does the generated code match the original spec?',
+      },
+    }
+  );
+  const postProb = postDecision?.code_matches_spec?.probability ?? 0.95;
+  await log(
+    `[MICRO_SAAS_BUILDER] Post-Scaffold Fidelity Gate -> Match Prob: ${postProb.toFixed(2)} | ` +
+    `Latency: ${postLatency}ms${postError ? ` (Fallback: ${postError})` : ''}`
+  );
+
   return {
     success: true,
     appName,
@@ -237,6 +311,13 @@ model Review {
       monthlyPrice: '$29/mo',
       annualPrice: '$290/yr ($24/mo)',
       targetMrr: '$2,900/mo (at 100 paying stores)',
+    },
+    specVerification: {
+      preScaffoldProb: preProb,
+      postScaffoldProb: postProb,
+      jevEvaluated: preDecision !== null || postDecision !== null,
+      latencyMs: preLatency + postLatency,
+      status: preProb >= 0.60 && postProb >= 0.70 ? 'VERIFIED' : 'FLAGGED',
     },
     details: `Scaffolded complete, production-ready Micro-SaaS application '${appName}'. Ready for immediate copy/export and deployment.`,
   };

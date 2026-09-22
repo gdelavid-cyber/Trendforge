@@ -9,6 +9,17 @@ export interface RedditScraperParams {
   userName?: string;
 }
 
+export interface JevQualificationDecision {
+  monetizability?: {
+    score: number;
+    confidence?: number;
+  };
+  blueprint_fit?: {
+    choice: 'voice_agent' | 'content_factory' | 'saas_scaffold' | 'lead_gen' | 'other';
+    confidence?: number;
+  };
+}
+
 export interface RedditScraperResult {
   success: boolean;
   subreddit: string;
@@ -24,6 +35,22 @@ export interface RedditScraperResult {
   actionableSteps: string[];
   pdfDownloadUrl?: string;
   reportHtml?: string;
+  qualification?: {
+    monetizabilityScore: number;
+    blueprintType: string;
+    jevEvaluated: boolean;
+    latencyMs: number;
+  };
+}
+
+import { askJev as askJevGateway } from '../intelligence/decision/jev';
+
+async function askJevQualification(
+  state: Record<string, any>,
+  questions: Record<string, any>
+): Promise<{ decision: JevQualificationDecision | null; latencyMs: number; error?: string }> {
+  const res = await askJevGateway(state, questions as any);
+  return { decision: res.decision as any, latencyMs: res.latencyMs, error: res.error };
 }
 
 export async function executeRedditScraper(
@@ -76,8 +103,52 @@ export async function executeRedditScraper(
     ];
   }
 
-  // 2. Synthesize with LLM
-  await log(`[REDDIT_SCRAPER] Synthesizing recurring market pain points via AI reasoning engine...`);
+  // 2. Jev Pain Point Qualification Layer
+  await log(`[REDDIT_SCRAPER] Evaluating problem signals through Jev decision model...`);
+
+  const totalEngagement = posts.reduce((acc, p) => acc + p.score + p.num_comments, 0);
+  const rulePasses = posts.length > 0 && totalEngagement > 10;
+
+  const topPostsSummary = posts.slice(0, 5).map((p) => ({
+    title: p.title,
+    snippet: p.selftext.slice(0, 150),
+    score: p.score,
+    comments: p.num_comments,
+  }));
+
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJevQualification(
+    {
+      subreddit: cleanSubreddit,
+      topic,
+      postCount: posts.length,
+      totalEngagement,
+      topDiscussions: topPostsSummary,
+    },
+    {
+      monetizability: {
+        type: 'score',
+        description: 'Rate monetizability 0–100 based on commercial intent and willingness to pay',
+        min: 0,
+        max: 100,
+      },
+      blueprint_fit: {
+        type: 'choice',
+        description: 'Which blueprint architecture best fits this problem set?',
+        options: ['voice_agent', 'content_factory', 'saas_scaffold', 'lead_gen', 'other'],
+      },
+    }
+  );
+
+  const monetizabilityScore = jevDecision?.monetizability?.score ?? (rulePasses ? 65 : 30);
+  const blueprintType = jevDecision?.blueprint_fit?.choice ?? 'saas_scaffold';
+
+  await log(
+    `[REDDIT_SCRAPER] Jev Telemetry -> Monetizability: ${monetizabilityScore}/100 | Blueprint: ${blueprintType} | ` +
+    `Latency: ${jevLatencyMs}ms${jevError ? ` (Fallback: ${jevError})` : ''}`
+  );
+
+  // 3. Synthesize with LLM (Prompt conditioned on selected blueprint)
+  await log(`[REDDIT_SCRAPER] Synthesizing recurring market pain points via AI reasoning engine for ${blueprintType}...`);
 
   const prompt = [
     {
@@ -187,5 +258,11 @@ export async function executeRedditScraper(
     summary,
     problemsList,
     actionableSteps,
+    qualification: {
+      monetizabilityScore,
+      blueprintType,
+      jevEvaluated: jevDecision !== null,
+      latencyMs: jevLatencyMs,
+    },
   };
 }
