@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Framer Motion Animation Principles Demo Page
  * Demonstrates all 12 Disney animation principles using Framer Motion
