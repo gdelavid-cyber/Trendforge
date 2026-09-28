@@ -4,6 +4,9 @@ export interface PredictionArbitrageParams {
   apiKeyEncrypted?: string;
   userEmail?: string;
   userName?: string;
+  runId?: string;
+  agentId?: string;
+  userId?: string;
 }
 
 export interface ArbitrageOpportunity {
@@ -51,6 +54,7 @@ export interface PredictionArbitrageResult {
 }
 
 import { askJev as askJevGateway } from '../intelligence/decision/jev';
+import { instrumentedJevCall } from '../observability/collector';
 
 async function askJev(
   state: Record<string, any>,
@@ -167,10 +171,19 @@ export async function executePredictionArbitrage(
     },
   };
 
-  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJev(
-    { payload: jevPayload },
-    jevQuestions
-  );
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } =
+    await instrumentedJevCall(
+      {
+        gateType: 'trade_execution',
+        runId: (params as any)?.runId,
+        agentId: (params as any)?.agentId,
+        userId: (params as any)?.userId,
+        threshold: confidenceThreshold,
+        state: { payload: jevPayload },
+        questions: jevQuestions as any,
+      },
+      () => askJev({ payload: jevPayload }, jevQuestions)
+    );
 
   let gatePassed = false;
   let gateReason = '';

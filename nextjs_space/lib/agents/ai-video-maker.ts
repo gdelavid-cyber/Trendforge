@@ -53,6 +53,7 @@ export interface AIVideoMakerResult {
 }
 
 import { askJev as askJevGateway } from '../intelligence/decision/jev';
+import { instrumentedJevCall } from '../observability/collector';
 
 async function askJevScriptQuality(
   state: Record<string, any>,
@@ -109,33 +110,69 @@ export async function executeAIVideoMaker(
 
   // Jev Script Quality Gate
   await log(`[AI_VIDEO_MAKER] Running Jev script quality & viral retention gate...`);
-  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJevScriptQuality(
-    { script: generatedScript, topic, aspectRatio },
-    {
-      hook_strength: {
-        type: 'score',
-        description: 'Rate hook strength 0–10 for short-form retention',
-        min: 0,
-        max: 10,
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } =
+    await instrumentedJevCall(
+      {
+        gateType: 'completion',
+        runId: (params as any)?.runId,
+        agentId: (params as any)?.agentId,
+        userId: (params as any)?.userId,
+        threshold: 0.75,
+        state: { script: generatedScript, topic, aspectRatio },
+        questions: {
+          hook_strength: {
+            type: 'score',
+            description: 'Rate hook strength 0–10 for short-form retention',
+            min: 0,
+            max: 10,
+          },
+          clarity: {
+            type: 'score',
+            description: 'Rate clarity and pacing 0–10',
+            min: 0,
+            max: 10,
+          },
+          cta_effectiveness: {
+            type: 'score',
+            description: 'Rate call-to-action conversion effectiveness 0–10',
+            min: 0,
+            max: 10,
+          },
+          publish_decision: {
+            type: 'noul',
+            description: 'Should this script be published or regenerated?',
+          },
+        },
       },
-      clarity: {
-        type: 'score',
-        description: 'Rate clarity and pacing 0–10',
-        min: 0,
-        max: 10,
-      },
-      cta_effectiveness: {
-        type: 'score',
-        description: 'Rate call-to-action conversion effectiveness 0–10',
-        min: 0,
-        max: 10,
-      },
-      publish_decision: {
-        type: 'noul',
-        description: 'Should this script be published or regenerated?',
-      },
-    }
-  );
+      () =>
+        askJevScriptQuality(
+          { script: generatedScript, topic, aspectRatio },
+          {
+            hook_strength: {
+              type: 'score',
+              description: 'Rate hook strength 0–10 for short-form retention',
+              min: 0,
+              max: 10,
+            },
+            clarity: {
+              type: 'score',
+              description: 'Rate clarity and pacing 0–10',
+              min: 0,
+              max: 10,
+            },
+            cta_effectiveness: {
+              type: 'score',
+              description: 'Rate call-to-action conversion effectiveness 0–10',
+              min: 0,
+              max: 10,
+            },
+            publish_decision: {
+              type: 'noul',
+              description: 'Should this script be published or regenerated?',
+            },
+          }
+        )
+    );
 
   const hookScore = jevDecision?.hook_strength?.score ?? 8;
   const clarityScore = jevDecision?.clarity?.score ?? 8;

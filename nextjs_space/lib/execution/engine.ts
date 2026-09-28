@@ -286,12 +286,25 @@ async function runAutopilot(
       if (step.external) {
         try {
           const { askJev: askJevGateway } = await import('../intelligence/decision/jev');
-          const res = await askJevGateway(
-            { action: step.action, title: step.title, description: step.description, taskTitle: task?.title },
+          const { instrumentedJevCall } = await import('../observability/collector');
+          const res = await instrumentedJevCall(
             {
-              requires_approval: { type: 'noul', description: 'Does this action require human approval, or can it proceed autonomously?' },
-              confidence: { type: 'score', description: 'Confidence in risk 0-100', min: 0, max: 100 },
-            }
+              gateType: 'approval',
+              threshold: 0.85,
+              state: { action: step.action, title: step.title, description: step.description, taskTitle: task?.title },
+              questions: {
+                requires_approval: { type: 'noul', description: 'Does this action require human approval, or can it proceed autonomously?' },
+                confidence: { type: 'score', description: 'Confidence in risk 0-100', min: 0, max: 100 },
+              },
+            },
+            () =>
+              askJevGateway(
+                { action: step.action, title: step.title, description: step.description, taskTitle: task?.title },
+                {
+                  requires_approval: { type: 'noul', description: 'Does this action require human approval, or can it proceed autonomously?' },
+                  confidence: { type: 'score', description: 'Confidence in risk 0-100', min: 0, max: 100 },
+                }
+              )
           );
           if (res.decision) {
             const prob = res.decision?.requires_approval?.probability;

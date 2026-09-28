@@ -49,12 +49,27 @@ async function move(params: {
   let verificationConf = 1.0;
   try {
     const { askJev: askJevGateway } = await import('../intelligence/decision/jev');
-    const res = await askJevGateway(
-      { agentId, userId, type, amountUsdc: params.amountUsdc, ref, note },
+    const { instrumentedJevCall } = await import('../observability/collector');
+    const res = await instrumentedJevCall(
       {
-        is_verifiable_operation: { type: 'noul', description: 'Is this a verifiable operation, or should it be reported as blocked?' },
-        confidence: { type: 'score', description: 'Confidence in transaction audit trail 0-100', min: 0, max: 100 },
-      }
+        gateType: 'ledger_verification',
+        agentId,
+        userId,
+        threshold: 0.85,
+        state: { agentId, userId, type, amountUsdc: params.amountUsdc, ref, note },
+        questions: {
+          is_verifiable_operation: { type: 'noul', description: 'Is this a verifiable operation, or should it be reported as blocked?' },
+          confidence: { type: 'score', description: 'Confidence in transaction audit trail 0-100', min: 0, max: 100 },
+        },
+      },
+      () =>
+        askJevGateway(
+          { agentId, userId, type, amountUsdc: params.amountUsdc, ref, note },
+          {
+            is_verifiable_operation: { type: 'noul', description: 'Is this a verifiable operation, or should it be reported as blocked?' },
+            confidence: { type: 'score', description: 'Confidence in transaction audit trail 0-100', min: 0, max: 100 },
+          }
+        )
     );
     if (res.decision) {
       verificationProb = res.decision?.is_verifiable_operation?.probability ?? 1.0;

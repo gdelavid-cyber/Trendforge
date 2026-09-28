@@ -10,3 +10,21 @@ services:
         value: https://trendly-platform-chi.vercel.app
       - key: PIPELINE_API_KEY
         sync: false   # set in dashboard, never in repo
+
+  - type: cron
+    name: trendly-observability-worker
+    runtime: node
+    schedule: "0 * * * *"
+    buildCommand: "cd nextjs_space && npm install && npx prisma generate"
+    startCommand: "cd nextjs_space && npx tsx worker/observability.ts --run"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: OBSERVABILITY_ENABLED
+        value: "true"
+      - key: CRON_SECRET
+        sync: false
+
+

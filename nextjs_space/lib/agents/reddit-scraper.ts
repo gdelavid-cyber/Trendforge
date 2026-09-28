@@ -44,6 +44,7 @@ export interface RedditScraperResult {
 }
 
 import { askJev as askJevGateway } from '../intelligence/decision/jev';
+import { instrumentedJevCall } from '../observability/collector';
 
 async function askJevQualification(
   state: Record<string, any>,
@@ -116,28 +117,59 @@ export async function executeRedditScraper(
     comments: p.num_comments,
   }));
 
-  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJevQualification(
-    {
-      subreddit: cleanSubreddit,
-      topic,
-      postCount: posts.length,
-      totalEngagement,
-      topDiscussions: topPostsSummary,
-    },
-    {
-      monetizability: {
-        type: 'score',
-        description: 'Rate monetizability 0–100 based on commercial intent and willingness to pay',
-        min: 0,
-        max: 100,
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } =
+    await instrumentedJevCall(
+      {
+        gateType: 'lead_qualification',
+        runId: (params as any)?.runId,
+        agentId: (params as any)?.agentId,
+        userId: (params as any)?.userId,
+        threshold: 50,
+        state: {
+          subreddit: cleanSubreddit,
+          topic,
+          postCount: posts.length,
+          totalEngagement,
+          topDiscussions: topPostsSummary,
+        },
+        questions: {
+          monetizability: {
+            type: 'score',
+            description: 'Rate monetizability 0–100 based on commercial intent and willingness to pay',
+            min: 0,
+            max: 100,
+          },
+          blueprint_fit: {
+            type: 'choice',
+            description: 'Which blueprint architecture best fits this problem set?',
+            options: ['voice_agent', 'content_factory', 'saas_scaffold', 'lead_gen', 'other'],
+          },
+        },
       },
-      blueprint_fit: {
-        type: 'choice',
-        description: 'Which blueprint architecture best fits this problem set?',
-        options: ['voice_agent', 'content_factory', 'saas_scaffold', 'lead_gen', 'other'],
-      },
-    }
-  );
+      () =>
+        askJevQualification(
+          {
+            subreddit: cleanSubreddit,
+            topic,
+            postCount: posts.length,
+            totalEngagement,
+            topDiscussions: topPostsSummary,
+          },
+          {
+            monetizability: {
+              type: 'score',
+              description: 'Rate monetizability 0–100 based on commercial intent and willingness to pay',
+              min: 0,
+              max: 100,
+            },
+            blueprint_fit: {
+              type: 'choice',
+              description: 'Which blueprint architecture best fits this problem set?',
+              options: ['voice_agent', 'content_factory', 'saas_scaffold', 'lead_gen', 'other'],
+            },
+          }
+        )
+    );
 
   const monetizabilityScore = jevDecision?.monetizability?.score ?? (rulePasses ? 65 : 30);
   const blueprintType = jevDecision?.blueprint_fit?.choice ?? 'saas_scaffold';

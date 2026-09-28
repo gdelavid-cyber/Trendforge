@@ -2305,4 +2305,111 @@ model DiscoveryQuery {
 }
 
 
+// ============================================================================
+// OBSERVABILITY & JEV CALIBRATION LAYER
+// ============================================================================
 
+model DecisionLog {
+  id           String           @id @default(cuid())
+  runId        String?
+  agentId      String?
+  userId       String?
+  gateType     String           // 'trade_execution'|'lead_qualification'|'approval'|'completion'|'ledger_verification'|'tool_routing'|'model_routing'
+  primitive    String           // 'choice'|'score'|'noul'
+  question     String           @db.Text
+  answer       Json             // {probability?, confidence?, choice?, score?}
+  threshold    Float
+  inputSummary String           @db.VarChar(500)
+  inputHash    String           // sha256 first 16 chars
+  latencyMs    Int
+  costUsd      Float
+  actionTaken  String           // 'allowed'|'blocked'|'escalated'|'fallback_to_llm'|'fallback_to_rule'
+  outcomeId    String?          @unique
+  outcome      DecisionOutcome?
+  createdAt    DateTime         @default(now())
+
+  @@index([gateType, createdAt])
+  @@index([agentId, createdAt])
+  @@index([userId, createdAt])
+  @@index([actionTaken, createdAt])
+}
+
+model DecisionOutcome {
+  id            String      @id @default(cuid())
+  decisionId    String      @unique
+  decision      DecisionLog @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  wasCorrect    Boolean?
+  actualValue   Json?
+  source        String      // 'user_feedback'|'automated_signal'|'delayed_verification'|'manual_review'
+  evidenceUrl   String?
+  recordedAt    DateTime    @default(now())
+  timeToOutcome Int?        // milliseconds to outcome
+
+  @@index([wasCorrect])
+  @@index([source])
+}
+
+model CalibrationSnapshot {
+  id               String   @id @default(cuid())
+  gateType         String
+  confidenceBucket Float
+  windowStart      DateTime
+  windowEnd        DateTime
+  totalDecisions   Int
+  correctDecisions Int
+  actualAccuracy   Float
+  expectedAccuracy Float
+  calibrationError Float
+  createdAt        DateTime @default(now())
+
+  @@unique([gateType, confidenceBucket, windowStart])
+  @@index([gateType, windowStart])
+}
+
+model AgentRunMetrics {
+  id                 String   @id @default(cuid())
+  runId              String   @unique
+  totalActions       Int
+  blockedActions     Int
+  escalatedActions   Int
+  completed          Boolean
+  tokensUsed         Int
+  costUsd            Float
+  durationMs         Int
+  guardsTriggered    String[]
+  guardsPassed       Int
+  primaryPattern     String
+  additionalPatterns String[]
+  deliveredValue     Boolean?
+  valueScore         Float?
+  createdAt          DateTime @default(now())
+
+  @@index([primaryPattern, createdAt])
+  @@index([completed, createdAt])
+}
+
+model ObservabilityRun {
+  id                String   @id @default(cuid())
+  tradesBackfilled  Int      @default(0)
+  leadsBackfilled   Int      @default(0)
+  snapshotsComputed Int      @default(0)
+  durationMs        Int
+  error             String?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model DynamicGateConfig {
+  id               String   @id @default(cuid())
+  gateType         String   @unique
+  currentThreshold Float    @default(0.85)
+  baseThreshold    Float    @default(0.85)
+  lastTunedAt      DateTime @default(now())
+  calibrationError Float    @default(0.0)
+  adjustmentReason String?
+  totalDecisions   Int      @default(0)
+  accuracy         Float    @default(0.0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

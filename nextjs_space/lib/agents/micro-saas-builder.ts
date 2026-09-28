@@ -51,6 +51,7 @@ export interface MicroSaaSBuilderResult {
 }
 
 import { askJev as askJevGateway } from '../intelligence/decision/jev';
+import { instrumentedJevCall } from '../observability/collector';
 
 async function askJevSpecVerification(
   state: Record<string, any>,
@@ -76,21 +77,45 @@ export async function executeMicroSaaSBuilder(
 
   // Jev Pre-Scaffolding Gate
   await log(`[MICRO_SAAS_BUILDER] Verifying problem spec completeness via Jev gate...`);
-  const { decision: preDecision, latencyMs: preLatency, error: preError } = await askJevSpecVerification(
-    { ideaPrompt, niche, authType, pricingModel },
-    {
-      spec_completeness: {
-        type: 'noul',
-        description: 'Is this problem spec complete enough to build a working SaaS from?',
+  const { decision: preDecision, latencyMs: preLatency, error: preError } =
+    await instrumentedJevCall(
+      {
+        gateType: 'approval',
+        runId: (params as any)?.runId,
+        agentId: (params as any)?.agentId,
+        userId: (params as any)?.userId,
+        threshold: 0.85,
+        state: { ideaPrompt, niche, authType, pricingModel },
+        questions: {
+          spec_completeness: {
+            type: 'noul',
+            description: 'Is this problem spec complete enough to build a working SaaS from?',
+          },
+          confidence: {
+            type: 'score',
+            description: 'Confidence in spec feasibility 0-100',
+            min: 0,
+            max: 100,
+          },
+        },
       },
-      confidence: {
-        type: 'score',
-        description: 'Confidence in spec feasibility 0-100',
-        min: 0,
-        max: 100,
-      },
-    }
-  );
+      () =>
+        askJevSpecVerification(
+          { ideaPrompt, niche, authType, pricingModel },
+          {
+            spec_completeness: {
+              type: 'noul',
+              description: 'Is this problem spec complete enough to build a working SaaS from?',
+            },
+            confidence: {
+              type: 'score',
+              description: 'Confidence in spec feasibility 0-100',
+              min: 0,
+              max: 100,
+            },
+          }
+        )
+    );
   const preProb = preDecision?.spec_completeness?.probability ?? 0.92;
   await log(
     `[MICRO_SAAS_BUILDER] Pre-Scaffold Spec Gate -> Completeness: ${preProb.toFixed(2)} | ` +
@@ -277,21 +302,45 @@ model Review {
 
   // Jev Post-Scaffolding Gate
   await log(`[MICRO_SAAS_BUILDER] Running post-scaffold code fidelity verification gate...`);
-  const { decision: postDecision, latencyMs: postLatency, error: postError } = await askJevSpecVerification(
-    {
-      ideaPrompt,
-      niche,
-      appName,
-      filesGenerated: coreFiles.map((f) => f.filePath),
-      pricingModel,
-    },
-    {
-      code_matches_spec: {
-        type: 'noul',
-        description: 'Does the generated code match the original spec?',
+  const { decision: postDecision, latencyMs: postLatency, error: postError } =
+    await instrumentedJevCall(
+      {
+        gateType: 'completion',
+        runId: (params as any)?.runId,
+        agentId: (params as any)?.agentId,
+        userId: (params as any)?.userId,
+        threshold: 0.85,
+        state: {
+          ideaPrompt,
+          niche,
+          appName,
+          filesGenerated: coreFiles.map((f) => f.filePath),
+          pricingModel,
+        },
+        questions: {
+          code_matches_spec: {
+            type: 'noul',
+            description: 'Does the generated code match the original spec?',
+          },
+        },
       },
-    }
-  );
+      () =>
+        askJevSpecVerification(
+          {
+            ideaPrompt,
+            niche,
+            appName,
+            filesGenerated: coreFiles.map((f) => f.filePath),
+            pricingModel,
+          },
+          {
+            code_matches_spec: {
+              type: 'noul',
+              description: 'Does the generated code match the original spec?',
+            },
+          }
+        )
+    );
   const postProb = postDecision?.code_matches_spec?.probability ?? 0.95;
   await log(
     `[MICRO_SAAS_BUILDER] Post-Scaffold Fidelity Gate -> Match Prob: ${postProb.toFixed(2)} | ` +

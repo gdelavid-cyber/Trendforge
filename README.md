@@ -35,6 +35,17 @@ Live Production URL: **[https://trendly-platform-chi.vercel.app](https://trendly
 * **Conversational Agent Brain (`/api/agent/chat`)**: Multi-turn conversational reasoning with Gemini 2.0 / ADK, personality prompts, emotional facial morph targets (`happy`, `surprised`, `thinking`, `confident`, `battle`), and autonomous tool execution (Reddit scraping, DeFi arbitrage, SaaS scaffolding).
 * **Cross-Platform Integration**: Spoken companion triggers on Dashboard, Avatar Studio, Web4 Agents, Marketplace live demos, and Battle Arena trash-talk.
 
+### 7. Observability & Jev Calibration Layer
+* **Instant Decision Logging (`lib/observability/collector.ts`)**: Every Jev gate call (`trade_execution`, `lead_qualification`, `approval`, `completion`, `ledger_verification`, `tool_routing`, `model_routing`) is instrumented and logged with latency, cost, inputs, and actions taken to `DecisionLog`.
+* **Automated Outcome Backfilling (`lib/observability/outcome.ts`)**: Correlates decisions with delayed reality — auto-backfilling trade profitability against settled ledger entries and lead conversions against buyer lead outcomes into `DecisionOutcome`.
+* **Calibration & Metrics Engine (`lib/observability/metrics.ts`)**: Continuously buckets decisions into confidence intervals (0.0 to 1.0) and computes expected vs. actual accuracy and calibration error across all 7 gates.
+* **Extraction APIs (`/api/observability/*`)**:
+  - `/api/observability/calibration`: Returns rolling calibration snapshots per gate.
+  - `/api/observability/export`: Streams up to 10,000 decisions in JSON or CSV format for downstream analysis.
+  - `/api/observability/health`: Real-time system health, decision count, outcome backfill coverage %, and average calibration error.
+* **Background Worker Daemon (`worker/observability.ts`)**: Hourly cyclic worker that backfills trades, leads, computes snapshots, and logs to `ObservabilityRun`.
+
+
 ---
 
 ## ⚙️ Environment Variables

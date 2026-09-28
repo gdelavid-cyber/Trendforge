@@ -46,6 +46,7 @@ export interface OpenClawDeployerResult {
 }
 
 import { askJev as askJevGateway } from '../intelligence/decision/jev';
+import { instrumentedJevCall } from '../observability/collector';
 
 async function askJevProxyCleanliness(
   state: Record<string, any>,
@@ -102,21 +103,42 @@ export async function executeOpenClawDeployer(
     canvasFingerprintSpoofed: true,
   };
 
-  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } = await askJevProxyCleanliness(
-    { proxy: proxyState },
-    {
-      proxy_cleanliness: {
-        type: 'noul',
-        description: 'Is this proxy clean enough for account creation given latency, headers, and fingerprint signals?',
+  const { decision: jevDecision, latencyMs: jevLatencyMs, error: jevError } =
+    await instrumentedJevCall(
+      {
+        gateType: 'tool_routing',
+        threshold: confidenceThreshold,
+        state: { proxy: proxyState },
+        questions: {
+          proxy_cleanliness: {
+            type: 'noul',
+            description: 'Is this proxy clean enough for account creation given latency, headers, and fingerprint signals?',
+          },
+          confidence: {
+            type: 'score',
+            description: 'Confidence in proxy reputation score 0-100',
+            min: 0,
+            max: 100,
+          },
+        },
       },
-      confidence: {
-        type: 'score',
-        description: 'Confidence in proxy reputation score 0-100',
-        min: 0,
-        max: 100,
-      },
-    }
-  );
+      () =>
+        askJevProxyCleanliness(
+          { proxy: proxyState },
+          {
+            proxy_cleanliness: {
+              type: 'noul',
+              description: 'Is this proxy clean enough for account creation given latency, headers, and fingerprint signals?',
+            },
+            confidence: {
+              type: 'score',
+              description: 'Confidence in proxy reputation score 0-100',
+              min: 0,
+              max: 100,
+            },
+          }
+        )
+    );
 
   const jevEvaluated = jevDecision !== null;
   const prob = jevDecision?.proxy_cleanliness?.probability ?? null;
