@@ -57,12 +57,20 @@ export async function createVentureLead(input: CreateLeadInput) {
         () => askJev({ handle: input.contactHandle, excerpt: input.problemExcerpt, channel: input.sourceChannel }, questions)
       );
       const scoreVal = (jevRes as any)?.decision?.buyer_intent;
-      if (typeof scoreVal === 'number') score = scoreVal > 1 ? scoreVal : Math.round(scoreVal * 100);
+      if (typeof scoreVal === 'number') {
+        score = scoreVal > 1 ? scoreVal : Math.round(scoreVal * 100);
+      } else {
+        let s = 50;
+        const text = input.problemExcerpt.toLowerCase();
+        if (text.includes('buy') || text.includes('pay') || text.includes('pricing') || text.includes('ready')) s += 30;
+        if (text.includes('urgent') || text.includes('asap') || text.includes('solution') || text.includes('immediately')) s += 15;
+        score = Math.min(100, s);
+      }
     } catch (_) {
       let s = 50;
       const text = input.problemExcerpt.toLowerCase();
-      if (text.includes('buy') || text.includes('pay') || text.includes('pricing')) s += 30;
-      if (text.includes('urgent') || text.includes('asap')) s += 15;
+      if (text.includes('buy') || text.includes('pay') || text.includes('pricing') || text.includes('ready')) s += 30;
+      if (text.includes('urgent') || text.includes('asap') || text.includes('solution') || text.includes('immediately')) s += 15;
       score = Math.min(100, s);
     }
   }

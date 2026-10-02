@@ -64,6 +64,10 @@ const HIGH_URGENCY_TRIGGERS = [
 
 const HIGH_INTENT_TRIGGERS = [
   'looking to buy',
+  'looking for',
+  'willing to pay',
+  'budget is',
+  'alternative to',
   'what tool can do',
   'any software that',
   'recommend a service for',
@@ -140,16 +144,24 @@ export async function ingestMarketSignal(input: IngestSignalInput) {
 export async function validateDemand(input: DemandValidationInput): Promise<DemandValidationResult> {
   const { problem, targetCustomer, industry, competitors = [], observedPricingPoints = [] } = input;
 
-  // Evaluate pain & urgency from text density and specifics
+  // Evaluate pain & urgency from text density, target audience, and specifics
   const lowerProb = problem.toLowerCase();
-  const hasSpecificWorkflow = lowerProb.length > 40 && !lowerProb.includes('lorem');
-  const hasCommercialFocus = !lowerProb.includes('hobby') && (
-    lowerProb.includes('business') ||
-    lowerProb.includes('company') ||
-    lowerProb.includes('agency') ||
-    lowerProb.includes('client') ||
-    lowerProb.includes('revenue') ||
-    lowerProb.includes('workflow')
+  const combinedContext = `${problem} ${targetCustomer || ''} ${industry || ''}`.toLowerCase();
+  const hasSpecificWorkflow = lowerProb.length > 30 && !lowerProb.includes('lorem');
+  const hasCommercialFocus = !combinedContext.includes('hobby') && (
+    combinedContext.includes('business') ||
+    combinedContext.includes('company') ||
+    combinedContext.includes('agency') ||
+    combinedContext.includes('client') ||
+    combinedContext.includes('revenue') ||
+    combinedContext.includes('workflow') ||
+    combinedContext.includes('b2b') ||
+    combinedContext.includes('sales') ||
+    combinedContext.includes('budget') ||
+    combinedContext.includes('team') ||
+    combinedContext.includes('firm') ||
+    combinedContext.includes('saas') ||
+    combinedContext.includes('enterprise')
   );
 
   // Calculate pricing baseline
@@ -192,7 +204,15 @@ export async function validateDemand(input: DemandValidationInput): Promise<Dema
       () => askJev({ problem, targetCustomer, industry, competitorCount: competitors.length }, questions)
     );
     const scoreVal = (jevResult as any)?.decision?.commercial_viability;
-    if (typeof scoreVal === 'number') viabilityScore = scoreVal > 1 ? scoreVal / 100 : scoreVal;
+    if (typeof scoreVal === 'number') {
+      viabilityScore = scoreVal > 1 ? scoreVal / 100 : scoreVal;
+    } else {
+      let score = 0.5;
+      if (hasSpecificWorkflow) score += 0.2;
+      if (hasCommercialFocus) score += 0.2;
+      if (competitors.length >= 1 && competitors.length <= 6) score += 0.1;
+      viabilityScore = Math.min(1.0, score);
+    }
   } catch (_) {
     let score = 0.5;
     if (hasSpecificWorkflow) score += 0.2;

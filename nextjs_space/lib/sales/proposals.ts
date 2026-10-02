@@ -97,9 +97,18 @@ export async function handleBuyerObjection(input: HandleObjectionInput): Promise
   const lowerObj = objection.toLowerCase();
   let category: 'PRICE' | 'TRUST' | 'CAPABILITY' | 'TIMING' | 'OTHER' = 'OTHER';
 
-  if (lowerObj.includes('expensive') || lowerObj.includes('cost') || lowerObj.includes('discount') || lowerObj.includes('budget')) {
+  if (lowerObj.includes('expensive') || lowerObj.includes('cost') || lowerObj.includes('discount') || lowerObj.includes('budget') || lowerObj.includes('price')) {
     category = 'PRICE';
-  } else if (lowerObj.includes('proof') || lowerObj.includes('experience') || lowerObj.includes('who are you')) {
+  } else if (
+    lowerObj.includes('proof') ||
+    lowerObj.includes('experience') ||
+    lowerObj.includes('who are you') ||
+    lowerObj.includes('know') ||
+    lowerObj.includes('trust') ||
+    lowerObj.includes('verified') ||
+    lowerObj.includes('guarantee') ||
+    lowerObj.includes('legit')
+  ) {
     category = 'TRUST';
   } else if (lowerObj.includes('can you') || lowerObj.includes('feature') || lowerObj.includes('support')) {
     category = 'CAPABILITY';
@@ -153,7 +162,7 @@ export async function handleBuyerObjection(input: HandleObjectionInput): Promise
       ventureId,
       category: 'CUSTOMER_OBJECTION',
       insight: `Objection [${category}]: "${objection.substring(0, 200)}"`,
-      supportingData: { category, objection, response: recommendedResponse, jevChoice: jevRes.answer.choice },
+      supportingData: { category, objection, response: recommendedResponse, jevChoice },
       confidence: 0.85,
     },
   });
