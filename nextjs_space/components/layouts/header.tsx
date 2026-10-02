@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Briefcase,
+  Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +38,7 @@ export function Header({ userStats }: { userStats?: any } = {}) {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/ventures', label: 'Venture OS', icon: Rocket },
     { href: '/dashboard/my-work', label: 'My Work', icon: Briefcase, badge: activeCount },
     ...(isAdmin ? [{ href: '/council', label: 'AI Council', icon: Flame }] : []),
     { href: '/earn', label: 'Tasks & Earn', icon: Zap },
