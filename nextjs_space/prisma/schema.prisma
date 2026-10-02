@@ -87,100 +87,102 @@ enum VoteType {
 }
 
 model User {
-  id                    String           @id @default(cuid())
-  email                 String           @unique
-  name                  String?
-  passwordHash          String
-  passwordResetToken    String?          @unique
-  passwordResetExpires  DateTime?
-  role                  UserRole         @default(FREE)
-  stripeCustomerId      String?          @unique
-  stripeSubscriptionId  String?
-  subscriptionStatus    String?
-  skills                String[]         @default([])
-  riskTolerance         RiskTolerance    @default(MEDIUM)
-  totalEarnings         Float            @default(0)
-  firstHundredAt        DateTime?
-  firstThousandAt       DateTime?
-  favorCredits          Int              @default(3)
-  isVIP                 Boolean          @default(false)
-  isMentor              Boolean          @default(false)
-  mentorId              String?
-  mentor                User?            @relation("MentorMentee", fields: [mentorId], references: [id])
-  mentees               User[]           @relation("MentorMentee")
-  referralCode          String?          @unique
-  successFeeOptIn       Boolean          @default(false)
-  bonusAgentRuns        Int              @default(0)
-  communityPoints       Int              @default(0)
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
+  id                   String        @id @default(cuid())
+  email                String        @unique
+  name                 String?
+  passwordHash         String
+  passwordResetToken   String?       @unique
+  passwordResetExpires DateTime?
+  role                 UserRole      @default(FREE)
+  stripeCustomerId     String?       @unique
+  stripeSubscriptionId String?
+  subscriptionStatus   String?
+  skills               String[]      @default([])
+  riskTolerance        RiskTolerance @default(MEDIUM)
+  totalEarnings        Float         @default(0)
+  firstHundredAt       DateTime?
+  firstThousandAt      DateTime?
+  favorCredits         Int           @default(3)
+  isVIP                Boolean       @default(false)
+  isMentor             Boolean       @default(false)
+  mentorId             String?
+  mentor               User?         @relation("MentorMentee", fields: [mentorId], references: [id])
+  mentees              User[]        @relation("MentorMentee")
+  referralCode         String?       @unique
+  successFeeOptIn      Boolean       @default(false)
+  bonusAgentRuns       Int           @default(0)
+  communityPoints      Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
-  userTasks             UserTask[]
-  approvals             Approval[]
-  companions            Companion[]
-  llmKey                UserLlmKey?
-  successStories        SuccessStory[]
-  sentFavors            Favor[]          @relation("FavorFrom")
-  receivedFavors        Favor[]          @relation("FavorTo")
-  templates             Template[]
-  votes                 Vote[]
-  mentorshipsAsMentor   Mentorship[]     @relation("MentorRel")
-  mentorshipsAsMentee   Mentorship[]     @relation("MenteeRel")
-  notifications         Notification[]
-  badges                UserBadge[]
-  posts                 CommunityPost[]
-  comments              CommunityComment[]
-  referralsMade         Referral[]       @relation("ReferralsMade")
-  referredBy            Referral?        @relation("ReferredUser")
-  workflows             AgentWorkflow[]
-  web4Agents            Web4Agent[]
-  ledgerEntries         LedgerEntry[]
-  deposits              Deposit[]
-  withdrawalRequests    WithdrawalRequest[]
-  integrations          UserIntegrationKey[]
-  userCosmetics         UserCosmetic[]
-  marketplaceListings   MarketplaceListing[] @relation("SellerListings")
-  cosmeticPurchases     CosmeticTransaction[] @relation("BuyerTransactions")
-  cosmeticSales         CosmeticTransaction[] @relation("SellerTransactions")
-  executionPlans        ExecutionPlan[]
-  sales                 Sale[]
-  leads                 Lead[]
-  coPilotSessions       CoPilotSession[]
-  executions            TrendExecution[]
-  activities            UserActivity[]
-  buyerLeads            BuyerLead[]
-  pitchSessions         PitchSession[]
+  userTasks           UserTask[]
+  approvals           Approval[]
+  companions          Companion[]
+  llmKey              UserLlmKey?
+  successStories      SuccessStory[]
+  sentFavors          Favor[]                @relation("FavorFrom")
+  receivedFavors      Favor[]                @relation("FavorTo")
+  templates           Template[]
+  votes               Vote[]
+  mentorshipsAsMentor Mentorship[]           @relation("MentorRel")
+  mentorshipsAsMentee Mentorship[]           @relation("MenteeRel")
+  notifications       Notification[]
+  badges              UserBadge[]
+  posts               CommunityPost[]
+  comments            CommunityComment[]
+  referralsMade       Referral[]             @relation("ReferralsMade")
+  referredBy          Referral?              @relation("ReferredUser")
+  workflows           AgentWorkflow[]
+  web4Agents          Web4Agent[]
+  ledgerEntries       LedgerEntry[]
+  deposits            Deposit[]
+  withdrawalRequests  WithdrawalRequest[]
+  integrations        UserIntegrationKey[]
+  userCosmetics       UserCosmetic[]
+  marketplaceListings MarketplaceListing[]   @relation("SellerListings")
+  cosmeticPurchases   CosmeticTransaction[]  @relation("BuyerTransactions")
+  cosmeticSales       CosmeticTransaction[]  @relation("SellerTransactions")
+  executionPlans      ExecutionPlan[]
+  sales               Sale[]
+  leads               Lead[]
+  coPilotSessions     CoPilotSession[]
+  executions          TrendExecution[]
+  activities          UserActivity[]
+  buyerLeads          BuyerLead[]
+  pitchSessions       PitchSession[]
+  ventures            Venture[]
+  humanApprovals      HumanApprovalRequest[]
 
   @@index([role])
   @@index([email])
 }
 
 model Trend {
-  id                  String         @id @default(cuid())
-  name                String
-  fingerprint         String?        @unique
-  sourcePlatforms     String[]       @default([])
-  mentionVelocity     Float          @default(0)
-  sentimentScore      Float          @default(0)
-  confidence          Float          @default(0)
-  category            TrendCategory  @default(OTHER)
-  status              TrendStatus    @default(ACTIVE)
-  isMonetizable       Boolean        @default(true)
-  monetizationScore   Float          @default(0.85)
+  id                    String        @id @default(cuid())
+  name                  String
+  fingerprint           String?       @unique
+  sourcePlatforms       String[]      @default([])
+  mentionVelocity       Float         @default(0)
+  sentimentScore        Float         @default(0)
+  confidence            Float         @default(0)
+  category              TrendCategory @default(OTHER)
+  status                TrendStatus   @default(ACTIVE)
+  isMonetizable         Boolean       @default(true)
+  monetizationScore     Float         @default(0.85)
   monetizationRationale String?
-  newsSummary         String?
-  whyItMatters        String?
-  newsSourceUrl       String?
-  detectedAt          DateTime       @default(now())
-  hoursSinceDetection Float          @default(0)
-  slug                String?        @unique
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @default(now()) @updatedAt
+  newsSummary           String?
+  whyItMatters          String?
+  newsSourceUrl         String?
+  detectedAt            DateTime      @default(now())
+  hoursSinceDetection   Float         @default(0)
+  slug                  String?       @unique
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @default(now()) @updatedAt
 
-  tasks               Task[]
-  signals             RawSignal[]
-  executions          TrendExecution[]
-  marketingCampaigns  MarketingCampaign[]
+  tasks                  Task[]
+  signals                RawSignal[]
+  executions             TrendExecution[]
+  marketingCampaigns     MarketingCampaign[]
   publicOpportunityPages PublicOpportunityPage[]
 
   @@index([status])
@@ -224,15 +226,15 @@ model Task {
   trendScore            Float          @default(0)
   status                TaskStatus     @default(PENDING)
 
-  userTasks             UserTask[]
-  successStories        SuccessStory[]
-  favors                Favor[]
-  templates             Template[]
-  votes                 Vote[]
-  executionPlans        ExecutionPlan[]
-  sales                 Sale[]
-  leads                 Lead[]
-  salesKits             SalesKit[]
+  userTasks      UserTask[]
+  successStories SuccessStory[]
+  favors         Favor[]
+  templates      Template[]
+  votes          Vote[]
+  executionPlans ExecutionPlan[]
+  sales          Sale[]
+  leads          Lead[]
+  salesKits      SalesKit[]
 
   @@index([trendId])
   @@index([status])
@@ -268,9 +270,9 @@ model UserTask {
   stepResults      Json?
   companionId      String?
 
-  approvals        Approval[]
-  artifacts        TaskArtifact[]
-  createdAt        DateTime       @default(now())
+  approvals Approval[]
+  artifacts TaskArtifact[]
+  createdAt DateTime       @default(now())
 
   @@unique([userId, taskId])
   @@index([userId])
@@ -394,12 +396,12 @@ model TrendIngestionLog {
 }
 
 model WeeklyDigest {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   weekOf       DateTime
-  tasks        Json     @default("[]")
+  tasks        Json      @default("[]")
   trendSummary String?
   sentAt       DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   @@index([weekOf])
 }
@@ -407,11 +409,11 @@ model WeeklyDigest {
 model BrainDecision {
   id            String   @id @default(cuid())
   timestamp     DateTime @default(now())
-  type          String   // 'insight', 'action', 'anomaly'
-  parameters    Json     // structured parameters
+  type          String // 'insight', 'action', 'anomaly'
+  parameters    Json // structured parameters
   outcome       String?  @default("pending") // 'pending', 'approved', 'rejected', 'executed'
-  feedbackScore Float?   // 0-1, measured after execution
-  executedBy    String?  // 'admin' or 'system'
+  feedbackScore Float? // 0-1, measured after execution
+  executedBy    String? // 'admin' or 'system'
   title         String?  @default("Optimization Decision")
   description   String?
   riskLevel     String?  @default("MEDIUM") // 'LOW', 'MEDIUM', 'HIGH'
@@ -424,12 +426,12 @@ model BrainDecision {
 }
 
 model BrainMetric {
-  id          String   @id @default(cuid())
-  timestamp   DateTime @default(now())
-  metricName  String
-  value       Float
-  source      String   // 'database', 'stripe', 'vercel', 'sendgrid'
-  tags        Json     @default("{}") // { environment: 'prod', region: 'us-east' }
+  id         String   @id @default(cuid())
+  timestamp  DateTime @default(now())
+  metricName String
+  value      Float
+  source     String // 'database', 'stripe', 'vercel', 'sendgrid'
+  tags       Json     @default("{}") // { environment: 'prod', region: 'us-east' }
 
   @@index([metricName])
   @@index([timestamp])
@@ -439,18 +441,18 @@ model BrainMetric {
 model AgentRun {
   id            String    @id @default(cuid())
   userId        String
-  agentType     String    // 'reddit_scraper', 'prediction_arbitrage', 'openclaw_deployer', 'ai_video_maker', 'micro_saas_builder'
+  agentType     String // 'reddit_scraper', 'prediction_arbitrage', 'openclaw_deployer', 'ai_video_maker', 'micro_saas_builder'
   status        String    @default("queued") // 'queued', 'running', 'completed', 'failed', 'cancelled'
   parameters    Json      @default("{}")
   result        Json?
   logs          String    @default("") // concatenated log messages
   userFeedback  String?
-  userRating    Int?      // 1-5
+  userRating    Int? // 1-5
   createdAt     DateTime  @default(now())
   completedAt   DateTime?
   errorMessage  String?
   costCents     Int       @default(0)
-  durationMs    Int?      // execution time in milliseconds
+  durationMs    Int? // execution time in milliseconds
   correlationId String?
 
   @@index([userId])
@@ -460,54 +462,54 @@ model AgentRun {
 }
 
 model AgentQuota {
-  userId     String
-  agentType  String
-  runsUsed   Int      @default(0)
-  runsLimit  Int      @default(3) // 3 runs/week for free tier
-  weekStart  DateTime @default(now())
+  userId    String
+  agentType String
+  runsUsed  Int      @default(0)
+  runsLimit Int      @default(3) // 3 runs/week for free tier
+  weekStart DateTime @default(now())
 
   @@id([userId, agentType])
   @@index([userId])
 }
 
 model AgentWorkflow {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  name        String
-  definition  Json     // Array of agent steps with input mappings
-  status      String   @default("draft") // 'draft', 'active', 'completed', 'failed'
-  lastRunAt   DateTime?
-  result      Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  name       String
+  definition Json // Array of agent steps with input mappings
+  status     String    @default("draft") // 'draft', 'active', 'completed', 'failed'
+  lastRunAt  DateTime?
+  result     Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([userId])
 }
 
 model UserBadge {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  badgeId   String   // 'first_move', 'first_agent_run', 'hundred_club', 'thousand_club', 'top_earner', 'referral_champion'
-  earnedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  badgeId  String // 'first_move', 'first_agent_run', 'hundred_club', 'thousand_club', 'top_earner', 'referral_champion'
+  earnedAt DateTime @default(now())
 
   @@unique([userId, badgeId])
   @@index([userId])
 }
 
 model CommunityPost {
-  id        String             @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User               @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
   title     String
   content   String
-  category  String             @default("GENERAL") // 'GENERAL', 'HELP', 'SUCCESS_STORIES', 'AGENT_IDEAS'
-  upvotes   Int                @default(0)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  category  String   @default("GENERAL") // 'GENERAL', 'HELP', 'SUCCESS_STORIES', 'AGENT_IDEAS'
+  upvotes   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  comments  CommunityComment[]
+  comments CommunityComment[]
 
   @@index([userId])
   @@index([category])
@@ -577,40 +579,40 @@ enum CosmeticRarity {
 }
 
 model Web4Agent {
-  id                String          @id @default(cuid())
+  id                String      @id @default(cuid())
   userId            String
-  user              User            @relation(fields: [userId], references: [id])
+  user              User        @relation(fields: [userId], references: [id])
   name              String
   description       String?
-  archetype         String          @default("GENERALIST") // "DATA_MINER", "DEFI_ARBITRAGEUR", "LEAD_HUNTER", "VIRAL_CREATOR", "SAAS_ARCHITECT"
-  walletAddress     String          @unique
-  walletBalance     Float           @default(0.0) // Real funds only — ledger-backed, see LedgerEntry
-  referenceCode     String?         @unique // 8-char memo code senders include with USDC deposits
-  status            AgentStatus     @default(ACTIVE)
-  creationDate      DateTime        @default(now())
-  lastActive        DateTime        @default(now())
-  totalEarnings     Float           @default(0)
-  totalCosts        Float           @default(0)
-  profit            Float           @default(0)
-  survivalScore     Float           @default(85) // 0-100 score
-  riskExposure      Float           @default(0.2) // 0-1
+  archetype         String      @default("GENERALIST") // "DATA_MINER", "DEFI_ARBITRAGEUR", "LEAD_HUNTER", "VIRAL_CREATOR", "SAAS_ARCHITECT"
+  walletAddress     String      @unique
+  walletBalance     Float       @default(0.0) // Real funds only — ledger-backed, see LedgerEntry
+  referenceCode     String?     @unique // 8-char memo code senders include with USDC deposits
+  status            AgentStatus @default(ACTIVE)
+  creationDate      DateTime    @default(now())
+  lastActive        DateTime    @default(now())
+  totalEarnings     Float       @default(0)
+  totalCosts        Float       @default(0)
+  profit            Float       @default(0)
+  survivalScore     Float       @default(85) // 0-100 score
+  riskExposure      Float       @default(0.2) // 0-1
   gracePeriodEnds   DateTime?
-  parentAgentId     String?         // Lineage / genetic inheritance
-  skills            Json            // Workflow DAG nodes
-  memory            Json?           // Experience reflection logs
-  constitution      Json?           // Operational guardrails
-  avatarConfig      Json?           // GTA skin, accessories, animations, particle auras
-  personality       String?         // Core prompt / conversational personality instructions
-  voiceId           String?         // TTS voice ID (ElevenLabs / Google voice)
-  emotionsEnabled   Boolean         @default(true)
-  ttsEnabled        Boolean         @default(true)
-  sttEnabled        Boolean         @default(true)
-  eip8004Hash       String?         // Verifiable on-chain identity hash
-  mcpEndpoints      Json?           // Registered MCP tool servers
-  generation        Int             @default(1)
-  reproductionCount Int             @default(0)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  parentAgentId     String? // Lineage / genetic inheritance
+  skills            Json // Workflow DAG nodes
+  memory            Json? // Experience reflection logs
+  constitution      Json? // Operational guardrails
+  avatarConfig      Json? // GTA skin, accessories, animations, particle auras
+  personality       String? // Core prompt / conversational personality instructions
+  voiceId           String? // TTS voice ID (ElevenLabs / Google voice)
+  emotionsEnabled   Boolean     @default(true)
+  ttsEnabled        Boolean     @default(true)
+  sttEnabled        Boolean     @default(true)
+  eip8004Hash       String? // Verifiable on-chain identity hash
+  mcpEndpoints      Json? // Registered MCP tool servers
+  generation        Int         @default(1)
+  reproductionCount Int         @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   marketplaceListings MarketplaceListing[]
   battlesAsChallenger AgentBattle[]        @relation("ChallengerAgent")
@@ -626,21 +628,21 @@ model Web4Agent {
 }
 
 model Cosmetic {
-  id            String            @id @default(cuid())
-  name          String
-  description   String?
-  category      CosmeticCategory
-  rarity        CosmeticRarity    @default(COMMON)
-  previewUrl    String
-  modelUrl      String?
-  thumbnailUrl  String
-  price         Float             @default(0) // in TREND tokens / USD
-  marketable    Boolean           @default(true)
-  season        String?           @default("Season 1: Genesis")
-  unlockMethod  String?           @default("FREE_QUEST") // quest, achievement, referral, battlepass, shop
-  renderConfig  Json?             // Swarm-published CosmeticRenderConfig override
-  assetUrl      String?           // Swarm-published 2D PNG asset URL
-  createdAt     DateTime          @default(now())
+  id           String           @id @default(cuid())
+  name         String
+  description  String?
+  category     CosmeticCategory
+  rarity       CosmeticRarity   @default(COMMON)
+  previewUrl   String
+  modelUrl     String?
+  thumbnailUrl String
+  price        Float            @default(0) // in TREND tokens / USD
+  marketable   Boolean          @default(true)
+  season       String?          @default("Season 1: Genesis")
+  unlockMethod String?          @default("FREE_QUEST") // quest, achievement, referral, battlepass, shop
+  renderConfig Json? // Swarm-published CosmeticRenderConfig override
+  assetUrl     String? // Swarm-published 2D PNG asset URL
+  createdAt    DateTime         @default(now())
 
   userCosmetics       UserCosmetic[]
   marketplaceListings MarketplaceListing[]
@@ -651,14 +653,14 @@ model Cosmetic {
 }
 
 model UserCosmetic {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
   cosmeticId  String
-  cosmetic    Cosmetic  @relation(fields: [cosmeticId], references: [id])
-  equipped    Boolean   @default(false)
-  unlockedAt  DateTime  @default(now())
-  unlockedVia String    @default("INVENTORY_GENESIS")
+  cosmetic    Cosmetic @relation(fields: [cosmeticId], references: [id])
+  equipped    Boolean  @default(false)
+  unlockedAt  DateTime @default(now())
+  unlockedVia String   @default("INVENTORY_GENESIS")
 
   @@unique([userId, cosmeticId])
   @@index([userId])
@@ -686,17 +688,17 @@ model MarketplaceListing {
 }
 
 model CosmeticTransaction {
-  id          String    @id @default(cuid())
-  buyerId     String
-  buyer       User      @relation("BuyerTransactions", fields: [buyerId], references: [id])
-  sellerId    String?
-  seller      User?     @relation("SellerTransactions", fields: [sellerId], references: [id])
-  cosmeticId  String
-  cosmetic    Cosmetic  @relation(fields: [cosmeticId], references: [id])
-  amount      Float
-  currency    String    @default("USDC")
-  status      String    @default("COMPLETED")
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(cuid())
+  buyerId    String
+  buyer      User     @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  sellerId   String?
+  seller     User?    @relation("SellerTransactions", fields: [sellerId], references: [id])
+  cosmeticId String
+  cosmetic   Cosmetic @relation(fields: [cosmeticId], references: [id])
+  amount     Float
+  currency   String   @default("USDC")
+  status     String   @default("COMPLETED")
+  createdAt  DateTime @default(now())
 
   @@index([buyerId])
 }
@@ -710,7 +712,7 @@ model AgentBattle {
   arenaType      String    @default("ARBITRAGE_SHOWDOWN") // ARBITRAGE_SHOWDOWN, SCRAPER_SPEEDRUN, SAAS_HACKATHON, VIRAL_TRAFFIC_DUEL
   winnerId       String?
   yieldGenerated Float     @default(0)
-  logs           Json      // Turn-by-turn simulation logs
+  logs           Json // Turn-by-turn simulation logs
   status         String    @default("COMPLETED")
   createdAt      DateTime  @default(now())
 
@@ -722,7 +724,7 @@ model AgentSurvivalLog {
   id           String    @id @default(cuid())
   agentId      String
   agent        Web4Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  event        String    // BALANCE_CHECK, COMPUTE_BURN, PROFIT_INFLOW, SOS_TRIGGERED, SELF_DESTRUCT, REPRODUCED
+  event        String // BALANCE_CHECK, COMPUTE_BURN, PROFIT_INFLOW, SOS_TRIGGERED, SELF_DESTRUCT, REPRODUCED
   burnAmount   Float     @default(0)
   yieldAmount  Float     @default(0)
   balanceAfter Float     @default(0)
@@ -748,40 +750,40 @@ model OnboardingProgress {
 }
 
 model Battle {
-  id          String    @id @default(cuid())
-  name        String
-  tier        String    // bronze, silver, gold, platinum
-  entryFee    Float
-  prizePool   Float
-  status      String    @default("open") // open, in_progress, completed
-  winnerId    String?
-  runnerUpId  String?
-  startDate   DateTime  @default(now())
-  endDate     DateTime?
-  logs        Json?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(cuid())
+  name       String
+  tier       String // bronze, silver, gold, platinum
+  entryFee   Float
+  prizePool  Float
+  status     String    @default("open") // open, in_progress, completed
+  winnerId   String?
+  runnerUpId String?
+  startDate  DateTime  @default(now())
+  endDate    DateTime?
+  logs       Json?
+  createdAt  DateTime  @default(now())
 }
 
 model Grant {
-  id          String    @id @default(cuid())
-  userId      String
-  amount      Float     @default(25.0) // $25 USDC micro-grant
-  status      String    @default("available") // available, claimed, used, expired
-  claimedAt   DateTime?
-  usedAt      DateTime?
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
+  id        String    @id @default(cuid())
+  userId    String
+  amount    Float     @default(25.0) // $25 USDC micro-grant
+  status    String    @default("available") // available, claimed, used, expired
+  claimedAt DateTime?
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
 
   @@index([userId])
 }
 
 model ComplianceAgreement {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
   userId           String
-  isOver18         Boolean   @default(true)
-  riskAcknowledged Boolean   @default(true)
-  termsAccepted    Boolean   @default(true)
-  agreedAt         DateTime  @default(now())
+  isOver18         Boolean  @default(true)
+  riskAcknowledged Boolean  @default(true)
+  termsAccepted    Boolean  @default(true)
+  agreedAt         DateTime @default(now())
   ipAddress        String?
 
   @@index([userId])
@@ -834,40 +836,40 @@ enum QAVerdict {
 }
 
 model AgentSpecies {
-  id              String         @id @default(cuid())
-  role            SpeciesRole    @unique
+  id              String        @id @default(cuid())
+  role            SpeciesRole   @unique
   name            String
   description     String
-  status          SpeciesStatus  @default(ACTIVE)
-  targetHeadcount Int            @default(1)
+  status          SpeciesStatus @default(ACTIVE)
+  targetHeadcount Int           @default(1)
   maxHeadcount    Int
   dailyBudgetUsd  Float
-  currentSpendUsd Float          @default(0.0)
-  costPerUnitUsd  Float          @default(0.0)
-  spendResetAt    DateTime       @default(now())
+  currentSpendUsd Float         @default(0.0)
+  costPerUnitUsd  Float         @default(0.0)
+  spendResetAt    DateTime      @default(now())
   config          Json?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  instances       AgentInstance[]
-  jobsProcessed   AssetJob[]     @relation("ProcessedBySpecies")
+  instances     AgentInstance[]
+  jobsProcessed AssetJob[]      @relation("ProcessedBySpecies")
 
   @@index([status])
 }
 
 model AgentInstance {
-  id              String         @id @default(cuid())
-  speciesId       String
-  species         AgentSpecies   @relation(fields: [speciesId], references: [id])
-  instanceIndex   Int
-  status          InstanceStatus @default(IDLE)
-  currentJobId    String?
-  heartbeatAt     DateTime       @default(now())
-  totalRuns       Int            @default(0)
-  failedRuns      Int            @default(0)
-  spendToDateUsd  Float          @default(0.0)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id             String         @id @default(cuid())
+  speciesId      String
+  species        AgentSpecies   @relation(fields: [speciesId], references: [id])
+  instanceIndex  Int
+  status         InstanceStatus @default(IDLE)
+  currentJobId   String?
+  heartbeatAt    DateTime       @default(now())
+  totalRuns      Int            @default(0)
+  failedRuns     Int            @default(0)
+  spendToDateUsd Float          @default(0.0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@unique([speciesId, instanceIndex])
   @@index([status])
@@ -894,7 +896,7 @@ model AssetJob {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
-  qaReviews         QAReview[]
+  qaReviews QAReview[]
 
   @@index([stage])
   @@index([catalogItemId])
@@ -973,7 +975,7 @@ model UserLlmKey {
   id           String   @id @default(cuid())
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id])
-  provider     String   // 'openrouter' | 'custom'
+  provider     String // 'openrouter' | 'custom'
   model        String
   baseUrl      String?
   encryptedKey String
@@ -987,9 +989,9 @@ model UserIntegrationKey {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id])
-  provider     String   // 'sendgrid' | 'resend' | 'x' | 'polymarket' | 'websearch'
-  encryptedKey String   // AES-256-GCM JSON blob of provider credentials
-  meta         Json?    // e.g. verified sender, x handle, wallet pubkey, search vendor
+  provider     String // 'sendgrid' | 'resend' | 'x' | 'polymarket' | 'websearch'
+  encryptedKey String // AES-256-GCM JSON blob of provider credentials
+  meta         Json? // e.g. verified sender, x handle, wallet pubkey, search vendor
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1004,11 +1006,11 @@ model LedgerEntry {
   agent      Web4Agent @relation(fields: [agentId], references: [id])
   userId     String
   user       User      @relation(fields: [userId], references: [id])
-  type       String    // 'DEPOSIT' | 'TRADE_ALLOCATION' | 'TRADE_PROCEEDS'
-                       // | 'BATTLE_ENTRY' | 'BATTLE_PAYOUT' | 'MISSION_BURN'
-                       // | 'WITHDRAWAL' | 'ADJUSTMENT'
-  amountUsdc Float     // signed: positive credits the agent, negative debits
-  ref        String    // tx signature / approval id / admin note — idempotency key
+  type       String // 'DEPOSIT' | 'TRADE_ALLOCATION' | 'TRADE_PROCEEDS'
+  // | 'BATTLE_ENTRY' | 'BATTLE_PAYOUT' | 'MISSION_BURN'
+  // | 'WITHDRAWAL' | 'ADJUSTMENT'
+  amountUsdc Float // signed: positive credits the agent, negative debits
+  ref        String // tx signature / approval id / admin note — idempotency key
   note       String?
   createdAt  DateTime  @default(now())
 
@@ -1025,7 +1027,7 @@ model Deposit {
   agentId       String
   agent         Web4Agent @relation(fields: [agentId], references: [id])
   chain         String    @default("SOLANA")
-  referenceCode String    // 8-char memo code the sender includes
+  referenceCode String // 8-char memo code the sender includes
   txSignature   String    @unique
   amountUsdc    Float
   status        String    @default("PENDING") // PENDING -> CREDITED | REJECTED
@@ -1052,7 +1054,7 @@ model TaskArtifact {
   userTaskId String
   userTask   UserTask @relation(fields: [userTaskId], references: [id])
   stepIndex  Int
-  kind       String   // 'FILE' | 'EMAIL' | 'POST' | 'TRADE' | 'RESEARCH'
+  kind       String // 'FILE' | 'EMAIL' | 'POST' | 'TRADE' | 'RESEARCH'
   name       String
   url        String?
   meta       Json?
@@ -1069,7 +1071,7 @@ model WithdrawalRequest {
   agentId     String
   agent       Web4Agent @relation(fields: [agentId], references: [id])
   amountUsdc  Float
-  destination String    // user-supplied Solana address, captured at request time
+  destination String // user-supplied Solana address, captured at request time
   status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
   reviewedBy  String?
   createdAt   DateTime  @default(now())
@@ -1084,10 +1086,10 @@ model WithdrawalRequest {
 // ============================================================================
 
 enum MarketingAgentRole {
-  SEO_SYNTHESIZER      // Creates /opportunities/[slug] programmatic SEO pages
-  CONTENT_VIRALIST     // Drafts viral Twitter threads, LinkedIn carousel posts
-  PERMISSIONLESS_SDR   // Drafts targeted outreach & public snapshot reports (/p/[slug])
-  GROWTH_DIRECTOR      // Evaluates ROI, manages agent budgets & attribution
+  SEO_SYNTHESIZER // Creates /opportunities/[slug] programmatic SEO pages
+  CONTENT_VIRALIST // Drafts viral Twitter threads, LinkedIn carousel posts
+  PERMISSIONLESS_SDR // Drafts targeted outreach & public snapshot reports (/p/[slug])
+  GROWTH_DIRECTOR // Evaluates ROI, manages agent budgets & attribution
 }
 
 enum CampaignStatus {
@@ -1100,64 +1102,64 @@ enum CampaignStatus {
 }
 
 model AdminGrowthSetting {
-  id                    String   @id @default("global_growth_settings")
-  autoOrchestrate       Boolean  @default(true)
-  requireAdminApproval  Boolean  @default(true) // If true, campaigns wait in queue for Admin click
-  autoPublishPages      Boolean  @default(true)
-  maxDailyCampaigns     Int      @default(15)
-  minSignalSupportGate  Int      @default(3)
-  dailyBudgetCapUsd     Float    @default(10.00)
-  updatedAt             DateTime @updatedAt
+  id                   String   @id @default("global_growth_settings")
+  autoOrchestrate      Boolean  @default(true)
+  requireAdminApproval Boolean  @default(true) // If true, campaigns wait in queue for Admin click
+  autoPublishPages     Boolean  @default(true)
+  maxDailyCampaigns    Int      @default(15)
+  minSignalSupportGate Int      @default(3)
+  dailyBudgetCapUsd    Float    @default(10.00)
+  updatedAt            DateTime @updatedAt
 }
 
 model MarketingAgent {
-  id               String               @id @default(cuid())
-  name             String               // e.g. "SEO Synthesizer", "Viral Content Creator"
-  role             MarketingAgentRole
-  description      String
-  status           AgentStatus          @default(IDLE)
+  id          String             @id @default(cuid())
+  name        String // e.g. "SEO Synthesizer", "Viral Content Creator"
+  role        MarketingAgentRole
+  description String
+  status      AgentStatus        @default(IDLE)
 
   // Financial & Performance Ledger
-  computeBudgetUsd Float               @default(5.00)
-  totalSpentUsd    Float               @default(0.00)
-  conversionsCount Int                 @default(0)
-  mrrGeneratedUsd  Float               @default(0.00)
+  computeBudgetUsd Float @default(5.00)
+  totalSpentUsd    Float @default(0.00)
+  conversionsCount Int   @default(0)
+  mrrGeneratedUsd  Float @default(0.00)
 
-  campaigns        MarketingCampaign[]
-  logs             MarketingAgentLog[]
+  campaigns MarketingCampaign[]
+  logs      MarketingAgentLog[]
 
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([role])
   @@index([status])
 }
 
 model MarketingCampaign {
-  id             String          @id @default(cuid())
-  agentId        String
-  agent          MarketingAgent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  id      String         @id @default(cuid())
+  agentId String
+  agent   MarketingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  title          String
-  targetChannel  String          // "twitter_thread", "linkedin_carousel", "public_snapshot", "seo_page"
-  status         CampaignStatus  @default(DRAFTED)
+  title         String
+  targetChannel String // "twitter_thread", "linkedin_carousel", "public_snapshot", "seo_page"
+  status        CampaignStatus @default(DRAFTED)
 
-  headline       String
-  bodyText       String          @db.Text
-  targetUrl      String
-  metaData       Json?           // Slides, tweets array, keywords
+  headline  String
+  bodyText  String @db.Text
+  targetUrl String
+  metaData  Json? // Slides, tweets array, keywords
 
   // Telemetry
-  views          Int             @default(0)
-  clicks         Int             @default(0)
-  conversions    Int             @default(0)
-  mrrDrivenUsd   Float           @default(0.00)
+  views        Int   @default(0)
+  clicks       Int   @default(0)
+  conversions  Int   @default(0)
+  mrrDrivenUsd Float @default(0.00)
 
-  trendId        String?
-  trend          Trend?          @relation(fields: [trendId], references: [id])
+  trendId String?
+  trend   Trend?  @relation(fields: [trendId], references: [id])
 
-  createdAt      DateTime        @default(now())
-  publishedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
 
   @@index([status])
   @@index([targetChannel])
@@ -1165,26 +1167,26 @@ model MarketingCampaign {
 }
 
 model PublicOpportunityPage {
-  id                 String   @id @default(cuid())
-  slug               String   @unique
+  id                 String  @id @default(cuid())
+  slug               String  @unique
   title              String
   metaDescription    String
   category           String
   intentScore        Int
-  painSummary        String   @db.Text
+  painSummary        String  @db.Text
   signalCount        Int
   sourceSpread       Int
-  estimatedMarketUsd Float    @default(0)
-  isPublished        Boolean  @default(true)
+  estimatedMarketUsd Float   @default(0)
+  isPublished        Boolean @default(true)
 
-  trendId            String   @unique
-  trend              Trend    @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  trendId String @unique
+  trend   Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade)
 
-  organicViews       Int      @default(0)
-  conversions        Int      @default(0)
+  organicViews Int @default(0)
+  conversions  Int @default(0)
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([category])
@@ -1192,16 +1194,16 @@ model PublicOpportunityPage {
 }
 
 model MarketingAgentLog {
-  id          String         @id @default(cuid())
-  agentId     String
-  agent       MarketingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  id      String         @id @default(cuid())
+  agentId String
+  agent   MarketingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  level       String         // "info", "warn", "error"
-  action      String         // "generated_page", "drafted_thread", "budget_deducted"
-  costUsd     Float          @default(0.00)
-  message     String         @db.Text
+  level   String // "info", "warn", "error"
+  action  String // "generated_page", "drafted_thread", "budget_deducted"
+  costUsd Float  @default(0.00)
+  message String @db.Text
 
-  createdAt   DateTime       @default(now())
+  createdAt DateTime @default(now())
 
   @@index([agentId])
 }
@@ -1271,7 +1273,7 @@ model ExecutionPlan {
   userTaskId       String?
   companionId      String?
   status           ExecutionStatus @default(NOT_STARTED)
-  salesOption      String?         // 'BOT_SELLS' | 'YOU_SELL' | 'HYBRID'
+  salesOption      String? // 'BOT_SELLS' | 'YOU_SELL' | 'HYBRID'
   currentMilestone Int             @default(0)
   progress         Int             @default(0)
   errorMessage     String?
@@ -1279,7 +1281,7 @@ model ExecutionPlan {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  milestones       Milestone[]
+  milestones Milestone[]
 
   @@index([taskId])
   @@index([userId])
@@ -1302,8 +1304,8 @@ model Milestone {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  artifacts       Artifact[]
-  logs            ExecutionLog[]
+  artifacts Artifact[]
+  logs      ExecutionLog[]
 
   @@index([executionPlanId])
   @@index([status])
@@ -1317,7 +1319,7 @@ model Artifact {
   taskId      String
   userId      String?
   name        String
-  type        String     // 'video' | 'image' | 'document' | 'code' | 'audio' | 'data' | 'listing'
+  type        String // 'video' | 'image' | 'document' | 'code' | 'audio' | 'data' | 'listing'
   storageUrl  String
   previewUrl  String?
   fileHash    String
@@ -1330,33 +1332,33 @@ model Artifact {
 }
 
 model Lead {
-  id                   String       @id @default(cuid())
-  taskId               String
-  task                 Task         @relation(fields: [taskId], references: [id])
-  userId               String?
-  user                 User?        @relation(fields: [userId], references: [id])
-  source               String       // 'fiverr' | 'upwork' | 'twitter' | 'reddit' | 'linkedin' | 'email' | 'marketplace'
-  sourceUrl            String
-  buyerName            String?
-  buyerEmail           String?
-  buyerUsername        String?
-  requestText          String
-  statedBudgetCents    Int?
-  buyerIntentScore     Int          @default(0)
-  budgetMatchScore     Int          @default(0)
-  relevanceScore       Int          @default(0)
-  contactabilityScore  Int          @default(0)
-  compositeScore       Int          @default(0)
-  status               LeadStatus   @default(NEW)
-  contactedAt          DateTime?
-  lastResponseAt       DateTime?
-  notes                String?
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  id                  String     @id @default(cuid())
+  taskId              String
+  task                Task       @relation(fields: [taskId], references: [id])
+  userId              String?
+  user                User?      @relation(fields: [userId], references: [id])
+  source              String // 'fiverr' | 'upwork' | 'twitter' | 'reddit' | 'linkedin' | 'email' | 'marketplace'
+  sourceUrl           String
+  buyerName           String?
+  buyerEmail          String?
+  buyerUsername       String?
+  requestText         String
+  statedBudgetCents   Int?
+  buyerIntentScore    Int        @default(0)
+  budgetMatchScore    Int        @default(0)
+  relevanceScore      Int        @default(0)
+  contactabilityScore Int        @default(0)
+  compositeScore      Int        @default(0)
+  status              LeadStatus @default(NEW)
+  contactedAt         DateTime?
+  lastResponseAt      DateTime?
+  notes               String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  messages             LeadMessage[]
-  sales                Sale[]
-  coPilotSessions      CoPilotSession[]
+  messages        LeadMessage[]
+  sales           Sale[]
+  coPilotSessions CoPilotSession[]
 
   @@index([taskId])
   @@index([userId])
@@ -1369,9 +1371,9 @@ model LeadMessage {
   leadId    String
   lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
   direction MessageDirection // OUTBOUND or INBOUND
-  channel   String           // email, fiverr_dm, upwork_proposal, twitter_dm, etc.
+  channel   String // email, fiverr_dm, upwork_proposal, twitter_dm, etc.
   content   String
-  sentBy    String           // companion_id or user_id or buyer
+  sentBy    String // companion_id or user_id or buyer
   timestamp DateTime         @default(now())
 
   @@index([leadId])
@@ -1412,8 +1414,8 @@ model ExecutionLog {
   taskId            String
   milestoneId       String?
   milestone         Milestone? @relation(fields: [milestoneId], references: [id])
-  logType           String     // 'milestone_start' | 'milestone_complete' | 'artifact_created' | 'validator_run' | 'lead_scraped' | 'outreach_sent' | 'buyer_response' | 'negotiation' | 'approval_requested' | 'approval_decision' | 'payment_event' | 'sale_completed' | 'error' | 'retry' | 'user_action' | 'companion_action'
-  actor             String     // 'companion' | 'user' | 'system' | 'validator' | 'buyer'
+  logType           String // 'milestone_start' | 'milestone_complete' | 'artifact_created' | 'validator_run' | 'lead_scraped' | 'outreach_sent' | 'buyer_response' | 'negotiation' | 'approval_requested' | 'approval_decision' | 'payment_event' | 'sale_completed' | 'error' | 'retry' | 'user_action' | 'companion_action'
+  actor             String // 'companion' | 'user' | 'system' | 'validator' | 'buyer'
   actorId           String
   actionDescription String
   inputs            Json       @default("{}")
@@ -1434,12 +1436,12 @@ model SalesKit {
   taskId                String
   task                  Task     @relation(fields: [taskId], references: [id])
   leadId                String?
-  outreachTemplates     Json     // array of personalized templates
-  pricingRecommendation Int      // in cents
+  outreachTemplates     Json // array of personalized templates
+  pricingRecommendation Int // in cents
   pricingRationale      String?
   productCopy           String
-  objectionScripts      Json     // key-value objection battlecards
-  followUpSequences     Json     // email sequence steps
+  objectionScripts      Json // key-value objection battlecards
+  followUpSequences     Json // email sequence steps
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -1451,8 +1453,8 @@ model TaskBlueprint {
   name                String
   category            String
   description         String?
-  milestones          Json     // Array of blueprint milestone definitions
-  salesPipelineConfig Json     // Sales pipeline rules and channel configs
+  milestones          Json // Array of blueprint milestone definitions
+  salesPipelineConfig Json // Sales pipeline rules and channel configs
   isCustom            Boolean  @default(false)
   createdBy           String?
   createdAt           DateTime @default(now())
@@ -1468,8 +1470,8 @@ model TaskBlueprint {
 
 model AutonomousAgent {
   id                 String   @id @default(cuid())
-  role               String   // DISCOVERER | ANALYST | BUILDER | VALIDATOR | LISTER | OUTREACHER | SELLER | CLOSER | DELIVERER | LOGGER | DISPUTE_HANDLER
-  modelTier          String   // cheap | standard | premium | master
+  role               String // DISCOVERER | ANALYST | BUILDER | VALIDATOR | LISTER | OUTREACHER | SELLER | CLOSER | DELIVERER | LOGGER | DISPUTE_HANDLER
+  modelTier          String // cheap | standard | premium | master
   status             String   @default("ACTIVE") // SPAWNING | ACTIVE | PAUSED | KILLED | DEGRADED | IDLE | WORKING | COOLDOWN | DEAD
   performanceScore   Float    @default(50.0)
   tasksCompleted     Int      @default(0)
@@ -1487,7 +1489,7 @@ model AutonomousAgent {
   config             Json?
   killReason         String?
 
-  activityLogs       AgentActivityLog[]
+  activityLogs AgentActivityLog[]
 
   @@index([role, status])
   @@index([performanceScore])
@@ -1498,7 +1500,7 @@ model SwarmTask {
   id                    String    @id @default(cuid())
   trendId               String?
   templateId            String
-  templateType          String?   // FACELESS_VIDEO | ECOMMERCE_LISTING | LANDING_PAGE | LOGO_PACK | RESUME_REWRITE | SOCIAL_MEDIA_KIT | SIMPLE_VIDEO_EDIT
+  templateType          String? // FACELESS_VIDEO | ECOMMERCE_LISTING | LANDING_PAGE | LOGO_PACK | RESUME_REWRITE | SOCIAL_MEDIA_KIT | SIMPLE_VIDEO_EDIT
   pricingTier           String    @default("STANDARD") // BUDGET | STANDARD | PREMIUM
   state                 String    @default("DISCOVERY") // DISCOVERY | EVALUATION | BUILDING | VALIDATION | LISTING | OUTREACH | NEGOTIATION | CLOSING | DELIVERY | LOGGING | COMPLETED | FAILED | DISPUTED | REFUNDED
   phase                 String    @default("DISCOVERY")
@@ -1511,7 +1513,7 @@ model SwarmTask {
   buyerId               String?
   buyerEmail            String?
   buyerPlatform         String?
-  buyerFeedback         Int?      // 1-5 stars
+  buyerFeedback         Int? // 1-5 stars
   buyerComment          String?
   stripePaymentIntentId String?
   escrowStatus          String    @default("NONE") // NONE | AUTHORIZED | HELD | CAPTURED | REFUNDED | DISPUTED
@@ -1519,7 +1521,7 @@ model SwarmTask {
   attestationId         String?
   deliverableUrl        String?
   buildManifest         Json?
-  checkpoint            Json?     // TaskCheckpoint for crash recovery
+  checkpoint            Json? // TaskCheckpoint for crash recovery
   analysisResult        Json?
   validationResult      Json?
   listingResult         Json?
@@ -1532,11 +1534,11 @@ model SwarmTask {
   updatedAt             DateTime  @updatedAt
   completedAt           DateTime?
 
-  evidenceBundle        EvidenceBundle?
-  attestation           Attestation?
-  escrowLedger          EscrowLedger?
-  outreachRecords       OutreachRecord[]
-  brainDecisions        SwarmBrainDecision[]
+  evidenceBundle  EvidenceBundle?
+  attestation     Attestation?
+  escrowLedger    EscrowLedger?
+  outreachRecords OutreachRecord[]
+  brainDecisions  SwarmBrainDecision[]
 
   @@index([state])
   @@index([templateId])
@@ -1545,45 +1547,45 @@ model SwarmTask {
 }
 
 model EvidenceBundle {
-  id              String    @id @default(cuid())
-  taskId          String    @unique
-  runId           String
-  artifacts       Json      // [{type, url, hash}]
-  agentActions    Json      // [{agentId, action, timestamp, data}]
-  paymentRecords  Json?     @default("{}")
-  logs            Json?     @default("[]")
-  validators      Json?     @default("[]")
-  merkleRoot      String
-  ipfsHash        String?
-  storageUri      String    @default("")
-  createdAt       DateTime  @default(now())
+  id             String   @id @default(cuid())
+  taskId         String   @unique
+  runId          String
+  artifacts      Json // [{type, url, hash}]
+  agentActions   Json // [{agentId, action, timestamp, data}]
+  paymentRecords Json?    @default("{}")
+  logs           Json?    @default("[]")
+  validators     Json?    @default("[]")
+  merkleRoot     String
+  ipfsHash       String?
+  storageUri     String   @default("")
+  createdAt      DateTime @default(now())
 
-  task            SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  attestation     Attestation?
+  task        SwarmTask    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  attestation Attestation?
 
   @@index([taskId])
   @@index([merkleRoot])
 }
 
 model Attestation {
-  id               String          @id @default(cuid())
-  taskId           String          @unique
-  evidenceBundleId String?         @unique
+  id               String   @id @default(cuid())
+  taskId           String   @unique
+  evidenceBundleId String?  @unique
   runId            String
   result           String
   merkleRoot       String
   templateId       String
   salePrice        Float?
-  signerId         String          @default("trendly-platform")
-  signerPublicKey  String          @default("0x0")
-  signature        String          // EIP-712 / HMAC signature
+  signerId         String   @default("trendly-platform")
+  signerPublicKey  String   @default("0x0")
+  signature        String // EIP-712 / HMAC signature
   payload          Json
   polygonTxHash    String?
   chainTxHash      String?
-  createdAt        DateTime        @default(now())
+  createdAt        DateTime @default(now())
 
-  task             SwarmTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  evidenceBundle   EvidenceBundle? @relation(fields: [evidenceBundleId], references: [id])
+  task           SwarmTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  evidenceBundle EvidenceBundle? @relation(fields: [evidenceBundleId], references: [id])
 
   @@index([taskId])
   @@index([merkleRoot])
@@ -1603,7 +1605,7 @@ model EscrowLedger {
   refundedAt            DateTime?
   createdAt             DateTime  @default(now())
 
-  task                  SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([status])
@@ -1611,7 +1613,7 @@ model EscrowLedger {
 
 model RevenueSummary {
   id             String   @id @default(cuid())
-  date           DateTime @db.Date @unique
+  date           DateTime @unique @db.Date
   templateId     String?
   grossRevenue   Float    @default(0.0)
   netRevenue     Float    @default(0.0)
@@ -1665,26 +1667,26 @@ model SwarmBrainState {
 }
 
 model SwarmBrainDecision {
-  id              String     @id @default(cuid())
+  id              String   @id @default(cuid())
   taskId          String?
   agentId         String?
   decisionType    String
   reasoning       String
-  confidenceScore Int        @default(85) // 0-100
+  confidenceScore Int      @default(85) // 0-100
   expectedOutcome String
   actualOutcome   String?
-  inputState      Json?      @default("{}")
-  outputAction    Json?      @default("{}")
-  createdAt       DateTime   @default(now())
+  inputState      Json?    @default("{}")
+  outputAction    Json?    @default("{}")
+  createdAt       DateTime @default(now())
 
-  task            SwarmTask? @relation(fields: [taskId], references: [id])
+  task SwarmTask? @relation(fields: [taskId], references: [id])
 
   @@index([createdAt])
   @@index([decisionType])
 }
 
 model AgentActivityLog {
-  id           String          @id @default(cuid())
+  id           String   @id @default(cuid())
   agentId      String
   agentRole    String
   taskId       String?
@@ -1692,16 +1694,16 @@ model AgentActivityLog {
   actionType   String?
   model        String
   modelUsed    String?
-  tokensIn     Int             @default(0)
-  tokensOut    Int             @default(0)
-  tokenCount   Int?            @default(0)
-  cost         Float           @default(0.0)
-  costIncurred Float?          @default(0.0)
-  inputParams  Json?           @default("{}")
-  outputResult Json?           @default("{}")
-  timestamp    DateTime        @default(now())
+  tokensIn     Int      @default(0)
+  tokensOut    Int      @default(0)
+  tokenCount   Int?     @default(0)
+  cost         Float    @default(0.0)
+  costIncurred Float?   @default(0.0)
+  inputParams  Json?    @default("{}")
+  outputResult Json?    @default("{}")
+  timestamp    DateTime @default(now())
 
-  agent        AutonomousAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent AutonomousAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([agentId, timestamp])
   @@index([taskId])
@@ -1737,7 +1739,7 @@ model BotConfig {
 
 model PerformancePattern {
   id              String    @id @default(cuid())
-  type            String?   // WIN | LOSS | DISPUTE | COST_SPIKE
+  type            String? // WIN | LOSS | DISPUTE | COST_SPIKE
   patternType     String    @default("WIN") // WIN | LOSS | DISPUTE | COST_SPIKE
   templateId      String?
   templateType    String?
@@ -1760,7 +1762,7 @@ model PerformancePattern {
 
 model GoldenSample {
   id           String   @id @default(cuid())
-  templateType String   // FACELESS_VIDEO | ECOMMERCE_LISTING | LANDING_PAGE | LOGO_PACK | RESUME_REWRITE | SOCIAL_MEDIA_KIT | SIMPLE_VIDEO_EDIT
+  templateType String // FACELESS_VIDEO | ECOMMERCE_LISTING | LANDING_PAGE | LOGO_PACK | RESUME_REWRITE | SOCIAL_MEDIA_KIT | SIMPLE_VIDEO_EDIT
   artifactUrl  String
   buyerRating  Int      @default(5) // 1-5 stars
   buyerComment String?
@@ -1773,7 +1775,7 @@ model GoldenSample {
 model OutreachRecord {
   id              String    @id @default(cuid())
   taskId          String
-  platform        String    // fiverr | upwork | reddit | twitter | email
+  platform        String // fiverr | upwork | reddit | twitter | email
   recipientId     String?
   messageContent  String
   messageVariant  String    @default("A")
@@ -1784,7 +1786,7 @@ model OutreachRecord {
   responseContent String?
   createdAt       DateTime  @default(now())
 
-  task            SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task SwarmTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId, status])
   @@index([platform, status])
@@ -1807,7 +1809,7 @@ model UserCredit {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  transactions    CreditTransaction[]
+  transactions CreditTransaction[]
 
   @@index([userId])
 }
@@ -1815,25 +1817,25 @@ model UserCredit {
 model CreditTransaction {
   id              String   @id @default(cuid())
   userCreditId    String
-  actionType      String   // NOVA_MESSAGE | TREND_SCOUT_QUERY | VIDEO_RENDER | VIDEO_CLIP | BUYER_DISCOVERY_BATCH | OUTREACH_DRAFT | SWARM_DEPLOYMENT
+  actionType      String // NOVA_MESSAGE | TREND_SCOUT_QUERY | VIDEO_RENDER | VIDEO_CLIP | BUYER_DISCOVERY_BATCH | OUTREACH_DRAFT | SWARM_DEPLOYMENT
   creditsDeducted Int
   balanceAfter    Int
   description     String?
   createdAt       DateTime @default(now())
 
-  userCredit      UserCredit @relation(fields: [userCreditId], references: [id], onDelete: Cascade)
+  userCredit UserCredit @relation(fields: [userCreditId], references: [id], onDelete: Cascade)
 
   @@index([userCreditId, createdAt])
 }
 
 model ComplianceAuditLog {
-  id          String   @id @default(cuid())
-  userId      String
-  actionType  String   // OUTREACH_CONSENT | OUTREACH_SEND | BUYER_DISCOVERY | STRIPE_INVOICE | CREDIT_DEDUCT | EXPORT
-  channel     String?  // EMAIL | LINKEDIN | INSTAGRAM
-  recipient   String?
-  details     Json?    @default("{}")
-  timestamp   DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  actionType String // OUTREACH_CONSENT | OUTREACH_SEND | BUYER_DISCOVERY | STRIPE_INVOICE | CREDIT_DEDUCT | EXPORT
+  channel    String? // EMAIL | LINKEDIN | INSTAGRAM
+  recipient  String?
+  details    Json?    @default("{}")
+  timestamp  DateTime @default(now())
 
   @@index([userId, timestamp])
   @@index([actionType])
@@ -1852,7 +1854,7 @@ model SystemFeatureFlag {
 model NovaConversation {
   id        String   @id @default(cuid())
   userId    String
-  role      String   // user | assistant | system
+  role      String // user | assistant | system
   content   String
   tokens    Int      @default(0)
   createdAt DateTime @default(now())
@@ -1861,16 +1863,16 @@ model NovaConversation {
 }
 
 model NovaCustomTask {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String
-  schedule    String
-  taskType    String   @default("RESEARCH_SUMMARY") // PRICE_MONITOR | RESEARCH_SUMMARY | REMINDER
-  status      String   @default("ACTIVE") // ACTIVE | PAUSED | COMPLETED
-  lastRunAt   DateTime?
-  nextRunAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  schedule  String
+  taskType  String    @default("RESEARCH_SUMMARY") // PRICE_MONITOR | RESEARCH_SUMMARY | REMINDER
+  status    String    @default("ACTIVE") // ACTIVE | PAUSED | COMPLETED
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([userId, status])
 }
@@ -1896,9 +1898,9 @@ model NovaAction {
 // tracing never blocks, never throws, never changes the decision.
 model NovaTrace {
   id        String   @id @default(cuid())
-  userId    String?  // null = platform-wide event (trend scores, species gates)
-  kind      String   // RUN_REJECTED | STEP | BATTLE | TREND | GATE
-  subject   String   // run id, task title, battle ref, species name...
+  userId    String? // null = platform-wide event (trend scores, species gates)
+  kind      String // RUN_REJECTED | STEP | BATTLE | TREND | GATE
+  subject   String // run id, task title, battle ref, species name...
   summary   String
   reasons   Json     @default("[]")
   createdAt DateTime @default(now())
@@ -1910,9 +1912,9 @@ model NovaTrace {
 // Stripe webhook idempotency: one row per processed event; replays ack
 // without re-running.
 model ProcessedStripeEvent {
-  eventId     String   @id
-  type        String
-  createdAt   DateTime @default(now())
+  eventId   String   @id
+  type      String
+  createdAt DateTime @default(now())
 
   @@index([createdAt])
 }
@@ -1922,22 +1924,22 @@ model ProcessedStripeEvent {
 // ============================================================================
 
 model CoPilotSession {
-  id           String    @id @default(cuid())
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  executionId  String    // links to ExecutionPlan or UserTask
-  leadId       String    // links to Lead
-  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  channel      String    // email | phone | reddit | in_app
-  mode         String    // co_pilot | auto_close | manual
-  status       String    @default("waiting") // waiting | engaged | in_progress | closed_won | closed_lost | escalated | opted_out
-  transcript   Json      @default("[]")     // full conversation history (AI + user + buyer)
-  priceOffer   Float?    // what we're trying to sell it for
-  priceFloor   Float     @default(0)         // absolute floor AI cannot go below in auto mode
-  alertCount   Int       @default(0)
-  lastAlertAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionId String // links to ExecutionPlan or UserTask
+  leadId      String // links to Lead
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  channel     String // email | phone | reddit | in_app
+  mode        String // co_pilot | auto_close | manual
+  status      String    @default("waiting") // waiting | engaged | in_progress | closed_won | closed_lost | escalated | opted_out
+  transcript  Json      @default("[]") // full conversation history (AI + user + buyer)
+  priceOffer  Float? // what we're trying to sell it for
+  priceFloor  Float     @default(0) // absolute floor AI cannot go below in auto mode
+  alertCount  Int       @default(0)
+  lastAlertAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   suggestions  CopilotSuggestion[]
   callSession  CallSession?
@@ -1948,41 +1950,41 @@ model CoPilotSession {
 }
 
 model CopilotSuggestion {
-  id             String    @id @default(cuid())
+  id             String         @id @default(cuid())
   sessionId      String
   session        CoPilotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  triggerEvent   String    // buyer_email_reply | buyer_call_answered | buyer_said_x
+  triggerEvent   String // buyer_email_reply | buyer_call_answered | buyer_said_x
   buyerMessage   String?
-  aiAnalysis     Json      // {intent, objection, sentiment, urgency, keyPoints, coachingTip}
+  aiAnalysis     Json // {intent, objection, sentiment, urgency, keyPoints, coachingTip}
   suggestedReply String
-  used           Boolean   @default(false)
-  editedVersion  String?   // if user edited the AI message before sending
-  createdAt      DateTime  @default(now())
+  used           Boolean        @default(false)
+  editedVersion  String? // if user edited the AI message before sending
+  createdAt      DateTime       @default(now())
 
   @@index([sessionId])
 }
 
 model CallSession {
-  id              String    @id @default(cuid())
-  coPilotId       String    @unique
-  coPilot         CoPilotSession @relation(fields: [coPilotId], references: [id], onDelete: Cascade)
-  twilioCallSid   String?
-  status          String    @default("ringing") // ringing | live | completed
-  liveTranscript  Json      @default("[]")     // rolling chunks
-  consentGiven    Boolean   @default(false)    // two-party consent flag for call states that require it
-  startedAt       DateTime  @default(now())
-  endedAt         DateTime?
+  id             String         @id @default(cuid())
+  coPilotId      String         @unique
+  coPilot        CoPilotSession @relation(fields: [coPilotId], references: [id], onDelete: Cascade)
+  twilioCallSid  String?
+  status         String         @default("ringing") // ringing | live | completed
+  liveTranscript Json           @default("[]") // rolling chunks
+  consentGiven   Boolean        @default(false) // two-party consent flag for call states that require it
+  startedAt      DateTime       @default(now())
+  endedAt        DateTime?
 }
 
 model PaymentLinkSale {
-  id            String   @id @default(cuid())
-  sessionId     String
-  session       CoPilotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  stripeLinkId  String
-  url           String
-  amount        Float
-  status        String   @default("pending") // pending | paid | expired
-  createdAt     DateTime @default(now())
+  id           String         @id @default(cuid())
+  sessionId    String
+  session      CoPilotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  stripeLinkId String
+  url          String
+  amount       Float
+  status       String         @default("pending") // pending | paid | expired
+  createdAt    DateTime       @default(now())
 }
 
 // ============================================================================
@@ -1990,17 +1992,17 @@ model PaymentLinkSale {
 // ============================================================================
 
 model CouncilSession {
-  id                String            @id @default(cuid())
-  status            String            @default("pending") // pending | in_debate | gatekeeper_review | admin_review | approved | rejected
-  signal            Json              // initial market opportunity signal
-  debateTranscript  Json              @default("[]")     // 5-agent debate turns
-  gatekeeperVerdict Json?             // Gatekeeper reasoning, score, decision
-  conclusion        Json?             // { title, marketVector, targetBuyer, revenueModel, mapsToMethod, isNewMethod, newMethodSpec }
-  createdAt         DateTime          @default(now())
+  id                String    @id @default(cuid())
+  status            String    @default("pending") // pending | in_debate | gatekeeper_review | admin_review | approved | rejected
+  signal            Json // initial market opportunity signal
+  debateTranscript  Json      @default("[]") // 5-agent debate turns
+  gatekeeperVerdict Json? // Gatekeeper reasoning, score, decision
+  conclusion        Json? // { title, marketVector, targetBuyer, revenueModel, mapsToMethod, isNewMethod, newMethodSpec }
+  createdAt         DateTime  @default(now())
   completedAt       DateTime?
 
-  adminReview       AdminReview?
-  hotTrendProposal  HotTrendProposal?
+  adminReview      AdminReview?
+  hotTrendProposal HotTrendProposal?
 
   @@index([status])
   @@index([createdAt])
@@ -2011,7 +2013,7 @@ model AdminReview {
   sessionId   String         @unique
   session     CouncilSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   adminId     String
-  decision    String         // approved | rejected | needs_more_debate
+  decision    String // approved | rejected | needs_more_debate
   notes       String?
   reviewedAt  DateTime       @default(now())
   sentToUsers Boolean        @default(false) // mark when user-facing publish happens
@@ -2027,20 +2029,20 @@ model HotTrendProposal {
   marketVector         String
   targetBuyer          String
   revenueModel         String
-  mapsToMethod         String?         // one of the 9 methods OR null
+  mapsToMethod         String? // one of the 9 methods OR null
   isNewMethod          Boolean         @default(false)
-  newMethodSpec        Json?           // for dev team if truly new
+  newMethodSpec        Json? // for dev team if truly new
   visibleToUsers       Boolean         @default(false) // ← THIS IS THE USER EXPOSURE SWITCH
   publishedAt          DateTime        @default(now())
   timesExecuted        Int             @default(0)
-  timesAccessedByUsers Int             @default(0)     // track user interest
+  timesAccessedByUsers Int             @default(0) // track user interest
 
   @@index([visibleToUsers, publishedAt])
 }
 
 model AdminNotification {
   id        String   @id @default(cuid())
-  type      String   // council_discovery | system_alert
+  type      String // council_discovery | system_alert
   sessionId String?
   title     String
   read      Boolean  @default(false)
@@ -2050,21 +2052,21 @@ model AdminNotification {
 }
 
 model RawSignal {
-  id           String   @id @default(cuid())
-  source       String   // 'Reddit' | 'HackerNews'
-  externalId   String
-  title        String
-  url          String?
-  body         String?
-  score        Int      @default(0)
-  upvotes      Int      @default(0)
-  comments     Int      @default(0)
-  velocity     Float    @default(0)
-  subreddit    String?
-  themeId      String?  // set once clustered into a Trend
-  trend        Trend?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
-  processed    Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id         String   @id @default(cuid())
+  source     String // 'Reddit' | 'HackerNews'
+  externalId String
+  title      String
+  url        String?
+  body       String?
+  score      Int      @default(0)
+  upvotes    Int      @default(0)
+  comments   Int      @default(0)
+  velocity   Float    @default(0)
+  subreddit  String?
+  themeId    String? // set once clustered into a Trend
+  trend      Trend?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  processed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@unique([source, externalId])
   @@index([processed, createdAt])
@@ -2074,10 +2076,10 @@ model RawSignal {
 model InferHubTransfer {
   id               String   @id @default(cuid())
   amountUsd        Float
-  publisherBalance Float    // balance BEFORE transfer
-  consumerBalance  Float    // balance AFTER transfer
-  status           String   // "success", "failed", "skipped_below_threshold", "skipped_no_balance"
-  transactionId    String?  // InferHub's returned tx id
+  publisherBalance Float // balance BEFORE transfer
+  consumerBalance  Float // balance AFTER transfer
+  status           String // "success", "failed", "skipped_below_threshold", "skipped_no_balance"
+  transactionId    String? // InferHub's returned tx id
   errorMessage     String?  @db.Text
   metadata         Json?
   createdAt        DateTime @default(now())
@@ -2087,35 +2089,35 @@ model InferHubTransfer {
 }
 
 model TrendExecution {
-  id            String            @id @default(cuid())
-  trendId       String
-  trend         Trend             @relation(fields: [trendId], references: [id], onDelete: Cascade)
-  userId        String?
-  user          User?             @relation(fields: [userId], references: [id])
+  id      String  @id @default(cuid())
+  trendId String
+  trend   Trend   @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id])
 
-  status        TrendExecutionStatus @default(QUEUED)
-  currentStage  String?
-  progressPct   Int                  @default(0)
+  status       TrendExecutionStatus @default(QUEUED)
+  currentStage String?
+  progressPct  Int                  @default(0)
 
   // Final assembled deliverable
-  revenueKit    Json?
+  revenueKit Json?
 
-  startedAt     DateTime?
-  completedAt   DateTime?
-  approvedAt    DateTime?
-  totalCostUsd  Float                @default(0)
-  errorMessage  String?              @db.Text
+  startedAt    DateTime?
+  completedAt  DateTime?
+  approvedAt   DateTime?
+  totalCostUsd Float     @default(0)
+  errorMessage String?   @db.Text
 
-  stages        ExecutionStage[]
-  events        ExecutionEvent[]
-  buyerLeads    BuyerLead[]
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  stages     ExecutionStage[]
+  events     ExecutionEvent[]
+  buyerLeads BuyerLead[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   lastCheckpoint String?
-  lastActivityAt DateTime             @default(now())
+  lastActivityAt DateTime  @default(now())
   userViewedAt   DateTime?
-  pinnedByUser   Boolean              @default(false)
+  pinnedByUser   Boolean   @default(false)
 
   @@index([trendId])
   @@index([status])
@@ -2129,29 +2131,29 @@ enum TrendExecutionStatus {
   RUNNING
   AWAITING_APPROVAL
   COMPLETED
-  DEGRADED        // finished, but >=1 stage used fallback output
+  DEGRADED // finished, but >=1 stage used fallback output
   FAILED
 }
 
 model ExecutionStage {
-  id            String         @id @default(cuid())
-  executionId   String
-  execution     TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  id          String         @id @default(cuid())
+  executionId String
+  execution   TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
 
-  stageKey      String         // "research" | "brainstorm" | "work_plan" | "produce" | "preview" | "sell_fork"
-  ordinal       Int
-  status        StageStatus    @default(PENDING)
+  stageKey String // "research" | "brainstorm" | "work_plan" | "produce" | "preview" | "sell_fork"
+  ordinal  Int
+  status   StageStatus @default(PENDING)
 
-  output        Json?
-  attempts      Int            @default(0)
-  usedFallback  Boolean        @default(false)
-  provider      String?
-  model         String?
-  latencyMs     Int            @default(0)
-  errorMessage  String?        @db.Text
+  output       Json?
+  attempts     Int     @default(0)
+  usedFallback Boolean @default(false)
+  provider     String?
+  model        String?
+  latencyMs    Int     @default(0)
+  errorMessage String? @db.Text
 
-  startedAt     DateTime?
-  completedAt   DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
 
   @@unique([executionId, stageKey])
   @@index([executionId])
@@ -2171,7 +2173,7 @@ model ExecutionEvent {
   executionId String
   execution   TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
   at          DateTime       @default(now())
-  actor       String         // "system" | "llm" | "user" | "fallback"
+  actor       String // "system" | "llm" | "user" | "fallback"
   stageKey    String?
   message     String
   data        Json?
@@ -2181,55 +2183,55 @@ model ExecutionEvent {
 }
 
 model UserActivity {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  executionId   String?
-  trendId       String?
-  kind          String   // "execution_started" | "stage_completed" | "awaiting_approval" | "approved" | "kit_ready" | "outreach_sent" | "money_received"
-  title         String
-  detail        String?  @db.Text
-  read          Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionId String?
+  trendId     String?
+  kind        String // "execution_started" | "stage_completed" | "awaiting_approval" | "approved" | "kit_ready" | "outreach_sent" | "money_received"
+  title       String
+  detail      String?  @db.Text
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   @@index([userId, read])
   @@index([userId, createdAt])
 }
 
 model BuyerLead {
-  id            String   @id @default(cuid())
-  executionId   String
-  execution     TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id])
+  id          String         @id @default(cuid())
+  executionId String
+  execution   TrendExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id])
 
   // Where we found them
-  source        String   // "reddit" | "hackernews" | "twitter" | "producthunt" | "forum"
-  sourceUrl     String   // direct link to their post/comment
-  externalId    String   // post/comment ID for dedupe
-  authorHandle  String   // their username on the platform
+  source           String // "reddit" | "hackernews" | "twitter" | "producthunt" | "forum"
+  sourceUrl        String // direct link to their post/comment
+  externalId       String // post/comment ID for dedupe
+  authorHandle     String // their username on the platform
   authorProfileUrl String?
 
   // What they said
-  postTitle     String?
-  postExcerpt   String   @db.Text  // the actual pain statement, in their words
-  postedAt      DateTime // when THEY posted, not when we found it
+  postTitle   String?
+  postExcerpt String   @db.Text // the actual pain statement, in their words
+  postedAt    DateTime // when THEY posted, not when we found it
 
   // Ranking signals
-  intentScore   Int      // 0-100, computed
-  intentReasons Json     // ["explicit budget mention", "urgency signal", "asking for solutions"]
-  engagement    Int      @default(0) // upvotes/likes on their post
-  replyCount    Int      @default(0)
+  intentScore   Int // 0-100, computed
+  intentReasons Json // ["explicit budget mention", "urgency signal", "asking for solutions"]
+  engagement    Int  @default(0) // upvotes/likes on their post
+  replyCount    Int  @default(0)
 
   // Contact pathways (never scraped emails — only public channels)
-  contactMethods Json    // [{"channel":"reddit_reply","how":"reply in-thread","effort":"low"}]
+  contactMethods Json // [{"channel":"reddit_reply","how":"reply in-thread","effort":"low"}]
 
   // User workflow
-  status        BuyerLeadStatus @default(NEW)
-  savedToShortlist Boolean @default(false)
-  userNotes     String?    @db.Text
-  pitchedAt     DateTime?
-  outcome       String?    // "no_reply" | "positive" | "objection" | "closed_won" | "closed_lost"
+  status           BuyerLeadStatus @default(NEW)
+  savedToShortlist Boolean         @default(false)
+  userNotes        String?         @db.Text
+  pitchedAt        DateTime?
+  outcome          String? // "no_reply" | "positive" | "objection" | "closed_won" | "closed_lost"
 
   pitchSessions PitchSession[]
 
@@ -2243,67 +2245,66 @@ model BuyerLead {
 }
 
 enum BuyerLeadStatus {
-  NEW           // just discovered
-  REVIEWED      // user has seen it
-  SHORTLISTED   // user starred it
-  PITCHED       // user sent something (self-reported)
-  RESPONDED     // user marked they got a reply
+  NEW // just discovered
+  REVIEWED // user has seen it
+  SHORTLISTED // user starred it
+  PITCHED // user sent something (self-reported)
+  RESPONDED // user marked they got a reply
   CLOSED_WON
   CLOSED_LOST
-  DISMISSED     // user rejected the lead
+  DISMISSED // user rejected the lead
 }
 
 model PitchSession {
-  id            String   @id @default(cuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  leadId        String?  // optional: practice against a real lead
-  lead          BuyerLead? @relation(fields: [leadId], references: [id])
-  executionId   String?
+  id          String     @id @default(cuid())
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  leadId      String? // optional: practice against a real lead
+  lead        BuyerLead? @relation(fields: [leadId], references: [id])
+  executionId String?
 
-  scenario      String   // "cold_reply" | "discovery_call" | "price_objection" | "custom"
-  buyerPersona  Json     // AI-generated buyer profile they're practicing against
+  scenario     String // "cold_reply" | "discovery_call" | "price_objection" | "custom"
+  buyerPersona Json // AI-generated buyer profile they're practicing against
 
-  turns         PitchTurn[]
+  turns PitchTurn[]
 
-  score         Int?     // final score 0-100
-  strengths     Json?    // ["clear price anchor", "handled objection well"]
-  weaknesses    Json?    // ["didn't ask discovery questions"]
+  score      Int? // final score 0-100
+  strengths  Json? // ["clear price anchor", "handled objection well"]
+  weaknesses Json? // ["didn't ask discovery questions"]
 
-  createdAt     DateTime @default(now())
-  completedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
 
   @@index([userId])
 }
 
 model PitchTurn {
-  id            String   @id @default(cuid())
-  sessionId     String
-  session       PitchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  ordinal       Int
-  speaker       String   // "user" | "buyer_bot"
-  message       String   @db.Text
-  critique      String?  @db.Text  // realtime feedback on user turns
-  createdAt     DateTime @default(now())
+  id        String       @id @default(cuid())
+  sessionId String
+  session   PitchSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  ordinal   Int
+  speaker   String // "user" | "buyer_bot"
+  message   String       @db.Text
+  critique  String?      @db.Text // realtime feedback on user turns
+  createdAt DateTime     @default(now())
 
   @@index([sessionId, ordinal])
 }
 
 model DiscoveryQuery {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   executionId String
   userId      String?
-  platform    String   // "reddit" | "twitter" | "hackernews"
+  platform    String // "reddit" | "twitter" | "hackernews"
   query       String
   reason      String?
-  status      String   @default("PENDING") // "PENDING" | "COMPLETED" | "FAILED"
+  status      String    @default("PENDING") // "PENDING" | "COMPLETED" | "FAILED"
   runAt       DateTime?
   resultCount Int?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([status])
 }
-
 
 // ============================================================================
 // OBSERVABILITY & JEV CALIBRATION LAYER
@@ -2314,16 +2315,16 @@ model DecisionLog {
   runId        String?
   agentId      String?
   userId       String?
-  gateType     String           // 'trade_execution'|'lead_qualification'|'approval'|'completion'|'ledger_verification'|'tool_routing'|'model_routing'
-  primitive    String           // 'choice'|'score'|'noul'
+  gateType     String // 'trade_execution'|'lead_qualification'|'approval'|'completion'|'ledger_verification'|'tool_routing'|'model_routing'
+  primitive    String // 'choice'|'score'|'noul'
   question     String           @db.Text
-  answer       Json             // {probability?, confidence?, choice?, score?}
+  answer       Json // {probability?, confidence?, choice?, score?}
   threshold    Float
   inputSummary String           @db.VarChar(500)
-  inputHash    String           // sha256 first 16 chars
+  inputHash    String // sha256 first 16 chars
   latencyMs    Int
   costUsd      Float
-  actionTaken  String           // 'allowed'|'blocked'|'escalated'|'fallback_to_llm'|'fallback_to_rule'
+  actionTaken  String // 'allowed'|'blocked'|'escalated'|'fallback_to_llm'|'fallback_to_rule'
   outcomeId    String?          @unique
   outcome      DecisionOutcome?
   createdAt    DateTime         @default(now())
@@ -2340,10 +2341,10 @@ model DecisionOutcome {
   decision      DecisionLog @relation(fields: [decisionId], references: [id], onDelete: Cascade)
   wasCorrect    Boolean?
   actualValue   Json?
-  source        String      // 'user_feedback'|'automated_signal'|'delayed_verification'|'manual_review'
+  source        String // 'user_feedback'|'automated_signal'|'delayed_verification'|'manual_review'
   evidenceUrl   String?
   recordedAt    DateTime    @default(now())
-  timeToOutcome Int?        // milliseconds to outcome
+  timeToOutcome Int? // milliseconds to outcome
 
   @@index([wasCorrect])
   @@index([source])
@@ -2412,4 +2413,481 @@ model DynamicGateConfig {
   accuracy         Float    @default(0.0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+// ============================================================================
+// TRENDLY VENTURE OS DOMAIN MODELS (PHASE 3)
+// ============================================================================
+
+enum VentureLifecycleState {
+  DISCOVERED
+  RESEARCHING
+  VALIDATING
+  VALIDATED
+  BUILDING
+  READY_TO_SELL
+  SELLING
+  FIRST_REVENUE
+  DELIVERING
+  PROFITABLE
+  SCALING
+  PAUSED
+  KILLED
+  ARCHIVED
+}
+
+enum VentureBusinessModel {
+  SAAS
+  AI_SAAS
+  AI_SERVICE
+  AGENCY
+  AUTOMATION_SERVICE
+  API
+  DIGITAL_PRODUCT
+  SUBSCRIPTION
+  USAGE_BASED
+  MARKETPLACE
+  LEAD_GEN
+  CONTENT_BUSINESS
+  LICENSING
+  MANAGED_SERVICE
+  HYBRID
+}
+
+enum SignalProvenance {
+  OBSERVED
+  INFERRED
+  MODEL_ESTIMATE
+  USER_PROVIDED
+}
+
+enum FinancialProvenance {
+  PROJECTED
+  ESTIMATED
+  ACTUAL
+  VERIFIED
+}
+
+enum FinancialRecordType {
+  REVENUE
+  REFUND
+  STRIPE_FEE
+  AI_COMPUTE_COST
+  INFRA_COST
+  MARKETING_COST
+  OPERATIONAL_COST
+  CONTRACTOR_COST
+}
+
+enum AutonomyLevel {
+  LEVEL_0
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  EDITED
+  REJECTED
+  ALWAYS_ALLOWED
+  NEVER_ALLOWED
+}
+
+enum FulfillmentStatus {
+  PENDING
+  IN_PROGRESS
+  QA_VERIFICATION
+  DELIVERED
+  ACCEPTED
+  DISPUTED
+  REFUNDED
+}
+
+enum LeadPipelineStage {
+  NEW
+  QUALIFIED
+  PROPOSAL_SENT
+  NEGOTIATING
+  WON
+  LOST
+  CHURNED
+}
+
+enum ValidationRecommendation {
+  VALIDATE
+  REJECT
+  DEFER
+}
+
+model Venture {
+  id                      String                @id @default(cuid())
+  name                    String
+  slug                    String                @unique
+  description             String?               @db.Text
+  lifecycleState          VentureLifecycleState @default(DISCOVERED)
+  businessModel           VentureBusinessModel  @default(AI_SAAS)
+  problem                 String                @db.Text
+  targetCustomer          String
+  industry                String
+  geography               String                @default("GLOBAL")
+  pricingModel            String?
+  hypothesis              String?               @db.Text
+  riskLevel               RiskLevel             @default(MEDIUM)
+  autonomyLevel           AutonomyLevel         @default(LEVEL_3)
+  capitalAllocatedCents   Int                   @default(0)
+  capitalConsumedCents    Int                   @default(0)
+  revenueCents            Int                   @default(0)
+  costCents               Int                   @default(0)
+  profitCents             Int                   @default(0)
+  currency                String                @default("USD")
+  timeToFirstRevenueHours Float?
+  userId                  String
+  user                    User                  @relation(fields: [userId], references: [id])
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  transitions       VentureTransition[]
+  signals           MarketSignal[]
+  validations       DemandValidationReport[]
+  hypotheses        VentureHypothesis[]
+  offers            VentureOffer[]
+  customers         VentureCustomer[]
+  leads             VentureLead[]
+  proposals         SalesProposal[]
+  fulfillmentOrders FulfillmentOrder[]
+  financialRecords  FinancialRecord[]
+  experiments       VentureExperiment[]
+  memories          VentureMemory[]
+  approvalRequests  HumanApprovalRequest[]
+  capitalPlans      CapitalAllocationPlan[]
+
+  @@index([userId])
+  @@index([lifecycleState])
+  @@index([businessModel])
+  @@index([industry])
+  @@index([createdAt])
+}
+
+model VentureTransition {
+  id            String                @id @default(cuid())
+  ventureId     String
+  venture       Venture               @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  fromState     VentureLifecycleState
+  toState       VentureLifecycleState
+  actor         String
+  reason        String                @db.Text
+  evidenceJson  Json?
+  decisionLogId String?
+  createdAt     DateTime              @default(now())
+
+  @@index([ventureId, createdAt])
+  @@index([toState])
+}
+
+model MarketSignal {
+  id               String           @id @default(cuid())
+  ventureId        String?
+  venture          Venture?         @relation(fields: [ventureId], references: [id], onDelete: SetNull)
+  source           String
+  sourceUrl        String
+  externalId       String?
+  topic            String
+  industry         String
+  customerSegment  String?
+  problemExcerpt   String           @db.Text
+  urgencyScore     Int              @default(50)
+  intentScore      Int              @default(50)
+  reliabilityScore Int              @default(70)
+  provenance       SignalProvenance @default(OBSERVED)
+  rawSignalData    Json?
+  createdAt        DateTime         @default(now())
+
+  validations DemandValidationReport[]
+
+  @@index([ventureId])
+  @@index([industry, urgencyScore])
+  @@index([source, externalId])
+  @@index([createdAt])
+}
+
+model DemandValidationReport {
+  id                       String                   @id @default(cuid())
+  ventureId                String?
+  venture                  Venture?                 @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  signalId                 String?
+  signal                   MarketSignal?            @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  painEvidence             String                   @db.Text
+  urgencyEvidence          String                   @db.Text
+  competitorLandscape      Json                     @default("[]")
+  pricingEvidence          Json                     @default("{}")
+  marginExpectation        Float                    @default(0.70)
+  technicalDifficultyScore Int                      @default(50)
+  operationalRiskScore     Int                      @default(30)
+  recommendation           ValidationRecommendation @default(DEFER)
+  rationale                String                   @db.Text
+  validatedAt              DateTime                 @default(now())
+
+  @@index([ventureId])
+  @@index([recommendation])
+}
+
+model VentureHypothesis {
+  id                 String               @id @default(cuid())
+  ventureId          String
+  venture            Venture              @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  targetCustomer     String
+  problem            String               @db.Text
+  proposedSolution   String               @db.Text
+  valueProposition   String               @db.Text
+  businessModel      VentureBusinessModel
+  pricingDescription String
+  expectedMargin     Float                @default(0.70)
+  acquisitionChannel String
+  fulfillmentMethod  String
+  successCriteria    Json
+  failureCriteria    Json
+  status             String               @default("ACTIVE")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([ventureId])
+}
+
+model VentureOffer {
+  id              String   @id @default(cuid())
+  ventureId       String
+  venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  title           String
+  tier            String   @default("STANDARD")
+  description     String   @db.Text
+  priceCents      Int
+  currency        String   @default("USD")
+  billingInterval String   @default("ONE_TIME")
+  deliverables    Json     @default("[]")
+  constraints     Json     @default("[]")
+  isLive          Boolean  @default(false)
+  stripePriceId   String?
+  stripeProductId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  proposals SalesProposal[]
+  orders    FulfillmentOrder[]
+
+  @@index([ventureId])
+}
+
+model VentureCustomer {
+  id                   String   @id @default(cuid())
+  ventureId            String
+  venture              Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  name                 String
+  email                String?
+  company              String?
+  lifetimeValueCents   Int      @default(0)
+  acquisitionCostCents Int      @default(0)
+  status               String   @default("ACTIVE")
+  stripeCustomerId     String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  leads            VentureLead[]
+  proposals        SalesProposal[]
+  orders           FulfillmentOrder[]
+  financialRecords FinancialRecord[]
+
+  @@index([ventureId])
+  @@index([email])
+}
+
+model VentureLead {
+  id                 String            @id @default(cuid())
+  ventureId          String
+  venture            Venture           @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  customerId         String?
+  customer           VentureCustomer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  sourceChannel      String
+  contactHandle      String
+  contactProfileUrl  String?
+  intentScore        Int               @default(50)
+  pipelineStage      LeadPipelineStage @default(NEW)
+  qualificationNotes String?           @db.Text
+  lastContactedAt    DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  proposals SalesProposal[]
+
+  @@index([ventureId, pipelineStage])
+}
+
+model SalesProposal {
+  id                  String           @id @default(cuid())
+  ventureId           String
+  venture             Venture          @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  customerId          String?
+  customer            VentureCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  leadId              String?
+  lead                VentureLead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  offerId             String?
+  offer               VentureOffer?    @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  title               String
+  scopeSummary        String           @db.Text
+  quotedPriceCents    Int
+  currency            String           @default("USD")
+  status              String           @default("DRAFT")
+  proposalArtifactUrl String?
+  sentAt              DateTime?
+  acceptedAt          DateTime?
+  rejectedAt          DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([ventureId])
+  @@index([status])
+}
+
+model FulfillmentOrder {
+  id                 String            @id @default(cuid())
+  ventureId          String
+  venture            Venture           @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  customerId         String
+  customer           VentureCustomer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  offerId            String?
+  offer              VentureOffer?     @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  scopeJson          Json              @default("{}")
+  status             FulfillmentStatus @default(PENDING)
+  assignedAgentType  String            @default("OPERATIONS_AGENT")
+  deliveryArtifacts  Json              @default("[]")
+  qualityScore       Float?
+  verificationNotes  String?           @db.Text
+  customerAcceptedAt DateTime?
+  disputedAt         DateTime?
+  deadline           DateTime?
+  deliveredAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  financialRecords FinancialRecord[]
+
+  @@index([ventureId, status])
+  @@index([customerId])
+}
+
+model FinancialRecord {
+  id              String              @id @default(cuid())
+  ventureId       String
+  venture         Venture             @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  customerId      String?
+  customer        VentureCustomer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orderId         String?
+  order           FulfillmentOrder?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type            FinancialRecordType
+  amountCents     Int
+  currency        String              @default("USD")
+  provenance      FinancialProvenance @default(ACTUAL)
+  stripeChargeId  String?             @unique
+  stripeInvoiceId String?
+  ledgerEntryId   String?
+  description     String
+  metadata        Json?
+  createdAt       DateTime            @default(now())
+
+  @@index([ventureId, type])
+  @@index([provenance])
+  @@index([createdAt])
+}
+
+model VentureExperiment {
+  id                String    @id @default(cuid())
+  ventureId         String
+  venture           Venture   @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  name              String
+  hypothesis        String    @db.Text
+  channelOrVariable String
+  budgetLimitCents  Int       @default(0)
+  budgetSpentCents  Int       @default(0)
+  targetMetric      String
+  targetValue       Float
+  actualValue       Float?
+  outcomeDecision   String?
+  status            String    @default("RUNNING")
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  @@index([ventureId, status])
+}
+
+model VentureMemory {
+  id                          String   @id @default(cuid())
+  ventureId                   String
+  venture                     Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  category                    String
+  insight                     String   @db.Text
+  supportingData              Json?
+  confidence                  Float    @default(0.85)
+  isPromotedToGlobalBlueprint Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+
+  @@index([ventureId, category])
+}
+
+model HumanApprovalRequest {
+  id                 String         @id @default(cuid())
+  ventureId          String
+  venture            Venture        @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User           @relation(fields: [userId], references: [id])
+  proposedAction     String
+  agentRole          String
+  toolName           String?
+  riskLevel          RiskLevel      @default(MEDIUM)
+  estimatedCostCents Int            @default(0)
+  rationale          String         @db.Text
+  evidenceJson       Json?
+  status             ApprovalStatus @default(PENDING)
+  reviewNotes        String?        @db.Text
+  reviewedByUserId   String?
+  createdAt          DateTime       @default(now())
+  resolvedAt         DateTime?
+
+  @@index([userId, status])
+  @@index([ventureId])
+}
+
+model CapitalAllocationPlan {
+  id                     String   @id @default(cuid())
+  ventureId              String
+  venture                Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  allocatedCents         Int      @default(0)
+  consumedCents          Int      @default(0)
+  maxDailyBurnCents      Int      @default(5000)
+  hardStopThresholdCents Int      @default(50000)
+  reinvestmentPercentage Int      @default(20)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([ventureId])
+}
+
+model VentureBlueprint {
+  id                     String               @id @default(cuid())
+  name                   String
+  industry               String
+  businessModel          VentureBusinessModel
+  typicalPriceCents      Int
+  validatedOfferTemplate Json
+  funnelTemplate         Json
+  agentStackConfig       Json
+  provenRoiMedian        Float                @default(0.0)
+  sampleSizeVentures     Int                  @default(1)
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  @@index([industry])
+  @@index([businessModel])
 }
