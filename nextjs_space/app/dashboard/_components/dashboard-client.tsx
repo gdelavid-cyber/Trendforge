@@ -25,6 +25,7 @@ import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
 import { CouncilBoardroom } from '@/components/council/council-boardroom';
 import { SwarmTelemetryConsole } from '@/components/swarm/SwarmTelemetryConsole';
 import { InferHubEarnings } from '@/components/dashboard/inferhub-earnings';
+import { StationCommandDeck } from './station-command-deck';
 
 interface DashboardClientProps {
   user: {
@@ -162,6 +163,9 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
           </div>
         </motion.div>
       </div>
+
+      {/* 1b. Native TrendForge Station Command Deck */}
+      <StationCommandDeck />
 
       {/* 2. LIVE AI MONEY COUNCIL BOARDROOM (Admin Exclusive) */}
       {user?.role === 'ADMIN' && (
