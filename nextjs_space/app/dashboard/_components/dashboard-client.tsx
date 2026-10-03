@@ -167,10 +167,8 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
       {/* 1b. Native TrendForge Station Command Deck */}
       <StationCommandDeck />
 
-      {/* 2. LIVE AI MONEY COUNCIL BOARDROOM (Admin Exclusive) */}
-      {user?.role === 'ADMIN' && (
-        <CouncilBoardroom embedded={true} />
-      )}
+      {/* 2. LIVE AI MONEY COUNCIL ROUND-TABLE BOARDROOM */}
+      <CouncilBoardroom embedded={true} />
 
       {/* 2b. InferHub publisher earnings auto-reinvestment */}
       <InferHubEarnings />
