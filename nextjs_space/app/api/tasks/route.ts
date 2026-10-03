@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
+import { NON_TEST_TASK_WHERE } from '@/lib/tasks/ready';
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     const category = url.searchParams.get('category');
     const search = url.searchParams.get('search');
 
-    const where: any = {};
+    const where: any = { ...NON_TEST_TASK_WHERE };
     if (difficulty && difficulty !== 'ALL') where.difficulty = difficulty;
     if (risk && risk !== 'ALL') where.riskLevel = risk;
     if (category && category !== 'ALL') where.category = category;

@@ -230,10 +230,25 @@ export async function harvestLiveSignalsAndTasks(): Promise<{
     console.warn('[LiveScrapling] Task cleanup warning:', err);
   }
 
-  // 5. Fetch freshest tasks
+  // 5. Fetch freshest commercial tasks (strictly excluding test/fixture rows)
   const freshTasks = await db.task.findMany({
-    where: { status: 'PENDING' },
-    orderBy: { createdAt: 'desc' },
+    where: {
+      status: 'PENDING',
+      AND: [
+        { NOT: { title: { startsWith: 'Exec test task', mode: 'insensitive' } } },
+        { NOT: { title: { startsWith: 'Proof test task', mode: 'insensitive' } } },
+        { NOT: { title: { startsWith: 'Brain priority task', mode: 'insensitive' } } },
+        { NOT: { title: { startsWith: 'Platform default task', mode: 'insensitive' } } },
+        { NOT: { title: { contains: 'test-', mode: 'insensitive' } } },
+        { NOT: { title: { contains: 'fixture', mode: 'insensitive' } } },
+        { NOT: { description: { in: ['state machine fixture', 'fixture', 'd'] } } },
+      ],
+    },
+    orderBy: [
+      { isFeatured: 'desc' },
+      { trendScore: 'desc' },
+      { createdAt: 'desc' },
+    ],
     take: 6,
     include: {
       trend: {

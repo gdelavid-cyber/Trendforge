@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
 import { redis } from '@/lib/core/redis';
+import { NON_TEST_TASK_WHERE } from '@/lib/tasks/ready';
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     // Caching first page queries with no filters
     const isFirstPage = !cursor;
     const hasFilters = difficulty || category || riskLevel;
-    const cacheKey = `tasks:stream:v1:${sort}:${limit}`;
+    const cacheKey = `tasks:stream:v2:${sort}:${limit}`;
 
     if (isFirstPage && !hasFilters) {
       try {
@@ -32,8 +33,9 @@ export async function GET(request: Request) {
 
     const now = new Date();
 
-    // Construct where filter
+    // Construct where filter (excluding test/fixture rows)
     const where: any = {
+      AND: [...NON_TEST_TASK_WHERE.AND],
       OR: [
         { expiresAt: null },
         { expiresAt: { gt: now } },
@@ -56,14 +58,12 @@ export async function GET(request: Request) {
       if (cursor) {
         const [scoreStr, cursorId] = cursor.split('_');
         const score = parseFloat(scoreStr || '0');
-        where.AND = [
-          {
-            OR: [
-              { trendScore: { lt: score } },
-              { trendScore: score, id: { lt: cursorId } }
-            ]
-          }
-        ];
+        where.AND.push({
+          OR: [
+            { trendScore: { lt: score } },
+            { trendScore: score, id: { lt: cursorId } }
+          ]
+        });
       }
     } else if (sort === 'earnings') {
       orderBy = [
@@ -74,14 +74,12 @@ export async function GET(request: Request) {
       if (cursor) {
         const [earningsStr, cursorId] = cursor.split('_');
         const earnings = parseFloat(earningsStr || '0');
-        where.AND = [
-          {
-            OR: [
-              { estimatedEarningsHigh: { lt: earnings } },
-              { estimatedEarningsHigh: earnings, id: { lt: cursorId } }
-            ]
-          }
-        ];
+        where.AND.push({
+          OR: [
+            { estimatedEarningsHigh: { lt: earnings } },
+            { estimatedEarningsHigh: earnings, id: { lt: cursorId } }
+          ]
+        });
       }
     } else {
       // Default: live-new first — featured pins, then newest issued, then stable id.
@@ -97,30 +95,26 @@ export async function GET(request: Request) {
         if (cursorFeatured) {
           // Still inside the featured block: featured rows older than cursor,
           // then the entire non-featured block.
-          where.AND = [
-            {
-              OR: [
-                { isFeatured: false },
-                {
-                  isFeatured: true,
-                  OR: [
-                    { createdAt: { lt: cursorDate } },
-                    { createdAt: cursorDate, id: { lt: cursorId } },
-                  ],
-                },
-              ],
-            },
-          ];
+          where.AND.push({
+            OR: [
+              { isFeatured: false },
+              {
+                isFeatured: true,
+                OR: [
+                  { createdAt: { lt: cursorDate } },
+                  { createdAt: cursorDate, id: { lt: cursorId } },
+                ],
+              },
+            ],
+          });
         } else {
-          where.AND = [
-            {
-              isFeatured: false,
-              OR: [
-                { createdAt: { lt: cursorDate } },
-                { createdAt: cursorDate, id: { lt: cursorId } },
-              ],
-            },
-          ];
+          where.AND.push({
+            isFeatured: false,
+            OR: [
+              { createdAt: { lt: cursorDate } },
+              { createdAt: cursorDate, id: { lt: cursorId } },
+            ],
+          });
         }
       }
     }

@@ -390,7 +390,7 @@ export async function runStationAutonomousLoop(
     }> = [];
 
     for (const call of toolCalls) {
-      if (call.parseError) {
+      if ((call as any).parseError) {
         turnResults.push({
           callId: call.id,
           isError: true,

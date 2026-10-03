@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
@@ -41,13 +41,25 @@ interface DashboardClientProps {
   trendSummary: string;
 }
 
+const TEST_TASK_RE = /exec test task|proof test task|brain priority task|platform default task|test council approval|test-|fixture/i;
+
 export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const [isDebriefOpen, setIsDebriefOpen] = useState(false);
-  const [tasks, setTasks] = useState(trendingMoves);
+  const cleanInitialMoves = (trendingMoves || []).filter(
+    (t: any) => !TEST_TASK_RE.test(String(t?.title || '')) && t?.description !== 'state machine fixture'
+  );
+  const [tasks, setTasks] = useState(cleanInitialMoves);
   const [scraping, setScraping] = useState(false);
   const realIncomeUsdc = user?.realIncomeUsdc ?? 0;
   const completedCount = user?.completedCount ?? 0;
+
+  useEffect(() => {
+    if (cleanInitialMoves.length < 6) {
+      handleScrapeFresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleScrapeFresh = async () => {
     setScraping(true);

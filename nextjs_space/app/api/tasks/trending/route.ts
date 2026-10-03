@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from '@/lib/core/db';
 import { createRedisClient } from '@/lib/core/redis';
+import { NON_TEST_TASK_WHERE } from '@/lib/tasks/ready';
 
 export async function GET(request: Request) {
   const subClient = createRedisClient();
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
         const topTrending = await prisma.task.findMany({
           where: {
             isFeatured: true,
+            AND: [...NON_TEST_TASK_WHERE.AND],
             OR: [
               { expiresAt: null },
               { expiresAt: { gt: now } }
