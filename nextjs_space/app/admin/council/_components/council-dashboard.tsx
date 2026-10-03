@@ -215,7 +215,7 @@ export function CouncilDashboard({ userModeEnabled }: { userModeEnabled: boolean
               <h3 className="font-semibold text-white text-base">Trigger Money Council Debate</h3>
             </div>
             <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              Inject a raw market signal to dispatch the 5 specialist agents (Trend Hunter, Unit Economist, Operator, Contrarian, Closer) and receive the Gatekeeper verdict.
+              Inject a raw market signal to dispatch the 6 specialist agents (Deal Finder, Trend Hunter, Unit Economist, Operator, Contrarian, Closer) and receive the Gatekeeper verdict.
             </p>
 
             <form onSubmit={handleTriggerDebate} className="space-y-4">
@@ -269,7 +269,7 @@ export function CouncilDashboard({ userModeEnabled }: { userModeEnabled: boolean
                 {triggering ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    5 Agents Debating...
+                    6 Agents Debating...
                   </>
                 ) : (
                   <>
@@ -293,8 +293,9 @@ export function CouncilDashboard({ userModeEnabled }: { userModeEnabled: boolean
 
           {/* Quick Guide Card */}
           <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 text-xs text-slate-400 space-y-2">
-            <h4 className="font-semibold text-slate-200">How The 5 Agents Score:</h4>
+            <h4 className="font-semibold text-slate-200">How The 6 Agents Score:</h4>
             <ul className="space-y-1.5 pl-3 list-disc">
+              <li><strong className="text-amber-300">Deal Finder:</strong> Verifies $450+ B2B buyer appetite & decision-maker.</li>
               <li><strong className="text-cyan-400">Trend Hunter:</strong> Assesses momentum & decay curve.</li>
               <li><strong className="text-emerald-400">Unit Economist:</strong> Models gross margin, CAC, and pricing.</li>
               <li><strong className="text-blue-400">Operator:</strong> Evaluates engineering lift & execution friction.</li>

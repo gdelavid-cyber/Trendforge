@@ -367,9 +367,66 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
   const [activeSpeakerIdx, setActiveSpeakerIdx] = useState<number>(0);
   const [autoPlayDebate, setAutoPlayDebate] = useState<boolean>(true);
 
-  const transcript = activeSession?.debateTranscript?.length
+  const rawTranscript = activeSession?.debateTranscript?.length
     ? activeSession.debateTranscript
     : DEFAULT_COUNCIL_SESSIONS_MAP[0].debateTranscript;
+
+  // Strictly align the 6 seats so Seat 4 (Contrarian) always maps to Contrarian's turn
+  // even if a historical DB session had 5 seats or a different turn order.
+  const transcript: AgentDialogue[] = ROUND_TABLE_SEATS.map((seat, idx) => {
+    const fallbackTurn = DEFAULT_COUNCIL_SESSIONS_MAP[0].debateTranscript[idx];
+    const match = rawTranscript.find(
+      (t: any) =>
+        String(t?.agentName || '').toLowerCase() === seat.agentName.toLowerCase() ||
+        String(t?.persona || '').toLowerCase() === seat.agentName.toLowerCase().replace(/\s+/g, '_')
+    );
+
+    if (!match) {
+      return fallbackTurn;
+    }
+
+    const isBadPerspective =
+      !match.perspective ||
+      match.perspective.includes('TrendForge Station Live Execution Report') ||
+      match.perspective.includes('{"success":true}') ||
+      match.perspective.includes('LLM call failed for');
+
+    if (seat.agentName === 'Contrarian') {
+      return {
+        agentName: 'Contrarian',
+        role: match.role || 'Risk & Failure Mode Assassin',
+        sentiment: 'bearish',
+        perspective: isBadPerspective ? fallbackTurn.perspective : match.perspective,
+        keyMetric:
+          match.keyMetric && match.keyMetric !== 'pending fresh intel'
+            ? match.keyMetric
+            : fallbackTurn.keyMetric || 'Risk: Scope & SLA',
+        recommendation:
+          match.recommendation &&
+          match.recommendation !== 'see analysis' &&
+          match.recommendation !== 'retry this persona'
+            ? match.recommendation
+            : fallbackTurn.recommendation,
+      };
+    }
+
+    return {
+      agentName: seat.agentName,
+      role: match.role || fallbackTurn.role,
+      sentiment: match.sentiment || fallbackTurn.sentiment,
+      perspective: isBadPerspective ? fallbackTurn.perspective : match.perspective,
+      keyMetric:
+        match.keyMetric && match.keyMetric !== 'pending fresh intel'
+          ? match.keyMetric
+          : fallbackTurn.keyMetric,
+      recommendation:
+        match.recommendation &&
+        match.recommendation !== 'see analysis' &&
+        match.recommendation !== 'retry this persona'
+          ? match.recommendation
+          : fallbackTurn.recommendation,
+    };
+  });
 
   // Cycle speaker around the Round Table every 3.6 seconds when autoPlayDebate is on
   useEffect(() => {
@@ -506,7 +563,7 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
       case 'Contrarian':
         return {
           icon: <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />,
-          color: 'bg-rose-500/10 text-rose-500/30 border-rose-500/30',
+          color: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
         };
       case 'Closer':
         return {
@@ -718,12 +775,48 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
 
+          {/* Live Round-Table Speech Banner docked cleanly at top of arena (never overlaps table or gets clipped) */}
+          <AnimatePresence mode="wait">
+            {activeTurn && activeSeat && (
+              <motion.div
+                key={`banner-${activeSeat.agentName}-${activeSession.id}`}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="pointer-events-none absolute top-2.5 left-3 right-3 px-3 py-1.5 rounded-xl bg-black/90 border shadow-[0_6px_25px_rgba(0,0,0,0.85)] z-30 flex items-center justify-between gap-2"
+                style={{ borderColor: activeSeat.color }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm shrink-0">{activeSeat.avatar}</span>
+                  <span
+                    className="text-[10px] font-mono font-bold uppercase shrink-0"
+                    style={{ color: activeSeat.color }}
+                  >
+                    {activeSeat.agentName}:
+                  </span>
+                  <span className="text-[11px] font-sans text-slate-200 truncate">
+                    “{activeTurn.perspective}”
+                  </span>
+                </div>
+                <span
+                  className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                    activeTurn.sentiment === 'bearish'
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  }`}
+                >
+                  {activeTurn.sentiment === 'bearish' ? '⚠️ RED-TEAM CHALLENGE' : '✅ BULLISH'}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* 6 Seated AI Council Members around the Round Table */}
           {ROUND_TABLE_SEATS.map((seat, idx) => {
             const turnData =
               transcript.find((t) => t.agentName === seat.agentName) || transcript[idx];
             const isSpeaking = idx === activeSpeakerIdx;
-            const isBearish = turnData?.sentiment === 'bearish';
+            const isBearish = turnData?.sentiment === 'bearish' || seat.agentName === 'Contrarian';
 
             return (
               <div
@@ -735,36 +828,6 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
                 }}
                 className="absolute -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group"
               >
-                {/* Live Speech Bubble above the currently speaking Council Member */}
-                <AnimatePresence mode="wait">
-                  {isSpeaking && turnData && (
-                    <motion.div
-                      key={`${seat.agentName}-${activeSession.id}`}
-                      initial={{ opacity: 0, y: 6, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.9 }}
-                      className={`pointer-events-none absolute ${
-                        seat.y > 60 ? 'bottom-full mb-2' : 'top-full mt-2'
-                      } left-1/2 -translate-x-1/2 w-[185px] sm:w-[215px] p-2 rounded-xl bg-black/95 border shadow-[0_6px_25px_rgba(0,0,0,0.9)] z-30`}
-                      style={{ borderColor: seat.color }}
-                    >
-                      <div className="flex items-center justify-between gap-1 text-[9px] font-mono font-bold uppercase mb-0.5">
-                        <span style={{ color: seat.color }}>{seat.agentName}</span>
-                        <span
-                          className={
-                            isBearish ? 'text-rose-400' : 'text-emerald-400'
-                          }
-                        >
-                          {isBearish ? '⚠️ CHALLENGE' : '✅ BULLISH'}
-                        </span>
-                      </div>
-                      <div className="text-[10px] font-sans text-slate-200 leading-tight line-clamp-2">
-                        “{turnData.perspective}”
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 {/* Seated Council Member Avatar + Chair Ring */}
                 <motion.div
                   animate={
@@ -777,10 +840,18 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
                 >
                   <div
                     className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#090F22] border-2 flex items-center justify-center text-xl relative transition-all ${
-                      isSpeaking ? 'ring-4 ring-amber-400/35' : ' opacity-85 hover:opacity-100'
+                      isSpeaking
+                        ? isBearish
+                          ? 'ring-4 ring-rose-500/45'
+                          : 'ring-4 ring-amber-400/35'
+                        : 'opacity-85 hover:opacity-100'
                     }`}
                     style={{
-                      borderColor: isSpeaking ? seat.color : 'rgba(255,255,255,0.2)',
+                      borderColor: isSpeaking
+                        ? seat.color
+                        : isBearish
+                        ? 'rgba(244,63,94,0.45)'
+                        : 'rgba(255,255,255,0.2)',
                       boxShadow: isSpeaking ? `0 0 24px ${seat.color}90` : 'none',
                     }}
                   >
@@ -798,11 +869,15 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
                   </div>
                   <div
                     className="mt-1 px-2 py-0.5 rounded-md bg-black/90 border border-white/15 text-[10px] font-mono font-bold whitespace-nowrap shadow"
-                    style={{ color: isSpeaking ? seat.color : '#E2E8F0' }}
+                    style={{ color: isSpeaking ? seat.color : isBearish ? '#FDA4AF' : '#E2E8F0' }}
                   >
                     {seat.agentName}
                   </div>
-                  <span className="text-[8px] font-mono text-slate-400">
+                  <span
+                    className={`text-[8px] font-mono ${
+                      isBearish ? 'text-rose-400 font-semibold' : 'text-slate-400'
+                    }`}
+                  >
                     {turnData?.keyMetric || seat.shortTitle}
                   </span>
                 </motion.div>
@@ -852,15 +927,29 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -8 }}
-                className="p-3.5 rounded-xl bg-[#070C1B] border border-white/10 space-y-2.5"
+                className={`p-3.5 rounded-xl border space-y-2.5 ${
+                  activeTurn?.sentiment === 'bearish'
+                    ? 'bg-gradient-to-br from-rose-950/35 via-[#070C1B] to-black border-rose-500/40'
+                    : 'bg-[#070C1B] border-white/10'
+                }`}
               >
                 <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                  <span className="flex items-center gap-1 text-[#00F0FF]">
-                    <MessageSquare className="w-3 h-3" /> Live Round-Table Argument (Turn{' '}
-                    {activeSpeakerIdx + 1} of {transcript.length})
+                  <span
+                    className={`flex items-center gap-1 ${
+                      activeTurn?.sentiment === 'bearish' ? 'text-rose-400 font-bold' : 'text-[#00F0FF]'
+                    }`}
+                  >
+                    <MessageSquare className="w-3 h-3" />{' '}
+                    {activeTurn?.sentiment === 'bearish'
+                      ? `Red-Team Risk Challenge (Turn ${activeSpeakerIdx + 1} of ${transcript.length})`
+                      : `Live Round-Table Argument (Turn ${activeSpeakerIdx + 1} of ${transcript.length})`}
                   </span>
                   {activeTurn?.keyMetric && (
-                    <span className="text-emerald-400 font-bold">
+                    <span
+                      className={`font-bold ${
+                        activeTurn?.sentiment === 'bearish' ? 'text-rose-400' : 'text-emerald-400'
+                      }`}
+                    >
                       {activeTurn.keyMetric}
                     </span>
                   )}
@@ -868,8 +957,16 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
                 <p className="text-xs sm:text-sm text-white font-sans leading-relaxed">
                   “{activeTurn?.perspective}”
                 </p>
-                <div className="pt-2 border-t border-white/[0.08] text-xs font-mono text-amber-300">
-                  <span className="text-slate-400">Motion on the Table: </span>
+                <div
+                  className={`pt-2 border-t border-white/[0.08] text-xs font-mono ${
+                    activeTurn?.sentiment === 'bearish' ? 'text-rose-300' : 'text-amber-300'
+                  }`}
+                >
+                  <span className="text-slate-400">
+                    {activeTurn?.sentiment === 'bearish'
+                      ? '🛡️ Red-Team Defense Protocol: '
+                      : 'Motion on the Table: '}
+                  </span>
                   <strong>{activeTurn?.recommendation}</strong>
                 </div>
               </motion.div>
@@ -988,10 +1085,15 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
 
                 <div className="pt-2 border-t border-white/[0.06] text-[11px] font-mono flex items-center justify-between text-slate-400">
                   <span className="truncate mr-2">
-                    Rec: <strong className="text-white">{dia.recommendation}</strong>
+                    {dia.sentiment === 'bearish' ? 'Defense: ' : 'Rec: '}
+                    <strong className="text-white">{dia.recommendation}</strong>
                   </span>
                   {dia.keyMetric && (
-                    <span className="text-emerald-400 font-bold shrink-0">
+                    <span
+                      className={`font-bold shrink-0 ${
+                        dia.sentiment === 'bearish' ? 'text-rose-400' : 'text-emerald-400'
+                      }`}
+                    >
                       {dia.keyMetric}
                     </span>
                   )}

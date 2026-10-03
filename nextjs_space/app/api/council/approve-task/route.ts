@@ -9,7 +9,8 @@ import { fingerprint, isDuplicate } from '@/lib/pipeline';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !isUserAdmin(session.user as any)) {
+  const userModeEnabled = process.env.COUNCIL_USER_MODE_ENABLED !== 'false';
+  if (!session?.user || (!userModeEnabled && !isUserAdmin(session.user as any))) {
     return NextResponse.json({ error: 'Admin authorization required' }, { status: 403 });
   }
 

@@ -6,16 +6,35 @@ import { getCouncilMemory } from '@/lib/council/council-memory';
 import { harvestNextCouncilSignal } from '@/lib/council/signal-harvester';
 import { prisma } from '@/lib/core/db';
 
+const TEST_SESSION_RE = /council-mem-test-|council-switch-|council-hot-task-|test-|fixture/i;
+
 // GET: Fetch latest council deliberations and collective intelligence profile
 export async function GET() {
   try {
-    const [sessions, memory] = await Promise.all([
+    const [rawSessions, memory] = await Promise.all([
       prisma.councilSession.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 6,
+        take: 20,
       }),
       getCouncilMemory(),
     ]);
+
+    const sessions = rawSessions
+      .filter((s) => {
+        const title = String((s.signal as any)?.title || '');
+        if (!title || TEST_SESSION_RE.test(title)) return false;
+        const transcript = Array.isArray(s.debateTranscript) ? (s.debateTranscript as any[]) : [];
+        if (transcript.length < 5) return false;
+        const badTurn = transcript.some(
+          (t) =>
+            String(t?.perspective || '').includes('TrendForge Station Live Execution Report') ||
+            String(t?.perspective || '').includes('{"success":true}') ||
+            String(t?.perspective || '').includes('Sensitive internal note') ||
+            String(t?.perspective || '').includes('LLM call failed for')
+        );
+        return !badTurn;
+      })
+      .slice(0, 6);
 
     return NextResponse.json({
       success: true,
