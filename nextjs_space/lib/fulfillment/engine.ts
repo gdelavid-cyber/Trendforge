@@ -81,7 +81,7 @@ export async function inspectAndVerifyOrder(input: VerifyDeliveryInput) {
   try {
     const { askJev } = await import('@/lib/intelligence/decision/jev');
     const questions = {
-      delivery_quality: { type: 'score', description: 'Quality score 0-100', min: 0, max: 100 },
+      delivery_quality: { type: 'score' as const, description: 'Quality score 0-100', min: 0, max: 100 },
     };
     const jevRes = await instrumentedJevCall(
       {

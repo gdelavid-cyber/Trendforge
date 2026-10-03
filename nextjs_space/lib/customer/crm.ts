@@ -45,7 +45,7 @@ export async function createVentureLead(input: CreateLeadInput) {
     try {
       const { askJev } = await import('@/lib/intelligence/decision/jev');
       const questions = {
-        buyer_intent: { type: 'score', description: 'Buyer intent 0-100', min: 0, max: 100 },
+        buyer_intent: { type: 'score' as const, description: 'Buyer intent 0-100', min: 0, max: 100 },
       };
       const jevRes = await instrumentedJevCall(
         {

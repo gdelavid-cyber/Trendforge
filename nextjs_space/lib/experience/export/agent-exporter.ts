@@ -59,13 +59,92 @@ export async function exportAgentToJSON(agentId: string): Promise<StandardAgentE
   };
 }
 
+export interface StarNetAgentExport {
+  agentId?: string;
+  name?: string;
+  class?: string;
+  role?: string;
+  persona?: string;
+  systemPrompt?: string;
+  model?: string;
+  provider?: string;
+  skills?: any[];
+  dossier?: {
+    name?: string;
+    personality?: string;
+    beliefs?: string[];
+    goals?: string[];
+  };
+}
+
 /**
- * Imports an agent JSON package and creates a new active sovereign agent in the database
+ * Converts a StarNet agent export JSON (from StarNet's EXPORT AGENT button)
+ * into a Trendly WEB4-AGENT-1.0 package.
  */
-export async function importAgentFromJSON(userId: string, pkg: StandardAgentExportPackage) {
-  if (pkg.formatVersion !== 'WEB4-AGENT-1.0') {
-    throw new Error('Unsupported agent export format version.');
+export function convertStarNetExportToWeb4(raw: any): StandardAgentExportPackage {
+  if (raw && raw.formatVersion === 'WEB4-AGENT-1.0') {
+    return raw as StandardAgentExportPackage;
   }
+
+  const name = String(raw?.name || raw?.dossier?.name || raw?.agentId || 'StarNet Crew Specialist').trim();
+  const description = String(
+    raw?.persona ||
+      raw?.dossier?.personality ||
+      raw?.systemPrompt ||
+      raw?.role ||
+      'Imported from StarNet Station'
+  ).trim();
+  const rawClass = String(raw?.class || raw?.role || '').toUpperCase();
+  const archetype = rawClass.includes('TRADER') || rawClass.includes('FINANCE')
+    ? 'ARBITRAGE_TRADER'
+    : rawClass.includes('BUILD') || rawClass.includes('CODE')
+    ? 'SAAS_ARCHITECT'
+    : 'DATA_MINER';
+
+  return {
+    formatVersion: 'WEB4-AGENT-1.0',
+    exportedAt: new Date().toISOString(),
+    metadata: {
+      name,
+      description,
+      archetype,
+      generation: 1,
+    },
+    skillsDag: Array.isArray(raw?.skills) ? raw.skills : [],
+    avatarConfiguration: {
+      source: 'starnet-station',
+      model: raw?.model || 'starnet-agent',
+      provider: raw?.provider || 'starnet',
+    },
+    financialHistory: {
+      totalEarnings: 0,
+      totalCosts: 0,
+      netProfit: 0,
+      survivalScore: 85,
+    },
+    documentation: {
+      operationalGuide: `Imported from StarNet Station dossier (${name}).`,
+      license: 'MIT-WEB4-OPEN-AGENT',
+    },
+  };
+}
+
+/**
+ * Imports a WEB4-AGENT-1.0 or StarNet Agent Export JSON package and creates a new sovereign agent
+ */
+export async function importAgentFromJSON(userId: string, rawPkg: StandardAgentExportPackage | StarNetAgentExport) {
+  const isWeb4 = (rawPkg as any)?.formatVersion === 'WEB4-AGENT-1.0';
+  const isStarNet =
+    !isWeb4 &&
+    typeof rawPkg === 'object' &&
+    rawPkg !== null &&
+    Boolean((rawPkg as any).agentId || (rawPkg as any).dossier || (rawPkg as any).persona || (rawPkg as any).name);
+
+  if (!isWeb4 && !isStarNet) {
+    throw new Error('Unsupported agent export format version. Expected WEB4-AGENT-1.0 or StarNet Agent Export.');
+  }
+
+  const pkg = isWeb4 ? (rawPkg as StandardAgentExportPackage) : convertStarNetExportToWeb4(rawPkg);
 
   const tempId = `import-${Date.now()}`;
   const wallet = generateConwayWallet(tempId);

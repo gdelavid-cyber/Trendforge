@@ -1,0 +1,14 @@
+{
+  "name": "@trendforge/station-sidecar",
+  "version": "1.0.0",
+  "description": "TrendForge Station Sidecar — Upgraded, multi-tenant, cloud-ready autonomous agent harness (/v1/* OpenAI-compatible + MCP client bridge)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

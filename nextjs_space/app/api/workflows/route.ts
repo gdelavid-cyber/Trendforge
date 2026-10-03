@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
-import { launchAgentRun } from '@/lib/agents/orchestrator';
+import { executeWorkflowPipeline } from '@/lib/agents/orchestrator';
 
 export async function GET() {
   try {
@@ -47,19 +47,21 @@ export async function POST(request: Request) {
       },
     });
 
-    // Launch first agent step in sequence
-    const firstStep = steps[0];
-    const firstRun = await launchAgentRun({
+    // Execute full multi-step pipeline sequentially (fixes Weakness #6)
+    const pipeline = await executeWorkflowPipeline({
+      workflowId: workflow.id,
       userId,
-      agentType: firstStep.agentType,
-      parameters: firstStep.parameters || {},
       userRole,
+      userEmail: (session.user as any)?.email,
+      userName: (session.user as any)?.name,
+      steps,
     });
 
     return NextResponse.json({
       success: true,
       workflowId: workflow.id,
-      firstRunId: firstRun.runId,
+      firstRunId: pipeline.firstRunId,
+      runIds: pipeline.runIds,
     });
   } catch (error: any) {
     console.error('Workflow creation error:', error);

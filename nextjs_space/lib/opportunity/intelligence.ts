@@ -37,6 +37,7 @@ export interface DemandValidationInput {
 }
 
 export interface DemandValidationResult {
+  reportId?: string;
   recommendation: ValidationRecommendation;
   painEvidence: string;
   urgencyEvidence: string;
@@ -192,7 +193,7 @@ export async function validateDemand(input: DemandValidationInput): Promise<Dema
   try {
     const { askJev } = await import('@/lib/intelligence/decision/jev');
     const questions = {
-      commercial_viability: { type: 'score', description: 'Viability 0-100', min: 0, max: 100 },
+      commercial_viability: { type: 'score' as const, description: 'Viability 0-100', min: 0, max: 100 },
     };
     const jevResult = await instrumentedJevCall(
       {

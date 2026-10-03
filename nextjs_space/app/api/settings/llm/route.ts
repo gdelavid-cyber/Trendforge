@@ -5,8 +5,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { encryptSecret, decryptSecret, maskSecret } from '@/lib/core/encryption';
+import { validateStarNetApiKey } from '@/lib/execution/starnet-serve';
 
-const PROVIDERS = new Set(['openrouter', 'custom']);
+const PROVIDERS = new Set(['station', 'openrouter', 'starnet', 'custom']);
 
 /** GET — the user's connected brain (key always masked, never raw). */
 export async function GET() {
@@ -50,22 +51,36 @@ export async function PUT(request: Request) {
     const apiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
 
     if (!PROVIDERS.has(provider)) {
-      return NextResponse.json({ error: "provider must be 'openrouter' or 'custom'" }, { status: 400 });
+      return NextResponse.json(
+        { error: "provider must be 'station', 'openrouter', 'starnet', or 'custom'" },
+        { status: 400 }
+      );
     }
     if (!model) return NextResponse.json({ error: 'model is required' }, { status: 400 });
 
     const existing = await prisma.userLlmKey.findUnique({ where: { userId: user.id } });
-    if (!apiKey && !existing) {
+    const effectiveInputKey = provider === 'station' && !apiKey ? 'station-native-autonomous-harness' : apiKey;
+    if (!effectiveInputKey && !existing) {
       return NextResponse.json({ error: 'apiKey is required' }, { status: 400 });
     }
 
+    if (provider === 'starnet') {
+      const effectiveKey = apiKey || (existing ? decryptSecret(existing.encryptedKey) : '');
+      try {
+        validateStarNetApiKey(effectiveKey);
+      } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 400 });
+      }
+    }
+
     let baseUrl: string | null = null;
-    if (provider === 'custom') {
-      if (!baseUrlRaw) {
+    if (provider === 'custom' || provider === 'starnet') {
+      const targetUrl = baseUrlRaw || (provider === 'starnet' ? 'http://127.0.0.1:8787' : '');
+      if (!targetUrl) {
         return NextResponse.json({ error: 'baseUrl is required for custom providers' }, { status: 400 });
       }
       try {
-        const url = new URL(baseUrlRaw);
+        const url = new URL(targetUrl);
         if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('bad protocol');
         baseUrl = url.toString().replace(/\/+$/, '');
       } catch {
@@ -73,7 +88,7 @@ export async function PUT(request: Request) {
       }
     }
 
-    const encryptedKey = apiKey ? encryptSecret(apiKey) : existing!.encryptedKey;
+    const encryptedKey = effectiveInputKey ? encryptSecret(effectiveInputKey) : existing!.encryptedKey;
 
     await prisma.userLlmKey.upsert({
       where: { userId: user.id },

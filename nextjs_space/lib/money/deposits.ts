@@ -48,15 +48,23 @@ function rpcUrl(): string {
 }
 
 async function rpc<T>(method: string, params: unknown[]): Promise<T> {
-  const res = await fetch(rpcUrl(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-  });
-  if (!res.ok) throw new Error(`Solana RPC ${method} ${res.status}`);
-  const body = await res.json();
-  if (body.error) throw new Error(`Solana RPC ${method}: ${JSON.stringify(body.error)}`);
-  return body.result as T;
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch(rpcUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+    });
+    if ((res.status === 429 || res.status === 503) && attempt < maxAttempts - 1) {
+      await new Promise((r) => setTimeout(r, 250 * Math.pow(2, attempt)));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Solana RPC ${method} ${res.status}`);
+    const body = await res.json();
+    if (body.error) throw new Error(`Solana RPC ${method}: ${JSON.stringify(body.error)}`);
+    return body.result as T;
+  }
+  throw new Error(`Solana RPC ${method} rate limit exceeded after ${maxAttempts} attempts`);
 }
 
 interface SignatureInfo {

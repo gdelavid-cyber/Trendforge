@@ -122,7 +122,7 @@ export async function handleBuyerObjection(input: HandleObjectionInput): Promise
     const { askJev } = await import('@/lib/intelligence/decision/jev');
     const questions = {
       handle_objection: {
-        type: 'choice',
+        type: 'choice' as const,
         options: ['allowed', 'escalate'],
         description: `Does the objection "${objection}" require human escalation or can it be handled with verified tier specifications?`,
       },

@@ -94,14 +94,61 @@ export async function executeRedditScraper(
     await log(`[REDDIT_SCRAPER] Warning: Live fetch error (${err.message}). Engaging synthetic market extractor.`);
   }
 
-  // Fallback if Reddit rate limits or blocks
+  // Live secondary fallback if Reddit hot.json blocks datacenter IPs (never inject fake posts)
   if (posts.length === 0) {
-    await log(`[REDDIT_SCRAPER] Ingesting cached community telemetry for r/${cleanSubreddit}...`);
-    posts = [
-      { title: `Struggling to find reliable software for automating ${topic}`, selftext: `Everything on the market is either bloated or too expensive for small operations. Looking for alternative workflows.`, score: 142, num_comments: 38, url: `https://reddit.com/r/${cleanSubreddit}` },
-      { title: `How do you handle client reporting without spending 10 hours a week?`, selftext: `Current tools break constantly and formatting takes forever. Would pay for a simple dashboard.`, score: 98, num_comments: 54, url: `https://reddit.com/r/${cleanSubreddit}` },
-      { title: `What are your biggest bottlenecks in ${topic} this month?`, selftext: `Lead generation and fast turnaround times are killing our profit margins.`, score: 215, num_comments: 87, url: `https://reddit.com/r/${cleanSubreddit}` },
-    ];
+    try {
+      await log(`[REDDIT_SCRAPER] Trying Reddit search JSON endpoint for r/${cleanSubreddit}...`);
+      const searchUrl = `https://www.reddit.com/r/${encodeURIComponent(cleanSubreddit)}/search.json?q=${encodeURIComponent(topic)}&restrict_sr=1&sort=relevance&t=year&limit=${Math.min(maxPosts, 50)}`;
+      const searchRes = await fetch(searchUrl, {
+        headers: {
+          'User-Agent': 'TrendlyWeb4/1.0 (autonomous market intelligence; contact ops@trendly.app)',
+        },
+        cache: 'no-store',
+      });
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const children = searchData?.data?.children || [];
+        posts = children.map((c: any) => ({
+          title: c?.data?.title || '',
+          selftext: (c?.data?.selftext || '').slice(0, 500),
+          score: c?.data?.score || 0,
+          num_comments: c?.data?.num_comments || 0,
+          url: `https://reddit.com${c?.data?.permalink || ''}`,
+        }));
+      }
+    } catch (_) {}
+  }
+
+  // Live tertiary fallback via HackerNews Algolia community search (100% real public discussions, zero fake data)
+  if (posts.length === 0) {
+    try {
+      await log(`[REDDIT_SCRAPER] Reddit rate-limited; querying live HackerNews Algolia discussions for '${cleanSubreddit} ${topic}'...`);
+      const hnUrl = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(`${cleanSubreddit} ${topic}`)}&tags=story&hitsPerPage=${Math.min(maxPosts, 25)}`;
+      const hnRes = await fetch(hnUrl, {
+        headers: { 'User-Agent': 'TrendlyWeb4/1.0' },
+        cache: 'no-store',
+      });
+      if (hnRes.ok) {
+        const hnData = await hnRes.json();
+        const hits = hnData?.hits || [];
+        posts = hits.map((h: any) => ({
+          title: String(h.title || ''),
+          selftext: String(h.story_text || h.title || '').replace(/<[^>]+>/g, ' ').slice(0, 500),
+          score: Number(h.points || 0),
+          num_comments: Number(h.num_comments || 0),
+          url: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,
+        }));
+        if (posts.length > 0) {
+          await log(`[REDDIT_SCRAPER] Ingested ${posts.length} live community discussions via HN Algolia gateway.`);
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (posts.length === 0) {
+    throw new Error(
+      `BLOCKED: Could not fetch live community posts for r/${cleanSubreddit} (${topic}) — upstream APIs returned 0 results or rate-limited.`
+    );
   }
 
   // 2. Jev Pain Point Qualification Layer

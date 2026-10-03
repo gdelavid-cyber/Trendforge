@@ -227,7 +227,7 @@ export async function reconcileStripeWebhookEvent(event: {
     const ventureId = obj.metadata?.ventureId;
 
     if (!ventureId) {
-      return { reconciled: false, reason: 'No ventureId in metadata' };
+      return { reconciled: false, reason: 'No ventureId in metadata', record: null as any, isDuplicate: false };
     }
 
     return recordFinancialTransaction({
@@ -249,7 +249,7 @@ export async function reconcileStripeWebhookEvent(event: {
     const ventureId = obj.metadata?.ventureId;
 
     if (!ventureId) {
-      return { reconciled: false, reason: 'No ventureId in metadata' };
+      return { reconciled: false, reason: 'No ventureId in metadata', record: null as any, isDuplicate: false };
     }
 
     return recordFinancialTransaction({
@@ -264,5 +264,5 @@ export async function reconcileStripeWebhookEvent(event: {
     });
   }
 
-  return { reconciled: false, reason: `Ignored event type: ${event.type}` };
+  return { reconciled: false, reason: `Ignored event type: ${event.type}`, record: null as any, isDuplicate: false };
 }

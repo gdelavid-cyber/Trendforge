@@ -2,9 +2,14 @@ import { execFile, spawn } from 'child_process';
 import path from 'path';
 import { callLLM } from '@/lib/pipeline';
 import { opencodeServeLlm } from './opencode-serve';
+import { starnetServeLlm, type StarNetRunOptions } from './starnet-serve';
+import { trendforgeStationLlm } from '@/lib/station/engine';
 
 // Pluggable brain for companions and the execution engine.
 //
+//   LLM_PROVIDER=starnet   → StarNet Station sidecar (/v1/chat/completions on :8787).
+//                            Routes tasks to your StarNet crew with tenant-isolated
+//                            X-StarNet-Session-Id headers and truthful capdenied reporting.
 //   LLM_PROVIDER=opencode  → local opencode install (e.g. ox-alpha free).
 //                            Zero API keys, dev-only: serverless prod cannot
 //                            carry local auth.
@@ -14,8 +19,10 @@ import { opencodeServeLlm } from './opencode-serve';
 //                            prompt contract, Windows .exe resolution below).
 //   (unset/anything else)  → callLLM: OpenAI / Abacus endpoints.
 
+export type ChatMessage = { role: string; content: string };
+
 export type LlmFn = (
-  messages: { role: string; content: string }[],
+  messages: ChatMessage[],
   jsonMode?: boolean
 ) => Promise<string>;
 
@@ -105,7 +112,29 @@ export function opencodeRunLlm(
   };
 }
 
-export function makeLlm(): LlmFn {
+export function makeLlm(opts?: StarNetRunOptions): LlmFn {
+  if (process.env.LLM_PROVIDER === 'station') {
+    return trendforgeStationLlm({
+      userId: opts?.userId,
+      agentId: opts?.agent || opts?.model || 'overseer',
+      sessionId: opts?.sessionId || opts?.taskId,
+    });
+  }
+  if (process.env.LLM_PROVIDER === 'starnet') {
+    const starnetFn = starnetServeLlm(opts);
+    return async (messages, jsonMode) => {
+      try {
+        return await starnetFn(messages, jsonMode);
+      } catch (err: any) {
+        // Never mask an explicit station capability block (truthful telemetry)
+        if (String(err?.message || '').startsWith('BLOCKED by StarNet station:')) {
+          throw err;
+        }
+        console.warn('[LLM] StarNet station unreachable, falling back to platform LLM:', err.message);
+        return (callLLM as unknown as LlmFn)(messages, jsonMode);
+      }
+    };
+  }
   if (process.env.LLM_PROVIDER === 'opencode') {
     const serveUrl = process.env.OPENCODE_SERVE_URL;
     if (serveUrl) {

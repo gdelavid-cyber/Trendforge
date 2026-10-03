@@ -1,10 +1,13 @@
+import { redis } from '@/lib/core/redis';
+
 /**
  * Circuit Breaker Pattern for Swarm Agents
  * Prevents continuous failures from overwhelming external APIs or draining user budgets.
- * Trips to OPEN state after 3 consecutive failures.
+ * Trips to OPEN state after 3 consecutive failures. Persists state to Redis when available
+ * so serverless isolates share breaker status.
  */
 
-interface CircuitState {
+export interface CircuitState {
   failures: number;
   lastFailureTime: number | null;
   state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
@@ -12,9 +15,16 @@ interface CircuitState {
 
 const FAILURE_THRESHOLD = 3;
 const COOLDOWN_PERIOD_MS = 60 * 1000; // 1 minute cooldown
+const REDIS_PREFIX = 'trendly:circuit:';
 
-// In-memory circuit breaker registry with fallback
+// In-memory circuit breaker registry with Redis sync
 const circuitRegistry: Map<string, CircuitState> = new Map();
+
+function persistCircuitState(agentType: string, state: CircuitState): void {
+  void redis
+    .set(`${REDIS_PREFIX}${agentType}`, JSON.stringify(state), 'PX', COOLDOWN_PERIOD_MS * 5)
+    .catch(() => {});
+}
 
 export function getCircuitState(agentType: string): CircuitState {
   if (!circuitRegistry.has(agentType)) {
@@ -36,11 +46,23 @@ export function getCircuitState(agentType: string): CircuitState {
   return current;
 }
 
+export async function syncCircuitStateFromRedis(agentType: string): Promise<CircuitState> {
+  try {
+    const raw = await redis.get(`${REDIS_PREFIX}${agentType}`);
+    if (raw) {
+      const parsed = JSON.parse(raw) as CircuitState;
+      circuitRegistry.set(agentType, parsed);
+    }
+  } catch {}
+  return getCircuitState(agentType);
+}
+
 export function recordSuccess(agentType: string): void {
   const state = getCircuitState(agentType);
   state.failures = 0;
   state.lastFailureTime = null;
   state.state = 'CLOSED';
+  persistCircuitState(agentType, state);
 }
 
 export function recordFailure(agentType: string): void {
@@ -51,6 +73,7 @@ export function recordFailure(agentType: string): void {
   if (state.failures >= FAILURE_THRESHOLD) {
     state.state = 'OPEN';
   }
+  persistCircuitState(agentType, state);
 }
 
 export function canExecute(agentType: string): { allowed: boolean; reason?: string } {

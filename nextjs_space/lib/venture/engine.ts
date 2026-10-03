@@ -24,6 +24,7 @@ export interface CreateVentureInput {
   targetCustomer: string;
   industry: string;
   hypothesis?: string;
+  initialHypothesis?: Record<string, any>;
   riskLevel?: RiskLevel;
   autonomyLevel?: AutonomyLevel;
   capitalAllocatedCents?: number;
@@ -192,7 +193,7 @@ export async function transitionVentureState(input: TransitionStateInput) {
       const { askJev } = await import('@/lib/intelligence/decision/jev');
       const questions = {
         approve_transition: {
-          type: 'choice',
+          type: 'choice' as const,
           options: ['allowed', 'blocked'],
           description: `Approve state transition of Venture "${venture.name}" from ${currentState} to ${toState}?`,
         },

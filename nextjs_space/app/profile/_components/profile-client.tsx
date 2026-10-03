@@ -275,7 +275,7 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
       toast.error('Model is required');
       return;
     }
-    if (!brainApiKey.trim() && !brainConnected) {
+    if (brainProvider !== 'station' && !brainApiKey.trim() && !brainConnected) {
       toast.error('API key is required');
       return;
     }
@@ -291,7 +291,10 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
         body: JSON.stringify({
           provider: brainProvider,
           model: brainModel,
-          baseUrl: brainProvider === 'custom' ? brainBaseUrl : undefined,
+          baseUrl:
+            brainProvider === 'custom' || brainProvider === 'starnet'
+              ? brainBaseUrl || (brainProvider === 'starnet' ? 'http://127.0.0.1:8787' : undefined)
+              : undefined,
           apiKey: brainApiKey,
         }),
       });
@@ -464,27 +467,43 @@ export function ProfileClient({ user, completedTasks, agentRunsCount, badges }: 
             <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Provider</label>
             <select
               value={brainProvider}
-              onChange={(e) => setBrainProvider(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setBrainProvider(next);
+                if (next === 'station') setBrainModel('overseer');
+                if (next === 'starnet' && !brainModel) setBrainModel('starnet-agent');
+                if (next === 'starnet' && !brainBaseUrl) setBrainBaseUrl('http://127.0.0.1:8787');
+              }}
               className="w-full bg-black/50 border border-white/10 rounded-md text-white text-xs h-9 px-2"
             >
+              <option value="station">TrendForge Station (Native Multi-Turn Autonomous Harness)</option>
               <option value="openrouter">OpenRouter</option>
+              <option value="starnet">StarNet Station (External /v1 Sidecar)</option>
               <option value="custom">Custom (OpenAI-compatible URL)</option>
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Model</label>
+            <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Model / StarNet Specialist</label>
             <Input
-              placeholder={brainProvider === 'openrouter' ? 'e.g. anthropic/claude-sonnet-4' : 'e.g. qwen3-coder'}
+              placeholder={
+                brainProvider === 'openrouter'
+                  ? 'e.g. anthropic/claude-sonnet-4'
+                  : brainProvider === 'starnet'
+                  ? 'e.g. starnet-agent or specialist ID'
+                  : 'e.g. qwen3-coder'
+              }
               value={brainModel}
               onChange={(e) => setBrainModel(e.target.value)}
               className="bg-black/50 border-white/10 text-white text-xs h-9"
             />
           </div>
-          {brainProvider === 'custom' && (
+          {(brainProvider === 'custom' || brainProvider === 'starnet') && (
             <div className="md:col-span-2">
-              <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">Base URL</label>
+              <label className="text-[10px] font-mono uppercase text-[#8892B0] block mb-1">
+                {brainProvider === 'starnet' ? 'StarNet Station URL' : 'Base URL'}
+              </label>
               <Input
-                placeholder="https://your-gateway.com/v1"
+                placeholder={brainProvider === 'starnet' ? 'http://127.0.0.1:8787' : 'https://your-gateway.com/v1'}
                 value={brainBaseUrl}
                 onChange={(e) => setBrainBaseUrl(e.target.value)}
                 className="bg-black/50 border-white/10 text-white text-xs h-9"

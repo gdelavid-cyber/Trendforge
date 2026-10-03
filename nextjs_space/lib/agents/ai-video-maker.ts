@@ -187,13 +187,7 @@ export async function executeAIVideoMaker(
     `Latency: ${jevLatencyMs}ms -> ${qualityStatus}${jevError ? ` (Fallback: ${jevError})` : ''}`
   );
 
-  // 2. Synthesize audio voiceover
-  await log(`[AI_VIDEO_MAKER] Synthesizing 24kHz neural voiceover stream via audio model...`);
-  await log(`[AI_VIDEO_MAKER] Audio waveform rendered. Timing: 42.4 seconds.`);
-
-  // 3. Render dynamic scenes and captions
-  await log(`[AI_VIDEO_MAKER] Generating 4 keyframe scene backdrops and animated kinetic typography...`);
-
+  // 2. Synthesize audio voiceover if TTS_API_KEY / ELEVENLABS_API_KEY is configured
   const scenes = [
     {
       timestamp: '00:00 - 00:03',
@@ -218,11 +212,63 @@ export async function executeAIVideoMaker(
   ];
 
   const videoId = `VID-${Date.now().toString(36).toUpperCase()}`;
-  const previewUrl = `https://storage.trendly.ai/videos/${videoId}/preview.mp4`;
-  const downloadUrl = `https://storage.trendly.ai/videos/${videoId}/export_1080p.mp4`;
+  const ttsKey = (process.env.TTS_API_KEY || process.env.ELEVENLABS_API_KEY || '').trim();
+  let audioDataUri = '';
 
-  await log(`[AI_VIDEO_MAKER] Stitching audio, overlays, and color grading at 1080x1920 (60 FPS)...`);
-  await log(`[AI_VIDEO_MAKER] Video rendering complete! Asset exported: ${downloadUrl}`);
+  if (ttsKey && ttsKey !== 'your-elevenlabs-api-key' && ttsKey !== 'placeholder_not_configured') {
+    try {
+      await log(`[AI_VIDEO_MAKER] Synthesizing real neural voiceover stream via ElevenLabs API...`);
+      const fullNarration = `${generatedScript.hook} ${generatedScript.body} ${generatedScript.callToAction}`;
+      const voiceId = process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
+      const ttsRes = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': ttsKey,
+            'Content-Type': 'application/json',
+            Accept: 'audio/mpeg',
+          },
+          body: JSON.stringify({
+            text: fullNarration.slice(0, 2500),
+            model_id: 'eleven_multilingual_v2',
+          }),
+        }
+      );
+      if (ttsRes.ok) {
+        const buf = Buffer.from(await ttsRes.arrayBuffer());
+        audioDataUri = `data:audio/mpeg;base64,${buf.toString('base64')}`;
+        await log(`[AI_VIDEO_MAKER] Neural voiceover synthesized (${buf.byteLength} bytes).`);
+      } else {
+        await log(`[AI_VIDEO_MAKER] ElevenLabs TTS returned HTTP ${ttsRes.status}; packaging storyboard without audio.`);
+      }
+    } catch (ttsErr: any) {
+      await log(`[AI_VIDEO_MAKER] TTS synthesis skipped (${ttsErr?.message || 'network error'}).`);
+    }
+  } else {
+    await log(`[AI_VIDEO_MAKER] TTS_API_KEY not configured; exporting verified script & 4-scene storyboard package.`);
+  }
+
+  // Package real downloadable storyboard & script JSON (never return dead storage.trendly.ai .mp4 links)
+  const storyboardBundle = {
+    videoId,
+    videoTitle: topic,
+    aspectRatio,
+    voiceStyle,
+    avatarPreset,
+    script: generatedScript,
+    scenes,
+    generatedAt: new Date().toISOString(),
+  };
+  const storyboardDataUri = `data:application/json;charset=utf-8;base64,${Buffer.from(
+    JSON.stringify(storyboardBundle, null, 2),
+    'utf8'
+  ).toString('base64')}`;
+
+  const previewUrl = audioDataUri || storyboardDataUri;
+  const downloadUrl = storyboardDataUri;
+
+  await log(`[AI_VIDEO_MAKER] Storyboard & script package exported (${scenes.length} scenes).`);
 
   return {
     success: true,
@@ -231,8 +277,8 @@ export async function executeAIVideoMaker(
     aspectRatio,
     previewUrl,
     downloadUrl,
-    voiceModel: `ElevenLabs Turbo (${voiceStyle})`,
-    captionStyle: 'MrBeast Kinetic Bold Yellow & Cyan Glow',
+    voiceModel: audioDataUri ? `ElevenLabs Turbo (${voiceStyle})` : `Script & Storyboard (${voiceStyle})`,
+    captionStyle: 'Kinetic Bold Yellow & Cyan Glow',
     script: generatedScript,
     scenes,
     qualityGate: {
@@ -245,6 +291,8 @@ export async function executeAIVideoMaker(
       status: qualityStatus,
       reason: `Quality gate completed: hook ${hookScore}/10, clarity ${clarityScore}/10, cta ${ctaScore}/10`,
     },
-    details: `Generated 43-second high-retention video asset for '${topic}'. Ready for direct export to TikTok, YouTube Shorts, and Instagram Reels.`,
+    details: audioDataUri
+      ? `Synthesized neural voiceover and 4-scene storyboard for '${topic}'.`
+      : `Generated verified 43-second script and 4-scene storyboard bundle for '${topic}' (configure TTS_API_KEY to enable audio synthesis).`,
   };
 }

@@ -15,8 +15,14 @@ function getMasterKey(): Buffer {
     if (buf.length === 32) return buf;
     return crypto.createHash('sha256').update(envKey).digest();
   }
-  // Deterministic local secret fallback for development
-  const localSecret = process.env.NEXTAUTH_SECRET || 'trendly-brain-swarm-secure-master-key-2050';
+  if (process.env.NEXTAUTH_SECRET) {
+    return crypto.createHash('sha256').update(process.env.NEXTAUTH_SECRET).digest();
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ENCRYPTION_KEY or NEXTAUTH_SECRET must be configured in production.');
+  }
+  // Deterministic local secret fallback for development/test only
+  const localSecret = 'trendly-brain-swarm-secure-master-key-2050';
   return crypto.createHash('sha256').update(localSecret).digest();
 }
 

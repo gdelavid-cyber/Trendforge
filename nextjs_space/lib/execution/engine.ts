@@ -231,9 +231,17 @@ export async function startExecution(
     return { ok: result.ok, error: result.error, userTaskId: userTask.id, stepResult: result.outcome };
   }
 
-  // AUTOPILOT â€” loop (awaited only under test for determinism)
+  // AUTOPILOT — loop (awaited under test; registered with serverless waitUntil in production)
   const loop = runAutopilot(userTask.id, userId, taskId, steps, startIndex, effectiveDeps);
-  if (deps.awaitLoops) await loop;
+  if (deps.awaitLoops) {
+    await loop;
+  } else {
+    const g = globalThis as any;
+    const ctx = g?.[Symbol.for('@vercel/request-context')]?.get?.();
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(loop);
+    }
+  }
   return { ok: true, userTaskId: userTask.id, status: 'STEP_EXECUTING' };
 }
 

@@ -292,13 +292,27 @@ model Review {
     },
   ];
 
-  const slug = appName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  const githubRepoUrl = `https://github.com/trendly-saas/${slug}`;
-  const liveDemoUrl = `https://${slug}.trendly.app`;
-  const vercelDeployUrl = `https://vercel.com/new/clone?repository-url=https://github.com/gdelavid-cyber/Trendly`;
+  const slug = appName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'micro-saas-app';
+  const bundlePayload = {
+    appName,
+    slug,
+    tagline,
+    techStack: ['Next.js 14 (App Router)', 'TypeScript', 'Tailwind CSS', 'Prisma', 'PostgreSQL', 'Stripe', authType],
+    files: coreFiles,
+    generatedAt: new Date().toISOString(),
+  };
+  const bundleDataUri = `data:application/json;charset=utf-8;base64,${Buffer.from(
+    JSON.stringify(bundlePayload, null, 2),
+    'utf8'
+  ).toString('base64')}`;
 
-  await log(`[MICRO_SAAS_BUILDER] Code synthesis complete! 4 production source files compiled.`);
-  await log(`[MICRO_SAAS_BUILDER] Repository scaffold prepared for instant local cloning or 1-click Vercel deploy.`);
+  // Honesty model: never invent nonexistent github.com/trendly-saas/* or *.trendly.app URLs
+  // unless GITHUB_PAT / VERCEL_TOKEN actually deployed them. Provide the real downloadable code bundle URI.
+  const githubRepoUrl = bundleDataUri;
+  const liveDemoUrl = '';
+  const vercelDeployUrl = 'https://vercel.com/new';
+
+  await log(`[MICRO_SAAS_BUILDER] Code synthesis complete! ${coreFiles.length} source files packaged into downloadable bundle.`);
 
   // Jev Post-Scaffolding Gate
   await log(`[MICRO_SAAS_BUILDER] Running post-scaffold code fidelity verification gate...`);
