@@ -1149,6 +1149,25 @@ export function CouncilBoardroom({ embedded = false }: { embedded?: boolean }) {
             </Button>
           )}
 
+          <Button
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent('trendforge:dispatch-mission', {
+                  detail: {
+                    title:
+                      activeSession?.signal?.title ||
+                      'Autonomous B2B Emergency Voice Dispatch for Contractors',
+                    description: activeSession?.signal?.rawInsight || '',
+                  },
+                })
+              );
+            }}
+            variant="outline"
+            className="border-[#00F0FF]/50 text-[#00F0FF] bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 font-extrabold uppercase text-xs h-10 px-4 font-mono"
+          >
+            ⚡ Dispatch to Station Crew
+          </Button>
+
           <Link href="/earn">
             <Button className="cyan-gradient text-black font-extrabold uppercase text-xs h-10 px-4 font-mono shadow-md">
               <Play className="w-3.5 h-3.5 mr-1.5 fill-black" /> Run Play &rarr;

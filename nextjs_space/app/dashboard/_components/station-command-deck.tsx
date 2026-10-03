@@ -587,10 +587,61 @@ export function StationCommandDeck() {
     }
   };
 
+  // Listen for 1-click "Dispatch to Station Crew" events from AI Money Council & Today's Money Tasks
+  useEffect(() => {
+    const onExternalDispatch = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      const title = String(detail.title || 'B2B Commercial Play');
+      const lower = title.toLowerCase();
+
+      let agentId = detail.agentId || 'deal_finder';
+      let targetModule = detail.targetModule || 'outreach_relay';
+      let prompt =
+        detail.prompt ||
+        `Execute b2b_lead_extractor and scrape_reddit_painpoints to find active buyers and decision-makers for: "${title}".`;
+
+      if (!detail.agentId) {
+        if (lower.includes('landing') || lower.includes('saas') || lower.includes('portal') || lower.includes('checkout')) {
+          agentId = 'micro_saas_builder';
+          targetModule = 'code_workbench';
+          prompt = `Use nextjs_microsaas_builder to scaffold a deployable Next.js + Stripe SaaS starter for "${title}".`;
+        } else if (lower.includes('polymarket') || lower.includes('arbitrage') || lower.includes('dex')) {
+          agentId = 'market_analyst';
+          targetModule = 'market_radar';
+          prompt = `Use polymarket_spread_scanner and crypto_funding_rate_arbitrage to scan live market spreads for "${title}".`;
+        } else if (lower.includes('reddit') || lower.includes('video') || lower.includes('content')) {
+          agentId = 'reddit_scraper';
+          targetModule = 'signal_dish';
+          prompt = `Use scrape_reddit_painpoints on r/SaaS and r/smallbusiness to harvest high-intent customer threads for "${title}".`;
+        } else {
+          agentId = 'deal_finder';
+          targetModule = 'outreach_relay';
+          prompt = `Use b2b_lead_extractor to pull verified B2B decision-maker leads for "${title}".`;
+        }
+      }
+
+      setSelectedAgent(agentId);
+      setMissionPrompt(prompt);
+      const el = document.getElementById('station-command-deck');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      toast.info(`Station Crew dispatched on "${title.slice(0, 48)}..."`);
+      handleRunMission(prompt, agentId, targetModule);
+    };
+
+    window.addEventListener('trendforge:dispatch-mission', onExternalDispatch);
+    return () => window.removeEventListener('trendforge:dispatch-mission', onExternalDispatch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectedAgentState = agents.find((a) => a.id === selectedAgent) || agents[0];
 
   return (
-    <div className="glass-card p-5 sm:p-6 border border-[#00F0FF]/40 bg-gradient-to-br from-[#060B19] via-[#05070F] to-[#0D061A] rounded-2xl space-y-5 shadow-[0_0_50px_rgba(0,240,255,0.12)]">
+    <div
+      id="station-command-deck"
+      className="glass-card p-5 sm:p-6 border border-[#00F0FF]/40 bg-gradient-to-br from-[#060B19] via-[#05070F] to-[#0D061A] rounded-2xl space-y-5 shadow-[0_0_50px_rgba(0,240,255,0.12)]"
+    >
       {/* Top Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
         <div className="space-y-1">

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
+import { NON_TEST_TASK_WHERE, NON_TEST_TREND_WHERE } from '@/lib/tasks/ready';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,9 +11,12 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
 
-    // Fetch top active trends ordered by velocity
+    // Fetch top active trends ordered by velocity (strictly excluding test fixtures)
     const topTrends = await prisma.trend.findMany({
-      where: { status: 'ACTIVE' },
+      where: {
+        status: 'ACTIVE',
+        ...NON_TEST_TREND_WHERE,
+      },
       take: 4,
       orderBy: { mentionVelocity: 'desc' },
       select: {
@@ -26,11 +30,18 @@ export async function GET() {
       },
     });
 
-    // Fetch top featured actionable moves
+    // Fetch top featured actionable moves (strictly excluding test fixtures)
     const featuredTasks = await prisma.task.findMany({
-      where: { isFeatured: true },
+      where: {
+        status: 'PENDING',
+        ...NON_TEST_TASK_WHERE,
+      },
       take: 3,
-      orderBy: { generatedAt: 'desc' },
+      orderBy: [
+        { isFeatured: 'desc' },
+        { trendScore: 'desc' },
+        { createdAt: 'desc' },
+      ],
       select: {
         id: true,
         title: true,

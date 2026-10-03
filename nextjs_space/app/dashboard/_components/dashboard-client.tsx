@@ -259,15 +259,34 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
                 </p>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-white/[0.06] flex items-center justify-between">
+              <div className="pt-4 mt-4 border-t border-white/[0.06] flex items-center justify-between gap-2">
                 <span className="text-[10px] text-slate-400 font-mono">
                   ⏱️ {task.timeToFirstDollar || '24-48 hrs'}
                 </span>
-                <Link href={`/tasks/${task.id}`}>
-                  <Button size="sm" className="h-8 px-3.5 text-xs font-mono font-bold bg-white text-black hover:bg-slate-200">
-                    <Play className="w-3 h-3 mr-1 fill-black" /> Run Move
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent('trendforge:dispatch-mission', {
+                          detail: {
+                            title: task.title,
+                            description: task.description,
+                          },
+                        })
+                      );
+                    }}
+                    className="h-8 px-2.5 text-[11px] font-mono font-bold border-[#00F0FF]/40 text-[#00F0FF] bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20"
+                  >
+                    <Zap className="w-3 h-3 mr-1" /> Station Crew
                   </Button>
-                </Link>
+                  <Link href={`/tasks/${task.id}`}>
+                    <Button size="sm" className="h-8 px-3 text-xs font-mono font-bold bg-white text-black hover:bg-slate-200">
+                      <Play className="w-3 h-3 mr-1 fill-black" /> Run Move
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </motion.div>
           ))}
