@@ -11,6 +11,7 @@ import {
 } from '@/lib/station/capability-registry';
 import { getStationBeliefs } from '@/lib/station/reflect-and-verify';
 import { runStationAutonomousLoop } from '@/lib/station/engine';
+import { jevMissionGate } from '@/lib/intelligence/decision/mission-gate';
 
 /**
  * GET /api/station/v1
@@ -79,6 +80,37 @@ export async function POST(request: Request) {
       ? body.enabledModules
       : undefined;
 
+    // JEV mission gate: the decision layer gives final go/no-go before the
+    // Station Crew executes. Fail-open when JEV is disabled/unkeyed.
+    const missionText = messages
+      .map((m: any) => (typeof m?.content === 'string' ? m.content : ''))
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 4000);
+    const jevVerdict = await jevMissionGate({
+      action: 'station_autonomous_run',
+      agentId,
+      userId,
+      mission: missionText || '(empty mission)',
+      context: {
+        enabledModules: enabledModules ?? DEFAULT_STATION_MODULES,
+        maxTurns: body.maxTurns,
+        maxBudgetUsdc: body.maxBudgetUsdc,
+        source: body.source || 'dashboard',
+      },
+    });
+    if (!jevVerdict.allowed) {
+      return NextResponse.json(
+        {
+          error: 'JEV_VETO',
+          detail:
+            'Jev (decision layer) blocked this Station run. Adjust the mission or the JEV_CONFIDENCE_THRESHOLD.',
+          jev: jevVerdict,
+        },
+        { status: 403 }
+      );
+    }
+
     const result = await runStationAutonomousLoop(messages, jsonMode, {
       userId,
       agentId,
@@ -109,6 +141,7 @@ export async function POST(request: Request) {
         toolTraces: result.toolTraces,
         evidence: result.evidence,
         newBeliefs: result.newBeliefs,
+        jev: jevVerdict,
       },
     });
   } catch (error: any) {

@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/core/auth-options';
 import { isUserAdmin } from '@/lib/council/config';
 import { prisma } from '@/lib/core/db';
 import { fingerprint, isDuplicate } from '@/lib/pipeline';
+import { jevMissionGate } from '@/lib/intelligence/decision/mission-gate';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -27,6 +28,34 @@ export async function POST(request: Request) {
       category = 'AGENT_ECONOMY',
       steps,
     } = body;
+
+    // JEV mission gate: the decision layer gives final go/no-go before a
+    // Council play is promoted to Hot Tasks. Fail-open when JEV is disabled/unkeyed.
+    const jevVerdict = await jevMissionGate({
+      action: 'council_approve_task',
+      agentId: 'council-gatekeeper',
+      userId: (session.user as any)?.id || (session.user as any)?.email || 'anon',
+      mission: `${title} — ${description}`,
+      context: {
+        sessionId,
+        estimatedEarningsLow,
+        estimatedEarningsHigh,
+        startupCost,
+        timeToFirstDollar,
+        category,
+        stepsCount: Array.isArray(steps) ? steps.length : 0,
+      },
+    });
+    if (!jevVerdict.allowed) {
+      return NextResponse.json(
+        {
+          error: 'JEV_VETO',
+          detail: 'Jev (decision layer) vetoed this Council play promotion.',
+          jev: jevVerdict,
+        },
+        { status: 403 }
+      );
+    }
 
     // 1. Find or create linked Trend (fingerprint-guarded, idempotent)
     const trendName = `Commercial Alpha: ${title.slice(0, 60)}`;
@@ -174,6 +203,7 @@ export async function POST(request: Request) {
       ...(duplicate ? { reason: 'duplicate' } : null),
       taskId: task.id,
       title: task.title,
+      jev: jevVerdict,
       message: duplicate
         ? 'Already in Hot Tasks — returning existing task (double-click safe).'
         : 'Council idea approved and moved to Hot Tasks section!',
