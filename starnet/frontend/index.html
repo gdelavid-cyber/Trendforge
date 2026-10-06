@@ -93,7 +93,7 @@
   <span class="cc-bracket sp-tl">┌</span><span class="cc-bracket sp-tr">┐</span>
   <span class="cc-bracket sp-bl">└</span><span class="cc-bracket sp-br">┘</span>
   <div class="sp-center">
-    <img class="sp-logo" src="assets/brand/starnet-logo.png" alt="TRENDLY OS" draggable="false">
+    <img class="sp-logo" src="assets/brand/starnet-wordmark.svg" alt="TRENDLY OS" draggable="false">
     <div class="sp-tag">AI-AGENT HARNESS</div>
     <button id="sp-press" class="sp-press" type="button">▮ PRESS ANY KEY TO START</button>
   </div>
@@ -281,7 +281,7 @@
                 <div id="starnet-status" class="codex-status">checking…</div>
                 <div id="starnet-code" class="codex-code hidden"></div>
                 <div class="codex-actions">
-                  <button type="button" id="btn-starnet-link" class="btn">CONNECT STARNET ACCOUNT ↗</button>
+                  <button type="button" id="btn-starnet-link" class="btn">CONNECT TRENDLY ACCOUNT ↗</button>
                   <button type="button" id="btn-starnet-open" class="btn hidden">↗ OPEN PAGE</button>
                   <button type="button" id="btn-starnet-credits" class="btn hidden">＄ ADD CREDITS ▸</button>
                   <button type="button" id="btn-starnet-switch" class="btn hidden">↻ USE A DIFFERENT ACCOUNT</button>
@@ -355,7 +355,7 @@
                  keyless Codex path (no key ⇒ the whole note is irrelevant there). -->
             <div id="byok-disclose" class="byok-disclose">
               <button type="button" id="byok-toggle" class="byok-toggle" aria-expanded="false" aria-controls="byok-note">▸ where does my key go?</button>
-              <p id="byok-note" class="muted byok-note hidden">Bring your own key — stored locally, sent only to the STARNET sidecar on this machine (127.0.0.1), which calls your chosen model. On a <b>task</b> the agent can search the live web (DuckDuckGo · Jina Reader) and read/write files in its workspace. <span class="dim">(In the shipped desktop build the key moves behind the OS keychain.)</span></p>
+              <p id="byok-note" class="muted byok-note hidden">Bring your own key — stored locally, sent only to the TRENDLY OS sidecar on this machine (127.0.0.1), which calls your chosen model. On a <b>task</b> the agent can search the live web (DuckDuckGo · Jina Reader) and read/write files in its workspace. <span class="dim">(In the shipped desktop build the key moves behind the OS keychain.)</span></p>
             </div>
             </div>
           </div>
@@ -404,11 +404,11 @@
     <header class="cc-console-head ov-head">
       <div class="cc-titlebar"><span class="cc-tb-tag">TRENDLY OS</span><span class="cc-tb-rule"></span><span class="cc-tb-mode">UPDATE REQUIRED</span><span class="cc-tb-rec">● HOLD</span></div>
       <div class="cc-title-row ov-title-row">
-        <h2>▮ SAVE FROM A NEWER STARNET</h2>
+        <h2>▮ SAVE FROM A NEWER TRENDLY OS</h2>
         <span id="future-sub" class="ov-sub"></span>
       </div>
       <div class="ov-recovery" role="alert">
-        Your station was last saved by a <b>newer version of StarNet</b>. This build can't read that save
+        Your station was last saved by a <b>newer version of Trendly OS</b>. This build can't read that save
         without risking damage to it, so it's being kept <b>untouched</b>. Update the app to continue — your
         agent, history and progress are safe.
       </div>
@@ -419,7 +419,7 @@
         <span class="ov-foot-cap">＋ your save is intact — this build simply predates it</span>
       </div>
       <div class="connect-actions ov-actions">
-        <button id="btn-future-update" class="btn-xl">⭯ UPDATE STARNET ▸</button>
+        <button id="btn-future-update" class="btn-xl">⭯ UPDATE TRENDLY OS ▸</button>
       </div>
     </div>
   </div>
@@ -701,11 +701,11 @@
         <div id="model-dock-list" class="model-dock-list scrolly" role="listbox" aria-label="Available models"></div>
         <div class="model-dock-foot">
           <button id="model-dock-refresh" type="button">REFRESH</button>
-          <a id="model-dock-subscription" href="https://www.starnetos.com/pricing" target="_blank" rel="noopener noreferrer" aria-label="StarNet subscription (opens in your browser)"><span>STARNET SUBSCRIPTION</span><span aria-hidden="true">↗</span></a>
+          <a id="model-dock-subscription" href="https://trendly-platform-chi.vercel.app/pricing" target="_blank" rel="noopener noreferrer" aria-label="Trendly OS subscription (opens in your browser)"><span>TRENDLY OS SUBSCRIPTION</span><span aria-hidden="true">↗</span></a>
         </div>
       </div>
       <button id="voice-toggle" class="voice-toggle" title="agent voice" aria-label="Agent voice" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 6.1h2.1L7.7 3.3v9.4L4.3 9.9H2.2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="miter"/><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10.3 6a3.2 3.2 0 0 1 0 4"/><path d="M12.4 4a6.2 6.2 0 0 1 0 8"/></g></svg></button>
-      <button id="voice-live" class="voice-toggle voice-live" title="Local Live hands-free voice — local speech with your active Starnet agent" aria-label="Start Local Live hands-free voice" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="5.8" stroke-width="1.2"/><path d="M5.1 8h1.2m1.1-2.4v4.8M9.7 7v2m1.6-3.1v4.2" stroke-width="1.35" stroke-linecap="square"/></svg></button>
+      <button id="voice-live" class="voice-toggle voice-live" title="Local Live hands-free voice — local speech with your active Trendly OS agent" aria-label="Start Local Live hands-free voice" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="5.8" stroke-width="1.2"/><path d="M5.1 8h1.2m1.1-2.4v4.8M9.7 7v2m1.6-3.1v4.2" stroke-width="1.35" stroke-linecap="square"/></svg></button>
       <button id="chat-mic" class="mic-btn" title="click to talk" aria-label="Click to talk" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5.8" y="1.7" width="4.4" height="7.2" rx="2.2"/><path d="M3.7 7.5a4.3 4.3 0 0 0 8.6 0"/><path d="M8 11.8v2.4"/><path d="M5.4 14.2h5.2"/></svg></button>
       </div>
     </div>
