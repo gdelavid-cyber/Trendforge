@@ -11286,11 +11286,12 @@ server.on('error', (e) => {
   else console.error('✗ sidecar listen error:', e);
   process.exit(1);
 });
-server.listen(PORT, '127.0.0.1', () => {
+const HOST = process.env.STARNET_HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
   const url = 'http://127.0.0.1:' + PORT;
   const bar = '═'.repeat(58);
   console.log('\n' + bar);
-  console.log('  ▲ STARNET — THE FULL APP IS RUNNING (UI + agent engine).');
+  console.log('  ▲ TRENDLY OS — THE FULL APP IS RUNNING (UI + agent engine).');
   console.log('     Open in your browser:  ' + url);
   console.log('     This one process IS the complete product — the UI you see and');
   console.log('     the agents/web-search/tools behind it are all served from here.');

@@ -135,15 +135,48 @@ export function TrendlyOsClient({
   const [runs, setRuns] = useState<any[]>(initialRuns);
   const [workflows, setWorkflows] = useState<any[]>(initialWorkflows);
   const [calibrations, setCalibrations] = useState<any[]>(initialCalibrations);
+  const DEFAULT_TUNNEL_URL = 'https://motherboard-march-dependent-intelligence.trycloudflare.com';
+  const LAN_URL = 'http://192.168.4.22:8787';
+
+  const [stationUrl, setStationUrl] = useState<string>('http://localhost:8787');
+  const [isEditingUrl, setIsEditingUrl] = useState<boolean>(false);
+  const [tempUrl, setTempUrl] = useState<string>('http://localhost:8787');
   const [isSidecarOnline, setIsSidecarOnline] = useState<boolean>(false);
   const [activeWorkerStates, setActiveWorkerStates] = useState<Record<string, { status: string; lastSeen: number }>>({});
   const [dispatchingWorker, setDispatchingWorker] = useState<string | null>(null);
 
-  // Probe local sidecar health (port 8787)
+  // Auto-detect optimal station URL based on environment (mobile/HTTPS vs localhost)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('trendly_os_station_url');
+      if (saved) {
+        setStationUrl(saved);
+        setTempUrl(saved);
+      } else if (window.location.protocol === 'https:') {
+        // When running on HTTPS (Vercel), default to the Cloudflare HTTPS tunnel to avoid mobile mixed-content blocks
+        setStationUrl(DEFAULT_TUNNEL_URL);
+        setTempUrl(DEFAULT_TUNNEL_URL);
+      }
+    }
+  }, []);
+
+  const saveStationUrl = (newUrl: string) => {
+    const clean = newUrl.trim().replace(/\/+$/, '');
+    setStationUrl(clean);
+    setTempUrl(clean);
+    setIsEditingUrl(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('trendly_os_station_url', clean);
+    }
+    toast.success(`Station endpoint set to ${clean}`);
+  };
+
+  // Probe sidecar health dynamically
   useEffect(() => {
     async function checkSidecar() {
       try {
-        const res = await fetch('http://localhost:8787/api/trendly/status', { method: 'GET', mode: 'cors' });
+        const target = stationUrl.replace(/\/+$/, '') + '/api/trendly/status';
+        const res = await fetch(target, { method: 'GET', mode: 'cors' });
         if (res.ok) setIsSidecarOnline(true);
         else setIsSidecarOnline(false);
       } catch {
@@ -153,7 +186,7 @@ export function TrendlyOsClient({
     checkSidecar();
     const interval = setInterval(checkSidecar, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [stationUrl]);
 
   // Connect to live station stream
   useEffect(() => {
@@ -291,12 +324,12 @@ export function TrendlyOsClient({
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-xs font-mono">
               <span className={`w-2 h-2 rounded-full ${isSidecarOnline ? 'bg-emerald-400 shadow-[0_0_8px_#00ff66]' : 'bg-amber-400'}`} />
               <span className="text-slate-300">
-                SIDECAR :8787 {isSidecarOnline ? '(ONLINE)' : '(IN-PROCESS)'}
+                HARNESS {isSidecarOnline ? '(ONLINE)' : '(CONNECTING)'}
               </span>
             </div>
 
             <a
-              href="http://localhost:8787"
+              href={stationUrl}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30 text-xs font-mono font-bold transition-all shadow-[0_0_15px_rgba(0,240,255,0.2)]"
@@ -415,30 +448,115 @@ export function TrendlyOsClient({
 
       {/* TAB 2: STATION EMBED (8787) */}
       {activeTab === 'station' && (
-        <div className="rounded-2xl bg-black border border-cyan-500/40 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.9)]">
-          <div className="bg-[#090e18] px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
-            <span className="text-cyan-400">STARNET PIXEL-ART HARNESS // PORT 8787</span>
-            <div className="flex items-center gap-3">
-              <span className="text-slate-400">Target: http://localhost:8787</span>
+        <div className="space-y-4">
+          {/* Mobile & Remote Endpoint Configuration Bar */}
+          <div className="rounded-xl bg-[#090e18] border border-cyan-500/30 p-4 shadow-lg space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold text-white">VISUAL HARNESS ENDPOINT:</span>
+                <span className="text-xs font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/30 truncate max-w-xs md:max-w-md">
+                  {stationUrl}
+                </span>
+                <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded ${isSidecarOnline ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
+                  {isSidecarOnline ? 'ONLINE' : 'PROBING'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={stationUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-mono font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(0,240,255,0.2)] transition-all"
+                >
+                  <span>OPEN FULLSCREEN IN MOBILE BROWSER</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingUrl(!isEditingUrl)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-mono font-bold flex items-center gap-1.5 transition"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>{isEditingUrl ? 'CANCEL' : 'CONFIGURE'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Presets */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+              <span className="text-[11px] font-mono text-slate-400">Quick Presets:</span>
               <button
                 type="button"
-                onClick={() => {
-                  const iframe = document.getElementById('starnet-iframe') as HTMLIFrameElement;
-                  if (iframe) iframe.src = iframe.src;
-                }}
-                className="text-slate-300 hover:text-white flex items-center gap-1"
+                onClick={() => saveStationUrl(DEFAULT_TUNNEL_URL)}
+                className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition ${stationUrl === DEFAULT_TUNNEL_URL ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400' : 'bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800'}`}
               >
-                <RefreshCw className="w-3 h-3" /> Reload Station
+                ⚡ Cloudflare Tunnel (Mobile HTTPS)
+              </button>
+              <button
+                type="button"
+                onClick={() => saveStationUrl(LAN_URL)}
+                className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition ${stationUrl === LAN_URL ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400' : 'bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800'}`}
+              >
+                📶 Local Wi-Fi (192.168.4.22)
+              </button>
+              <button
+                type="button"
+                onClick={() => saveStationUrl('http://localhost:8787')}
+                className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition ${stationUrl === 'http://localhost:8787' ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400' : 'bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800'}`}
+              >
+                💻 Localhost (Desktop PC)
               </button>
             </div>
+
+            {/* Custom URL Editor */}
+            {isEditingUrl && (
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                <input
+                  type="text"
+                  value={tempUrl}
+                  onChange={(e) => setTempUrl(e.target.value)}
+                  placeholder="https://your-tunnel.trycloudflare.com or http://192.168.x.x:8787"
+                  className="flex-1 bg-black/80 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-cyan-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => saveStationUrl(tempUrl)}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold"
+                >
+                  SAVE ENDPOINT
+                </button>
+              </div>
+            )}
           </div>
-          <div className="relative w-full h-[760px] bg-slate-950 flex items-center justify-center">
-            <iframe
-              id="starnet-iframe"
-              src="http://localhost:8787"
-              className="w-full h-full border-0"
-              title="Trendly Visual Agent OS Station"
-            />
+
+          {/* Iframe View */}
+          <div className="rounded-2xl bg-black border border-cyan-500/40 overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+            <div className="bg-[#090e18] px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
+              <span className="text-cyan-400">TRENDLY OS VISUAL CANVAS // PIXEL-ART HARNESS</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iframe = document.getElementById('starnet-iframe') as HTMLIFrameElement;
+                    if (iframe) iframe.src = iframe.src;
+                  }}
+                  className="text-slate-300 hover:text-white flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" /> Reload Station
+                </button>
+              </div>
+            </div>
+            <div className="relative w-full h-[650px] md:h-[760px] bg-slate-950 flex items-center justify-center">
+              <iframe
+                id="starnet-iframe"
+                src={stationUrl}
+                className="w-full h-full border-0"
+                title="Trendly Visual Agent OS Station"
+                allow="accelerometer; camera; encrypted-media; geolocation; gyroscope; microphone; midi"
+              />
+            </div>
           </div>
         </div>
       )}
