@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Briefcase,
   Rocket,
+  Cpu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,6 +39,7 @@ export function Header({ userStats }: { userStats?: any } = {}) {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/trendly-os', label: 'Trendly OS', icon: Cpu, badge: 'LIVE' },
     { href: '/ventures', label: 'Venture OS', icon: Rocket },
     { href: '/dashboard/my-work', label: 'My Work', icon: Briefcase, badge: activeCount },
     ...(isAdmin ? [{ href: '/council', label: 'AI Council', icon: Flame }] : []),
@@ -91,8 +93,14 @@ export function Header({ userStats }: { userStats?: any } = {}) {
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-[#00F0FF]' : ''}`} />
                       <span>{item.label}</span>
-                      {typeof (item as any).badge === 'number' && (item as any).badge > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
+                      {Boolean((item as any).badge) && (
+                        <span
+                          className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                            (item as any).badge === 'LIVE'
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse'
+                              : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                          }`}
+                        >
                           {(item as any).badge}
                         </span>
                       )}
@@ -226,8 +234,14 @@ export function Header({ userStats }: { userStats?: any } = {}) {
                     >
                       <Icon className="w-4 h-4" />
                       <span className="flex-1">{item.label}</span>
-                      {typeof (item as any).badge === 'number' && (item as any).badge > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold border border-cyan-500/40">
+                      {Boolean((item as any).badge) && (
+                        <span
+                          className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                            (item as any).badge === 'LIVE'
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse'
+                              : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                          }`}
+                        >
                           {(item as any).badge}
                         </span>
                       )}

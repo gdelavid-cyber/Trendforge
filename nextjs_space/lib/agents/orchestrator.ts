@@ -13,6 +13,7 @@ import { executeOpenClawDeployer } from '@/lib/agents/openclaw-deployer';
 import { executeAIVideoMaker } from '@/lib/agents/ai-video-maker';
 import { executeMicroSaaSBuilder } from '@/lib/agents/micro-saas-builder';
 import { recordTrace } from '@/lib/growth/nova/traces';
+import { stationBus } from '@/lib/station/bus';
 
 export interface StartAgentOptions {
   userId: string;
@@ -119,7 +120,22 @@ export async function launchAgentRun(
     });
   } catch (_) {}
 
-  // 7. Execute in background (registered with serverless waitUntil) or await if requested
+  // 7. Emit live station event for Visual OS
+  try {
+    stationBus.emitEvent({
+      runId: run.id,
+      type: 'step',
+      timestamp: Date.now(),
+      payload: {
+        event: 'worker.start',
+        agentType,
+        status: 'running',
+        correlationId,
+      },
+    });
+  } catch (_) {}
+
+  // 8. Execute in background (registered with serverless waitUntil) or await if requested
   const bgPromise = executeAgentAsync(
     run.id,
     userId,
@@ -252,6 +268,20 @@ async function executeAgentAsync(
       },
     });
 
+    try {
+      stationBus.emitEvent({
+        runId,
+        type: 'complete',
+        timestamp: Date.now(),
+        payload: {
+          event: 'worker.complete',
+          agentType,
+          result,
+          durationMs,
+        },
+      });
+    } catch (_) {}
+
     return { ok: true, result };
   } catch (error: any) {
     const durationMs = Date.now() - startTime;
@@ -272,6 +302,20 @@ async function executeAgentAsync(
         completedAt: new Date(),
       },
     });
+
+    try {
+      stationBus.emitEvent({
+        runId,
+        type: 'error',
+        timestamp: Date.now(),
+        payload: {
+          event: 'worker.error',
+          agentType,
+          error: errorMsg,
+          durationMs,
+        },
+      });
+    } catch (_) {}
 
     return { ok: false, error: errorMsg };
   }

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/core/db';
+import { stationBus } from '@/lib/station/bus';
 import { recordTrace } from '@/lib/growth/nova/traces';
 import { parseSteps } from '@/lib/pipeline/steps';
 import { makeLlm } from '@/lib/execution/llm';
@@ -388,7 +389,7 @@ async function queueApproval(
   step: ReturnType<typeof parseSteps>[number],
   deps: EngineDeps
 ): Promise<void> {
-  await prisma.approval.create({
+  const createdApproval = await prisma.approval.create({
     data: {
       userId,
       userTaskId,
@@ -397,6 +398,24 @@ async function queueApproval(
       action: { title: step.title, description: step.description, action: step.action } as any,
     },
   });
+
+  try {
+    stationBus.emitEvent({
+      runId: userTaskId,
+      type: 'step',
+      timestamp: Date.now(),
+      payload: {
+        event: 'approval.required',
+        approvalId: createdApproval.id,
+        userTaskId,
+        userId,
+        stepIndex,
+        title: step.title,
+        action: step.action,
+      },
+    });
+  } catch (_) {}
+
   await (deps.notify ?? DEFAULT_NOTIFY)(
     userId,
     'Your companion needs one click',

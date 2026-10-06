@@ -100,18 +100,13 @@ async function runAutonomousLoopDemo() {
     problem: signalResult.signal.problemExcerpt,
     targetCustomer: 'B2B Lead Generation Agencies',
     industry: 'B2B Sales Tech',
-    initialHypothesis: {
-      targetCustomer: 'B2B Lead Generation Agencies',
-      problemDescription: 'High labor cost and slow turnaround time for account enrichment.',
-      proposedSolution: 'Automated account synthesis agent delivering enriched CSV exports within 60s.',
-      pricingModel: 'Fixed monthly fee + pay-per-verified-lead',
-    },
+    hypothesis: 'High labor cost and slow turnaround time for account enrichment. Automated account synthesis agent delivering enriched CSV exports within 60s.',
   });
   console.log(`✓ Venture Created: "${venture.name}" (ID: ${venture.id})`);
   console.log(`  State: ${venture.lifecycleState} | Autonomy Level: ${venture.autonomyLevel}`);
 
   // Link validated demand report to the venture for state machine integrity
-  await prisma.demandValidationReport.create({
+  const report = await prisma.demandValidationReport.create({
     data: {
       ventureId: venture.id,
       signalId: signalResult.signal.id,
@@ -135,7 +130,7 @@ async function runAutonomousLoopDemo() {
     toState: VentureLifecycleState.VALIDATED,
     actor: 'DEMAND_AGENT',
     reason: 'Empirical demand validation satisfied',
-    evidence: { validationId: validation.reportId, recommendation: validation.recommendation },
+    evidence: { validationId: report.id, recommendation: validation.recommendation },
   });
   await transitionVentureState({
     ventureId: venture.id,
@@ -228,7 +223,7 @@ async function runAutonomousLoopDemo() {
   };
 
   const recon1 = await reconcileStripeWebhookEvent(mockChargeEvent);
-  console.log(`✓ Payment Processed: $${(recon1.record.amountCents / 100).toFixed(2)} (Duplicate: ${recon1.isDuplicate})`);
+  console.log(`✓ Payment Processed: $${((recon1.record?.amountCents ?? 0) / 100).toFixed(2)} (Duplicate: ${recon1.isDuplicate})`);
 
   const recon2 = await reconcileStripeWebhookEvent(mockChargeEvent);
   console.log(`✓ Idempotency Check (Duplicate Webhook): Ignored = ${recon2.isDuplicate}`);

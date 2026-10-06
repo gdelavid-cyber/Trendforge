@@ -9,6 +9,7 @@ import { runTradeStep } from './trade';
 import { runVoiceStep } from './voice';
 import { runVideoStep } from './video';
 import { runSalesStep } from './sales';
+import { checkStationHealth, dispatchToStarNet } from './starnet';
 
 import { guaranteeTurnkeyExecution } from '../guarantee';
 
@@ -269,10 +270,32 @@ export function createSkillRunner(llm: LlmFn) {
         }
       }
 
-      // --- External: deploy (no integration yet) ---
+      // --- External: deploy ---
       if (step.action === 'deploy') {
+        const stationAlive = await checkStationHealth();
+        if (stationAlive) {
+          try {
+            const job = await dispatchToStarNet({
+              ventureId: (ctx as any).ventureId || 'system',
+              taskId: (ctx as any).taskId || ctx.userTaskId,
+              agentGoal: `Deploy task: ${step.title}. Description: ${step.description}. Context: ${ctx.taskTitle}`,
+              tools: ['shell', 'fs'],
+            });
+            return {
+              output: `Dispatched deployment job to StarNet station (Job ID: ${job.jobId}). Station is executing build and deployment tasks.`,
+              costUsd: 0.01,
+              artifact: { kind: 'DEPLOY', name: step.title, meta: { jobId: job.jobId, station: 'starnet' } },
+            };
+          } catch (err: any) {
+            return {
+              output: `StarNet deployment dispatch failed: ${err.message}`,
+              blocked: true,
+              costUsd: 0,
+            };
+          }
+        }
         return {
-          output: 'BLOCKED — deployment automation is not wired yet. Do this step manually for now; the engine will never pretend a deploy happened.',
+          output: 'BLOCKED — deployment automation requires an active StarNet station. Connect or start a station at http://localhost:8787.',
           blocked: true,
           costUsd: 0,
         };

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/core/db';
+import { stationBus } from '@/lib/station/bus';
 
 // Append-only real-money ledger. Every walletBalance change on a Web4Agent
 // goes through here so balance stays a denormalized cache of the entry sum.
@@ -106,6 +107,22 @@ async function move(params: {
     await tx.ledgerEntry.create({
       data: { agentId, userId, type, amountUsdc: amount, ref, note },
     });
+    try {
+      stationBus.emitEvent({
+        runId: ref,
+        type: 'step',
+        timestamp: Date.now(),
+        payload: {
+          event: 'ledger.entry',
+          agentId,
+          userId,
+          type,
+          amountUsdc: amount,
+          ref,
+          note,
+        },
+      });
+    } catch (_) {}
     return { ok: true, balance: agent.walletBalance };
   });
 }

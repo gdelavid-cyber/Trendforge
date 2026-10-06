@@ -18,11 +18,13 @@ export async function GET() {
       prisma.task.count(),
     ]);
 
-    const redditCircuit = getCircuitState('reddit_scraper');
-    const arbitrageCircuit = getCircuitState('prediction_arbitrage');
-
-    const redditRuns = recentRuns.filter((r) => r.agentType === 'reddit_scraper');
-    const arbitrageRuns = recentRuns.filter((r) => r.agentType === 'prediction_arbitrage');
+    const WORKERS = [
+      { id: 'reddit_scraper', name: 'Reddit Scraper Swarm Agent' },
+      { id: 'prediction_arbitrage', name: 'Polymarket Arbitrage Swarm Agent' },
+      { id: 'openclaw_deployer', name: 'OpenClaw VPS & Proxy Swarm Agent' },
+      { id: 'ai_video_maker', name: 'AI Video & Viral Hook Swarm Agent' },
+      { id: 'micro_saas_builder', name: 'Micro SaaS Builder Swarm Agent' },
+    ];
 
     const calcUptime = (runs: any[]) => {
       if (runs.length === 0) return 99.9;
@@ -37,27 +39,25 @@ export async function GET() {
       return Math.round(total / finished.length);
     };
 
+    const workerServices = WORKERS.map((worker) => {
+      const circuit = getCircuitState(worker.id);
+      const workerRuns = recentRuns.filter((r) => r.agentType === worker.id);
+      return {
+        id: worker.id,
+        name: worker.name,
+        status: circuit.state === 'OPEN' ? 'DEGRADED' : 'OPERATIONAL',
+        uptimePercent: calcUptime(workerRuns),
+        avgLatencyMs: avgLatency(workerRuns),
+        recentRunsCount: workerRuns.length,
+      };
+    });
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       systemStatus: 'OPERATIONAL',
       services: [
-        {
-          id: 'reddit_scraper',
-          name: 'Reddit Scraper Swarm Agent',
-          status: redditCircuit.state === 'OPEN' ? 'DEGRADED' : 'OPERATIONAL',
-          uptimePercent: calcUptime(redditRuns),
-          avgLatencyMs: avgLatency(redditRuns),
-          recentRunsCount: redditRuns.length,
-        },
-        {
-          id: 'prediction_arbitrage',
-          name: 'Polymarket Arbitrage Swarm Agent',
-          status: arbitrageCircuit.state === 'OPEN' ? 'DEGRADED' : 'OPERATIONAL',
-          uptimePercent: calcUptime(arbitrageRuns),
-          avgLatencyMs: avgLatency(arbitrageRuns),
-          recentRunsCount: arbitrageRuns.length,
-        },
+        ...workerServices,
         {
           id: 'trend_pipeline',
           name: 'Trend Ingestion & Scraper Pipeline',

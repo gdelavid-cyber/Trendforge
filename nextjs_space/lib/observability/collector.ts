@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { stationBus } from '@/lib/station/bus';
 
 export type GateType =
   | 'trade_execution'
@@ -178,6 +179,40 @@ export async function recordDecision(record: DecisionLogRecord): Promise<void> {
         actionTaken: record.actionTaken,
       },
     });
+
+    try {
+      stationBus.emitEvent({
+        runId: record.runId || 'jev-gate',
+        type: 'step',
+        timestamp: Date.now(),
+        payload: {
+          event: 'jev.decision',
+          gateType: record.gateType,
+          agentId: record.agentId,
+          primitive: record.primitive,
+          question: record.question,
+          answer: record.answer,
+          actionTaken: record.actionTaken,
+          latencyMs: record.latencyMs,
+          costUsd,
+        },
+      });
+
+      if (record.actionTaken === 'blocked') {
+        stationBus.emitEvent({
+          runId: record.runId || 'guard',
+          type: 'step',
+          timestamp: Date.now(),
+          payload: {
+            event: 'guard.triggered',
+            gateType: record.gateType,
+            agentId: record.agentId,
+            question: record.question,
+            actionTaken: record.actionTaken,
+          },
+        });
+      }
+    } catch (_) {}
   } catch (err) {
     console.error('[Observability] Failed to record decision log:', err);
   }

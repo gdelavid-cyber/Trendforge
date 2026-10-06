@@ -230,7 +230,7 @@ export async function reconcileStripeWebhookEvent(event: {
       return { reconciled: false, reason: 'No ventureId in metadata', record: null as any, isDuplicate: false };
     }
 
-    return recordFinancialTransaction({
+    const tx = await recordFinancialTransaction({
       ventureId,
       amountCents,
       currency,
@@ -240,6 +240,7 @@ export async function reconcileStripeWebhookEvent(event: {
       description: `Stripe verified payment: ${obj.description || chargeId}`,
       metadata: { stripeEventId: event.id, customer: obj.customer },
     });
+    return { reconciled: true, ...tx };
   }
 
   if (event.type === 'charge.refunded') {
@@ -252,7 +253,7 @@ export async function reconcileStripeWebhookEvent(event: {
       return { reconciled: false, reason: 'No ventureId in metadata', record: null as any, isDuplicate: false };
     }
 
-    return recordFinancialTransaction({
+    const tx = await recordFinancialTransaction({
       ventureId,
       amountCents: amountRefundedCents,
       currency,
@@ -262,6 +263,7 @@ export async function reconcileStripeWebhookEvent(event: {
       description: `Stripe verified refund on charge ${chargeId}`,
       metadata: { stripeEventId: event.id },
     });
+    return { reconciled: true, ...tx };
   }
 
   return { reconciled: false, reason: `Ignored event type: ${event.type}`, record: null as any, isDuplicate: false };

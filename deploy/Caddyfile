@@ -1,0 +1,31 @@
+# Trendly Production Caddyfile
+# Usage: caddy run --config deploy/Caddyfile
+
+# Main Web Application & API
+trendforge.ai {
+    encode gzip zstd
+    
+    # Static files and Next.js server
+    reverse_proxy localhost:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# Trendly OS Visual Harness (StarNet Bridge)
+os.trendforge.ai {
+    encode gzip zstd
+
+    # Support SSE, WebSockets, and NDJSON streaming
+    reverse_proxy localhost:8787 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        
+        # Flush SSE chunks immediately
+        flush_interval -1
+    }
+}

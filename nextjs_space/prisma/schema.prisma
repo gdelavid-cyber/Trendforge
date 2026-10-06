@@ -2891,3 +2891,38 @@ model VentureBlueprint {
   @@index([industry])
   @@index([businessModel])
 }
+
+model StarNetStation {
+  id           String       @id @default(cuid())
+  userId       String
+  name         String
+  url          String
+  bridgeSecret String
+  isActive     Boolean      @default(true)
+  lastSeenAt   DateTime?
+  createdAt    DateTime     @default(now())
+  jobs         StarNetJob[]
+
+  @@index([userId])
+}
+
+model StarNetJob {
+  id                 String          @id @default(cuid())
+  stationId          String
+  station            StarNetStation  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  ventureId          String?
+  fulfillmentOrderId String?
+  taskId             String?
+  runId              String?
+  status             String          @default("PENDING")
+  jobPayload         Json
+  resultArtifact     Json?
+  costCents          Int?
+  dispatchedAt       DateTime        @default(now())
+  completedAt        DateTime?
+
+  @@index([stationId])
+  @@index([ventureId])
+  @@index([status])
+}
+
