@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/core/db';
 import { logExecutionEvent } from '@/lib/execution/logger';
+import { sendEmail } from '@/lib/experience/email/sendgrid';
 
 export interface SalesKitData {
   outreachTemplates: Array<{
@@ -177,6 +178,16 @@ export async function sendOutreachToLead(
 
   const messageText = customContent || defaultMessage;
 
+  let emailDeliveryResult: { success: boolean; messageId?: string; error?: string } | null = null;
+  if (lead.buyerEmail && (lead.source === 'email' || lead.buyerEmail.includes('@'))) {
+    emailDeliveryResult = await sendEmail({
+      to: lead.buyerEmail,
+      subject: `Regarding ${taskTitle} — Verified Deliverable Available`,
+      text: messageText,
+      html: `<div style="font-family:sans-serif;line-height:1.6;color:#111;">${messageText.replace(/\n/g, '<br/>')}</div>`,
+    });
+  }
+
   // Create outbound message
   const msg = await prisma.leadMessage.create({
     data: {
@@ -203,34 +214,28 @@ export async function sendOutreachToLead(
     logType: 'outreach_sent',
     actor: sentBy === 'companion_bot' ? 'companion' : 'user',
     actorId: sentBy,
-    actionDescription: `Sent personalized outreach to lead ${lead.buyerName} via ${lead.source}.`,
-    inputs: { leadId, buyerName: lead.buyerName, channel: lead.source },
-    outputs: { messageId: msg.id },
+    actionDescription: `Sent personalized outreach to lead ${lead.buyerName} via ${lead.source}.${emailDeliveryResult ? ` (Email delivery status: ${emailDeliveryResult.success ? 'Delivered' : emailDeliveryResult.error})` : ''}`,
+    inputs: { leadId, buyerName: lead.buyerName, channel: lead.source, recipientEmail: lead.buyerEmail },
+    outputs: { messageId: msg.id, emailResult: emailDeliveryResult },
   });
 
   return msg;
 }
 
 /**
- * Simulates a realistic buyer response and handles autonomous conversation progression.
+ * Records a real, verified inbound buyer response and updates lead progression.
  */
-export async function simulateBuyerResponse(leadId: string) {
+export async function recordInboundBuyerResponse(
+  leadId: string,
+  responseText: string,
+  senderName?: string
+) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     include: { task: true },
   });
 
   if (!lead) return null;
-
-  const responses = [
-    `Thanks for reaching out! This looks exactly like what we need. Could you confirm what the price is and if we get the full source files?`,
-    `Great timing! We were just reviewing proposals. What is the turnaround time if we approve today?`,
-    lead.statedBudgetCents
-      ? `Hey, looks interesting. Can you do $${Math.max(50, Math.round(lead.statedBudgetCents / 100))} for the complete package? If so, we are ready to purchase immediately.`
-      : `Hey, looks interesting. Could you share the budget range you had in mind for the complete package? If the scope fits, we are ready to purchase immediately.`,
-  ];
-
-  const responseText = responses[Math.floor(Math.random() * responses.length)];
 
   // Record inbound response
   const msg = await prisma.leadMessage.create({
@@ -239,7 +244,7 @@ export async function simulateBuyerResponse(leadId: string) {
       direction: 'INBOUND',
       channel: lead.source === 'email' ? 'email' : `${lead.source}_dm`,
       content: responseText,
-      sentBy: lead.buyerName || 'Buyer',
+      sentBy: senderName || lead.buyerName || 'Buyer',
     },
   });
 
@@ -257,8 +262,8 @@ export async function simulateBuyerResponse(leadId: string) {
     taskId: lead.taskId,
     logType: 'buyer_response',
     actor: 'buyer',
-    actorId: lead.buyerName || 'buyer',
-    actionDescription: `Received high-intent response from buyer ${lead.buyerName}.`,
+    actorId: senderName || lead.buyerName || 'buyer',
+    actionDescription: `Received verified inbound response from buyer ${lead.buyerName}.`,
     inputs: { leadId },
     outputs: { responseText },
   });

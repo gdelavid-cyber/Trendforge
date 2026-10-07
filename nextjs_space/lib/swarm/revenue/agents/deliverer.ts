@@ -22,28 +22,25 @@ Keep it concise, high-polish, and professional.`;
     );
 
     // Capture Stripe escrow payment
-    let captureStatus = 'succeeded';
+    let captureStatus: 'succeeded' | 'failed' = 'failed';
     if (ctx.stripePaymentIntentId) {
       const captureResult = await this.memory.captureEscrowPayment(ctx.stripePaymentIntentId);
       captureStatus = captureResult.status;
+    } else {
+      captureStatus = 'succeeded';
     }
 
-    // Post-delivery feedback collection simulation
-    const simulatedRating = 5;
-    const simulatedComment = 'Incredible turnaround time and flawless conversion pacing! Delivered exactly what we needed.';
-
+    // Deliverable published — real buyer review remains pending until submitted by buyer
     await prisma.swarmTask.update({
       where: { id: ctx.taskId },
       data: {
         deliverableUrl: deliveryUrl,
-        buyerFeedback: simulatedRating,
-        buyerComment: simulatedComment,
         completedAt: new Date(),
       },
     });
 
     const durationMs = Date.now() - startTime;
-    const isSuccess = captureStatus === 'succeeded' || captureStatus === 'simulated';
+    const isSuccess = captureStatus === 'succeeded';
 
     const result: AgentResult = {
       success: isSuccess,
@@ -51,12 +48,12 @@ Keep it concise, high-polish, and professional.`;
         deliveryUrl,
         deliveryMessage,
         captureStatus,
-        buyerFeedback: simulatedRating,
-        buyerComment: simulatedComment,
+        buyerFeedback: null,
+        buyerComment: null,
       },
       cost: 0.0021,
       durationMs,
-      reasoning: `Delivered production package to client, captured Stripe escrow funds (${captureStatus}), and collected ${simulatedRating}-star buyer rating`,
+      reasoning: `Delivered production package to client; escrow status: ${captureStatus}. Awaiting client review.`,
       evidence: [
         {
           agent: 'DELIVERER',
@@ -67,11 +64,6 @@ Keep it concise, high-polish, and professional.`;
           agent: 'DELIVERER',
           timestamp: new Date().toISOString(),
           message: `Stripe Escrow Capture: ${captureStatus}`,
-        },
-        {
-          agent: 'DELIVERER',
-          timestamp: new Date().toISOString(),
-          message: `Buyer Feedback: ${simulatedRating} Stars - "${simulatedComment}"`,
         },
       ],
     };

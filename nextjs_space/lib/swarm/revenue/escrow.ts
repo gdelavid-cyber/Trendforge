@@ -2,7 +2,7 @@ import { stripe } from '@/lib/core/stripe';
 import { prisma } from '@/lib/core/db';
 
 export interface StripeCaptureResult {
-  status: 'succeeded' | 'failed' | 'simulated';
+  status: 'succeeded' | 'failed';
   paymentIntentId: string;
   amount: number;
   currency: string;
@@ -99,27 +99,31 @@ export class EscrowService {
 
     if (!escrowRecord) {
       return {
-        status: 'succeeded',
+        status: 'failed',
         paymentIntentId,
-        amount: 249,
+        amount: 0,
         currency: 'USD',
       };
     }
 
-    let isCaptured = true;
+    let isCaptured = false;
 
-    try {
-      if (
-        process.env.STRIPE_SECRET_KEY &&
-        !process.env.STRIPE_SECRET_KEY.includes('placeholder') &&
-        paymentIntentId.startsWith('pi_') &&
-        !paymentIntentId.startsWith('pi_swarm_')
-      ) {
+    if (
+      process.env.STRIPE_SECRET_KEY &&
+      !process.env.STRIPE_SECRET_KEY.includes('placeholder') &&
+      paymentIntentId.startsWith('pi_') &&
+      !paymentIntentId.startsWith('pi_swarm_')
+    ) {
+      try {
         const captured = await stripe.paymentIntents.capture(paymentIntentId);
         isCaptured = captured.status === 'succeeded';
+      } catch (err) {
+        console.error('[STRIPE] Capture error:', err);
+        isCaptured = false;
       }
-    } catch (err) {
-      console.warn('Stripe capture simulation fallback:', err);
+    } else {
+      console.error('[STRIPE] Capture rejected: valid production STRIPE_SECRET_KEY required.');
+      isCaptured = false;
     }
 
     await prisma.escrowLedger.update({

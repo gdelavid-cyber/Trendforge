@@ -5,7 +5,7 @@ export interface TTSResponse {
   audioUrl?: string;
   durationEstimate: number; // in seconds
   voiceId: string;
-  provider: 'elevenlabs' | 'google' | 'browser_speech' | 'simulated';
+  provider: 'elevenlabs' | 'google' | 'browser_speech';
 }
 
 export async function generateSpeechAudio(params: {

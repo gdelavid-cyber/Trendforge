@@ -19,10 +19,10 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
   const fromName = payload.fromName || process.env.SENDGRID_FROM_NAME || 'Trendly Autonomous Wealth';
 
   if (!apiKey) {
-    console.warn('[SENDGRID] SENDGRID_API_KEY is not set. Email delivery skipped in dev mode.');
+    console.error('[SENDGRID] SENDGRID_API_KEY is not configured. Real SendGrid API credentials required.');
     return {
-      success: true,
-      messageId: `dev-mock-${Date.now()}`,
+      success: false,
+      error: 'SENDGRID_API_KEY is not configured. Production SendGrid API credentials are required.',
     };
   }
 

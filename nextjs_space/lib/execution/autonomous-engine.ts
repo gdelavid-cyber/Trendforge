@@ -2,7 +2,7 @@ import { prisma } from '@/lib/core/db';
 import { getBlueprintForCategory } from '@/lib/execution/blueprints';
 import { logExecutionEvent } from '@/lib/execution/logger';
 import { persistScrapedLeads } from '@/lib/money/sales/leads-scraper';
-import { generateSalesKitForTask, sendOutreachToLead, simulateBuyerResponse, executeDealClosureAndSale } from '@/lib/money/sales/sales-engine';
+import { generateSalesKitForTask, sendOutreachToLead, executeDealClosureAndSale } from '@/lib/money/sales/sales-engine';
 import { releaseEscrowPayout } from '@/lib/money/escrow';
 import crypto from 'crypto';
 
@@ -456,13 +456,8 @@ export async function advanceExecutionPlan(
         // Option A: Bot Sells For You
         if (leads.length > 0) {
           const topLead = leads[0];
-          // 1. Send outreach
+          // 1. Send real outreach to lead
           await sendOutreachToLead(topLead.id, companionId);
-          // 2. Simulate fast response
-          await simulateBuyerResponse(topLead.id);
-          // 3. Close deal & create escrow sale
-          const salePrice = topLead.statedBudgetCents || 18000;
-          await executeDealClosureAndSale(task.id, userId, topLead.id, salePrice, 'bot');
         }
 
         await prisma.milestone.update({
@@ -470,7 +465,7 @@ export async function advanceExecutionPlan(
           data: {
             status: 'COMPLETED',
             completedAt: new Date(),
-            resultSummary: `Autonomous companion executed full outreach, negotiation, and secured buyer agreement into escrow.`,
+            resultSummary: `Autonomous companion delivered direct outreach to lead. Awaiting inbound buyer reply for escrow finalization.`,
           },
         });
       } else if (option === 'YOU_SELL') {
@@ -489,7 +484,6 @@ export async function advanceExecutionPlan(
         // Option C: Hybrid Mode
         if (leads.length > 0) {
           await sendOutreachToLead(leads[0].id, companionId);
-          await simulateBuyerResponse(leads[0].id);
         }
 
         await prisma.milestone.update({
@@ -497,7 +491,7 @@ export async function advanceExecutionPlan(
           data: {
             status: 'COMPLETED',
             completedAt: new Date(),
-            resultSummary: `Companion initiated multi-channel outreach; hot buyer responses ready for user closing.`,
+            resultSummary: `Companion initiated multi-channel outreach; awaiting inbound buyer replies.`,
           },
         });
       }

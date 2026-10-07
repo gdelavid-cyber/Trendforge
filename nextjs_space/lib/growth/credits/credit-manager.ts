@@ -1,4 +1,4 @@
-﻿export type UserTier = 'free' | 'pro' | 'elite';
+export type UserTier = 'free' | 'pro' | 'elite';
 
 export interface TierConfig {
   name: string;
@@ -89,7 +89,7 @@ export interface CreditAccount {
   }[];
 }
 
-// In-memory / Mock store fallback for fast client & server operation
+// Ephemeral in-memory credit store for active sessions
 const creditAccounts: Map<string, CreditAccount> = new Map();
 
 export function getOrCreateCreditAccount(userId: string = 'default-user', tier: UserTier = 'free'): CreditAccount {
