@@ -44,4 +44,5 @@ project_tree.txt
 .aider*
 
 worker/.venv/
+.freebuff/
 .venv/

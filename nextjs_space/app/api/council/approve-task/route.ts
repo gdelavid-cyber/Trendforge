@@ -10,8 +10,7 @@ import { jevMissionGate } from '@/lib/intelligence/decision/mission-gate';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  const userModeEnabled = process.env.COUNCIL_USER_MODE_ENABLED !== 'false';
-  if (!session?.user || (!userModeEnabled && !isUserAdmin(session.user as any))) {
+  if (!session?.user || !isUserAdmin(session.user as any)) {
     return NextResponse.json({ error: 'Admin authorization required' }, { status: 403 });
   }
 

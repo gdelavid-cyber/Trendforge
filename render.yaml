@@ -1,4 +1,20 @@
 services:
+  - type: web
+    name: trendly-starnet-sidecar
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: "cd starnet && npm install --omit=dev"
+    startCommand: "cd starnet && node sidecar/index.js"
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: STARNET_HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
+
   - type: cron
     name: trendly-scrapling-worker
     runtime: python
@@ -26,5 +42,3 @@ services:
         value: "true"
       - key: CRON_SECRET
         sync: false
-
-
