@@ -3,13 +3,13 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
-import { isUserAdmin } from '@/lib/council/config';
+import { isUserAdmin, isCouncilUserModeEnabled } from '@/lib/council/config';
 import { Header } from '@/components/layouts/header';
 import { CouncilBoardroom } from '@/components/council/council-boardroom';
 
 export default async function CouncilPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !isUserAdmin(session.user as any)) {
+  if (!session?.user || (!isUserAdmin(session.user as any) && !isCouncilUserModeEnabled())) {
     redirect('/dashboard');
   }
 

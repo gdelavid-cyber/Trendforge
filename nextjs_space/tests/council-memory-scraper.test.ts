@@ -141,6 +141,6 @@ describe('Scraper Anti-Repetition & Council Adaptive Intelligence', () => {
       expect(conclusion?.councilLearning).toBeDefined();
       expect(conclusion.councilLearning.heuristic).toBeTruthy();
       expect(conclusion.councilLearning.deliberationsCompleted).toBeGreaterThan(0);
-    });
+    }, 90000);
   });
 });

@@ -79,7 +79,18 @@ async function runWorkerPulse() {
   }
 }
 
-if (require.main === module || process.argv.includes('--run')) {
+if (process.argv.includes('--once')) {
+  console.log('[Observability Worker] Single cycle execution started (--once)...');
+  runWorkerPulse()
+    .then(() => {
+      console.log('[Observability Worker] Cycle completed successfully. Exiting.');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[Observability Worker] Single cycle failed:', err);
+      process.exit(1);
+    });
+} else if (require.main === module || process.argv.includes('--run') || process.argv.includes('--daemon')) {
   console.log(`[Observability Worker] Daemon initializing. Interval: ${CYCLE_MS}ms`);
 
   // Run immediately on boot

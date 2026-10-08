@@ -22,6 +22,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
+import { CouncilBoardroom } from '@/components/council/council-boardroom';
 import { SwarmTelemetryConsole } from '@/components/swarm/SwarmTelemetryConsole';
 import { InferHubEarnings } from '@/components/dashboard/inferhub-earnings';
 import { StationCommandDeck } from './station-command-deck';

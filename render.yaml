@@ -14,6 +14,12 @@ services:
         value: 0.0.0.0
       - key: PORT
         value: 10000
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TRENDFORGE_API_URL
+        value: https://trendly-platform-chi.vercel.app
+      - key: STARNET_BRIDGE_SECRET
+        sync: false
 
   - type: cron
     name: trendly-scrapling-worker
@@ -32,7 +38,7 @@ services:
     runtime: node
     schedule: "0 * * * *"
     buildCommand: "cd nextjs_space && npm install && npx prisma generate"
-    startCommand: "cd nextjs_space && npx tsx worker/observability.ts --run"
+    startCommand: "cd nextjs_space && npx tsx worker/observability.ts --once"
     envVars:
       - key: DATABASE_URL
         sync: false

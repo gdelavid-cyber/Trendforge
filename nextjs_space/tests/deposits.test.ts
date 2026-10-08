@@ -57,6 +57,7 @@ function depositTx(signatureMemo: string | null, amount: number) {
 
 beforeAll(async () => {
   process.env.SOLANA_TREASURY_ADDRESS = TREASURY;
+  await prisma.depositCursor.deleteMany({ where: { chain: "SOLANA" } });
 
   const user = await prisma.user.create({
     data: { email: `${RUN}@deposit-test.local`, name: 'Deposit Test User', passwordHash: 'x' },

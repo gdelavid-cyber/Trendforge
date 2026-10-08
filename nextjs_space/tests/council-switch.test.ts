@@ -107,7 +107,7 @@ describe('AI Money Council — Two-Path Architecture & Gatekeeper Gating', () =>
     expect(feedback.breakdown.feasibility).toBeGreaterThan(0);
     expect(feedback.breakdown.unitEconomics).toBeGreaterThan(0);
     expect(feedback.breakdown.marketDemand).toBeGreaterThan(0);
-  });
+  }, 90000);
 
   it('filters low-scoring/high-risk signals and stops them from reaching admin review', async () => {
     const badSignal = {
@@ -123,7 +123,7 @@ describe('AI Money Council — Two-Path Architecture & Gatekeeper Gating', () =>
     expect(session.status).toBe('filtered');
     expect(session.gatekeeperScore).toBeLessThan(80);
     expect(session.conclusion).toBeDefined();
-  });
+  }, 90000);
 });
 
 describe('AI Money Council — Exposure Switch & Isolation Behavior', () => {

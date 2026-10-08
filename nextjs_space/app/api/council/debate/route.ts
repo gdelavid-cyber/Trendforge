@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth-options';
-import { isUserAdmin } from '@/lib/council/config';
+import { isUserAdmin, isCouncilUserModeEnabled } from '@/lib/council/config';
 import { runCouncilDebate } from '@/lib/council/council-runner';
 import { getCouncilMemory } from '@/lib/council/council-memory';
 import { harvestNextCouncilSignal } from '@/lib/council/signal-harvester';
@@ -14,7 +14,7 @@ const TEST_SESSION_RE = /council-mem-test-|council-switch-|council-hot-task-|tes
 // GET: Fetch latest council deliberations and collective intelligence profile
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !isUserAdmin(session.user as any)) {
+  if (!session?.user || (!isUserAdmin(session.user as any) && !isCouncilUserModeEnabled())) {
     return NextResponse.json({ error: 'Unauthorized: Admin authorization required' }, { status: 403 });
   }
   try {
@@ -65,7 +65,7 @@ export async function GET() {
 // POST: Run a live debate on a harvested or provided money signal
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || !isUserAdmin(session.user as any)) {
+  if (!session?.user || (!isUserAdmin(session.user as any) && !isCouncilUserModeEnabled())) {
     return NextResponse.json({ error: 'Unauthorized: Admin authorization required' }, { status: 403 });
   }
 

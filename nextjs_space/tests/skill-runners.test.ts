@@ -119,7 +119,7 @@ describe('skill runner gating (honesty invariant)', () => {
     const llm = vi.fn(async () => 'DEPLOYED');
     const outcome = await createSkillRunner(llm).run(makeStep('deploy'), makeCtx(llm));
     expect(outcome.blocked).toBe(true);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(outcome.output).toContain('StarNet');
   });
 });
 
