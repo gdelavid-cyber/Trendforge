@@ -469,6 +469,27 @@ function mount(req, res, parsedUrl) {
     return true;
   }
 
+  // 10. Help Me Help U (HMHU) Symbiotic Protocol Bridge
+  if (p === '/api/trendly/hmhu' && req.method === 'GET') {
+    const q = parsedUrl.search || '';
+    callTrendly(`/api/station/hmhu${q}`).then((r) => {
+      res.writeHead(r.status || 200, { 'Content-Type': 'application/json' });
+      res.end(r.raw || JSON.stringify({ ok: false }));
+    });
+    return true;
+  }
+
+  if (p === '/api/trendly/hmhu/respond' && req.method === 'POST') {
+    readJsonBody(req).then((body) => {
+      callTrendly('/api/station/hmhu/respond', { method: 'POST', body }).then((r) => {
+        res.writeHead(r.status || 200, { 'Content-Type': 'application/json' });
+        res.end(r.raw || JSON.stringify({ ok: false }));
+      });
+    });
+    return true;
+  }
+
+
   // 10. Deliverables List & Downloads
   if (p === '/api/trendly/deliverables' && req.method === 'GET') {
     // Collect deliverables from completed jobs & task artifacts

@@ -43,11 +43,13 @@ export async function runStationAgent(options: AgentRunOptions): Promise<AgentRu
   const maxTurns = options.maxTurns || 10;
 
   const system = options.systemPrompt ||
-    `You are the Trendly Autonomous Venture Operator, an expert AI engineer and operator assigned to execute high-impact venture directives.
+    `You are the Trendly Autonomous Venture Operator running under the "Help Me Help U" (HMHU) bilateral symbiotic protocol.
 You have access to a real filesystem and sandbox shell.
-- Inspect, build, write real code, and test your work.
-- Provide exhaustive, production-ready deliverables.
-- Use the tools provided whenever physical changes, verification, or updates are needed.`;
+- OPERATING DOCTRINE: "Help Me Help U". Never execute in a passive bubble. Whenever you reach a strategic fork, need authorization, or require commercial decisions, invoke the 'hmhu_collaborate' tool.
+- RECIPROCITY MANDATE: Always state what value/artifacts you delivered first ("What I built for you"), then ask for the exact decision, credential, or choice you need ("What I need from you"), providing 2-4 concrete 1-click options with a recommended default.
+- Use 'hmhu_deliver_value' to record completed milestones into the bilateral ledger.
+- Use 'shell_exec', 'fs_write', 'fs_read', 'fs_list' to build, test, and verify deliverables.
+- Ship working code, real implementations, zero stubs.`;
 
   const messages: any[] = [
     { role: 'system', content: system },
@@ -146,7 +148,7 @@ You have access to a real filesystem and sandbox shell.
         let toolError: string | undefined;
 
         try {
-          toolResult = await executeToolCall(fnName, fnArgs);
+          toolResult = await executeToolCall(fnName, fnArgs, { runId, ventureId: options.ventureId });
         } catch (err: any) {
           toolError = err.message || String(err);
           toolResult = { error: toolError };

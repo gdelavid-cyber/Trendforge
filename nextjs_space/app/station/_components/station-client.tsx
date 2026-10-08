@@ -21,6 +21,10 @@ import {
   FileCode,
   Flame,
   ArrowRight,
+  Handshake,
+  Sparkles,
+  HelpCircle,
+  Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -80,10 +84,29 @@ export function StationClient({
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
+  // "Help Me Help U" (HMHU) Symbiotic Protocol State
+  const [activeHmhuPacket, setActiveHmhuPacket] = useState<any | null>(null);
+  const [hmhuHistory, setHmhuHistory] = useState<any[]>([]);
+  const [customDirective, setCustomDirective] = useState('');
+  const [isRespondingHmhu, setIsRespondingHmhu] = useState(false);
+
   // Auto-scroll terminal
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [liveTokens, liveTools]);
+
+  // Initial load of pending HMHU packets
+  useEffect(() => {
+    fetch('/api/station/hmhu')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) {
+          if (data.pending) setActiveHmhuPacket(data.pending);
+          if (Array.isArray(data.packets)) setHmhuHistory(data.packets);
+        }
+      })
+      .catch((err) => console.warn('Failed to load HMHU packets:', err));
+  }, []);
 
   // Connect to SSE stream
   useEffect(() => {
@@ -107,6 +130,16 @@ export function StationClient({
                 : t
             )
           );
+        } else if (data.type === 'hmhu_packet') {
+          setActiveHmhuPacket(data.payload);
+          setHmhuHistory((prev) => [data.payload, ...prev.filter((p) => p.id !== data.payload.id)]);
+          toast.info(`⚡ "Help Me Help U" Ask: ${data.payload.commanderAsk?.question}`);
+        } else if (data.type === 'hmhu_resolved') {
+          setActiveHmhuPacket((current) => (current?.id === data.payload?.id ? null : current));
+          setHmhuHistory((prev) =>
+            prev.map((p) => (p.id === data.payload?.id ? { ...p, status: 'RESOLVED', commanderResponse: data.payload?.commanderResponse } : p))
+          );
+          toast.success('Commander directive synchronized! Agent execution resumed.');
         } else if (data.type === 'complete') {
           toast.success('Agent mission completed successfully!');
           refreshJobs();
@@ -121,6 +154,27 @@ export function StationClient({
     };
   }, []);
 
+  const handleRespondHmhu = async (packetId: string, selectedOption?: string, customInput?: string) => {
+    setIsRespondingHmhu(true);
+    try {
+      const res = await fetch('/api/station/hmhu/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packetId, selectedOption, customInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to submit directive');
+      toast.success('Symbiotic directive delivered to agent!');
+      setActiveHmhuPacket(null);
+      setCustomDirective('');
+      refreshJobs();
+    } catch (err: any) {
+      toast.error(err.message || 'Error responding to agent');
+    } finally {
+      setIsRespondingHmhu(false);
+    }
+  };
+
   const refreshJobs = async () => {
     try {
       const res = await fetch('/api/station/runs');
@@ -128,6 +182,7 @@ export function StationClient({
         const data = await res.json();
         setJobs(data.jobs || []);
       }
+
     } catch (err) {
       console.error('Failed to fetch runs:', err);
     }
@@ -384,7 +439,143 @@ export function StationClient({
 
         {/* Right: Live Terminal & Tool Execution Drawer (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
+          {/* HELP ME HELP U (HMHU) Symbiotic Exchange Module */}
+          <div className={`p-5 rounded-3xl border transition-all duration-300 ${
+            activeHmhuPacket
+              ? 'bg-gradient-to-br from-[#0c0818] via-[#120a21] to-[#080d1a] border-purple-500/60 shadow-[0_0_40px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/30'
+              : 'bg-[#06060e] border-white/[0.06]'
+          }`}>
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                  activeHmhuPacket ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-cyan-500/10 text-cyan-400'
+                }`}>
+                  <Handshake className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-black font-orbitron text-white tracking-wider flex items-center gap-2">
+                    HELP ME HELP U <span className="text-[10px] font-mono text-purple-400 px-1.5 py-0.5 rounded bg-purple-950/60 border border-purple-500/30">SYMBIOTIC OS</span>
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-sans">
+                    Bilateral Co-Pilot Protocol · Mutual Value Alignment
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                  activeHmhuPacket
+                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 animate-pulse'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                }`}>
+                  {activeHmhuPacket ? '⚡ DIRECTIVE PENDING' : '● RECIPROCITY SYNCED'}
+                </span>
+              </div>
+            </div>
+
+            {/* Active Symbiotic Exchange Card */}
+            {activeHmhuPacket ? (
+              <div className="mt-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Left: What I Built For You */}
+                  <div className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-1.5">
+                    <div className="text-[10px] font-bold font-mono text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      What I Built For You
+                    </div>
+                    <div className="text-xs text-slate-200 font-medium leading-relaxed">
+                      {activeHmhuPacket.valueDelivered?.summary || 'Generated foundational workspace scaffold.'}
+                    </div>
+                    {activeHmhuPacket.valueDelivered?.artifacts?.length > 0 && (
+                      <div className="pt-1 flex flex-wrap gap-1">
+                        {activeHmhuPacket.valueDelivered.artifacts.map((a: any, idx: number) => (
+                          <span key={idx} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-emerald-300 border border-emerald-500/20">
+                            {a.title || a.path}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: What I Need From You */}
+                  <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-500/30 space-y-1.5">
+                    <div className="text-[10px] font-bold font-mono text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      What I Need From You ({activeHmhuPacket.commanderAsk?.askType || 'DECISION'})
+                    </div>
+                    <div className="text-xs text-white font-semibold leading-relaxed">
+                      {activeHmhuPacket.commanderAsk?.question}
+                    </div>
+                    {activeHmhuPacket.commanderAsk?.recommendedAction && (
+                      <div className="text-[10px] text-slate-300 font-sans">
+                        <span className="text-purple-300 font-bold">Recommended:</span> {activeHmhuPacket.commanderAsk.recommendedAction}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 1-Click Action Pills */}
+                <div className="space-y-2 pt-1">
+                  <div className="text-[10px] font-mono text-slate-400 uppercase">
+                    Select 1-Tap Commander Directive:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(activeHmhuPacket.commanderAsk?.options || ['Approve & Continue', 'Revise Direction']).map((opt: string, i: number) => (
+                      <button
+                        key={i}
+                        type="button"
+                        disabled={isRespondingHmhu}
+                        onClick={() => handleRespondHmhu(activeHmhuPacket.id, opt)}
+                        className="px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/40 text-purple-200 hover:text-white text-xs font-mono font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                      >
+                        <ArrowRight className="w-3 h-3 text-purple-400" />
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Write-In Option */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      value={customDirective}
+                      onChange={(e) => setCustomDirective(e.target.value)}
+                      placeholder="Or type custom directive (e.g. 'Use Tailwind instead', 'Target $49 pricing')..."
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-black/40 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 font-sans"
+                    />
+                    <button
+                      type="button"
+                      disabled={isRespondingHmhu || !customDirective.trim()}
+                      onClick={() => handleRespondHmhu(activeHmhuPacket.id, undefined, customDirective.trim())}
+                      className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-mono font-bold hover:bg-purple-500 transition disabled:opacity-40 flex items-center gap-1"
+                    >
+                      <Send className="w-3 h-3" />
+                      SEND
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-400 font-sans bg-black/30 p-2.5 rounded-xl border border-white/[0.03]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>The agent reports verified value delivered before requesting commander inputs or approvals.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgentGoal("Initiate 'Help Me Help U' venture discovery loop: scrape market pain points, scaffold revenue plan, deliver findings, and present 3 strategic monetization choices for commander sign-off.");
+                  }}
+                  className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline underline-offset-2 flex items-center gap-1"
+                >
+                  Load Symbiotic Directive &rarr;
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="p-6 rounded-3xl bg-[#05050a] border border-white/[0.08] shadow-2xl flex flex-col h-[520px]">
+
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
                 <Terminal className="w-5 h-5 text-emerald-400" />
