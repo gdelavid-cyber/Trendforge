@@ -387,8 +387,15 @@ function mount(req, res, parsedUrl) {
   // 3. Worker Status
   if (p === '/api/trendly/status' && req.method === 'GET') {
     callTrendly('/api/status').then((r) => {
-      res.writeHead(r.status || 200, { 'Content-Type': 'application/json' });
-      res.end(r.raw || JSON.stringify({ ok: false }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        ok: true,
+        sidecar: 'online',
+        stationId: process.env.STARNET_STATION_ID || 'local-station-01',
+        upstream: r.ok ? 'connected' : 'disconnected',
+        upstreamStatus: r.status,
+        timestamp: Date.now(),
+      }));
     });
     return true;
   }
