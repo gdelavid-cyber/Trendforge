@@ -28,6 +28,7 @@ const https = require('node:https');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { taskConsumer } = require('../workers/task-consumer.js');
 
 const TRENDFORGE_API_URL = (process.env.TRENDFORGE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
 const BRIDGE_SECRET = process.env.TRENDFORGE_BRIDGE_SECRET || process.env.STARNET_BRIDGE_SECRET || '';
@@ -333,8 +334,13 @@ function startBackgroundSync() {
 }
 
 // Express/Node HTTP router mount
-function mount(req, res, parsedUrl) {
+function mount(req, res, parsedUrl, deps) {
   const p = parsedUrl.pathname;
+
+  // Auto-start persistent consumer loop if host runAgent is provided
+  if (deps && typeof deps.runAgent === 'function' && !taskConsumer.running && process.env.STARNET_CONSUMER_ENABLED !== 'false') {
+    taskConsumer.start(deps);
+  }
 
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -384,7 +390,7 @@ function mount(req, res, parsedUrl) {
     return true;
   }
 
-  // 3. Worker Status
+  // 3. Worker Status & Consumer Telemetry
   if (p === '/api/trendly/status' && req.method === 'GET') {
     callTrendly('/api/status').then((r) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -394,9 +400,17 @@ function mount(req, res, parsedUrl) {
         stationId: process.env.STARNET_STATION_ID || 'local-station-01',
         upstream: r.ok ? 'connected' : 'disconnected',
         upstreamStatus: r.status,
+        consumer: taskConsumer.getStatus(),
         timestamp: Date.now(),
       }));
     });
+    return true;
+  }
+
+  // 3b. Dedicated Consumer Control
+  if (p === '/api/trendly/consumer/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(taskConsumer.getStatus()));
     return true;
   }
 

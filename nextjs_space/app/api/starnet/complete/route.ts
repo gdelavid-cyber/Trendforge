@@ -69,17 +69,23 @@ export async function POST(req: NextRequest) {
   // Record verified AI compute cost in financial ledger
   if (costCents && costCents > 0 && ventureId) {
     try {
-      await prisma.financialRecord.create({
-        data: {
-          ventureId,
-          type:           'AI_COMPUTE_COST',
-          amountCents:    -Math.abs(costCents),
-          currency:       'USD',
-          provenance:     'ACTUAL',
-          description:    `StarNet agent run: ${starnetRunId || jobId}`,
-          metadata:       { referenceId: starnetRunId || jobId },
-        },
+      const ventureExists = await prisma.venture.findUnique({
+        where: { id: ventureId },
+        select: { id: true },
       });
+      if (ventureExists) {
+        await prisma.financialRecord.create({
+          data: {
+            ventureId,
+            type:           'AI_COMPUTE_COST',
+            amountCents:    -Math.abs(costCents),
+            currency:       'USD',
+            provenance:     'ACTUAL',
+            description:    `StarNet agent run: ${starnetRunId || jobId}`,
+            metadata:       { referenceId: starnetRunId || jobId },
+          },
+        });
+      }
     } catch (err) {
       console.error('[starnet/complete] failed to record cost:', err);
     }

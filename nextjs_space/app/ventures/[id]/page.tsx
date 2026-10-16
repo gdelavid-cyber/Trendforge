@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import { Header } from '@/components/layouts/header';
 import { getVentureDetails } from '@/lib/venture/engine';
 import { calculateVentureEconomics } from '@/lib/finance/ledger';
-import { evaluateVentureNextAction } from '@/lib/council/orchestration/venture-hierarchy';
 import { VentureDetailClient } from './_components/venture-detail-client';
 
 export default async function VentureDetailPage({ params }: { params: { id: string } }) {
@@ -19,7 +18,7 @@ export default async function VentureDetailPage({ params }: { params: { id: stri
     if (!venture) notFound();
 
     economics = await calculateVentureEconomics(id);
-    ceoRecommendation = await evaluateVentureNextAction(id);
+    ceoRecommendation = null;
   } catch (error) {
     console.error('Error loading venture detail:', error);
     notFound();

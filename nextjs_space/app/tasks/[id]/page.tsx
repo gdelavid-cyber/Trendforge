@@ -5,7 +5,6 @@ import { redirect, notFound } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
-import { userRealIncomeUsdc } from '@/lib/money/ledger';
 import { TaskDetailClient } from './_components/task-detail-client';
 
 export default async function TaskDetailPage({ params }: { params: { id: string } }) {
@@ -27,7 +26,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
     if (user) {
       const completedCount = user.userTasks.filter(ut => ut.status === 'COMPLETED').length;
       headerStats = {
-        totalEarnings: await userRealIncomeUsdc(user.id),
+        totalEarnings: 0,
         completedCount,
         userTasks: user.userTasks,
       };

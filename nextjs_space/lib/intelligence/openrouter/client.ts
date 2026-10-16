@@ -146,7 +146,7 @@ export class OpenRouterClient {
     this.fallbackProviders = fallbackProviders || [
       {
         provider: 'inferhub',
-        apiKey: process.env.INFERHUB_API_KEY || '',
+        apiKey: process.env.INFER_API_KEY || process.env.INFERHUB_API_KEY || '',
         baseUrl: process.env.INFERHUB_BASE_URL ? `${process.env.INFERHUB_BASE_URL.replace(/\/$/, '')}` : 'https://api.inferhub.dev/v1',
       },
       {

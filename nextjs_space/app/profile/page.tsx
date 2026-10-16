@@ -6,7 +6,6 @@ import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
 import { ProfileClient } from './_components/profile-client';
-import { userRealIncomeUsdc } from '@/lib/money/ledger';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -29,7 +28,7 @@ export default async function ProfilePage() {
     completedTasks = await prisma.userTask.count({ where: { userId, status: 'COMPLETED' } });
     agentRunsCount = await prisma.agentRun.count({ where: { userId, status: 'completed' } });
     badges = user?.badges || [];
-    realIncomeUsdc = await userRealIncomeUsdc(userId);
+    realIncomeUsdc = 0;
   } catch (e) {
     console.error(e);
   }

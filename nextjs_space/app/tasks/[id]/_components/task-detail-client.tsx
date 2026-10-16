@@ -19,7 +19,6 @@ import { ArtifactsVault } from '@/components/execution/ArtifactsVault';
 import { SalesPipelineCard } from '@/components/execution/SalesPipelineCard';
 import { LiveLogTerminal } from '@/components/execution/LiveLogTerminal';
 import { LogSaleModal } from '@/components/execution/LogSaleModal';
-import { BrainstormModal } from '@/components/earn/brainstorm-modal';
 import { TeamActivityDrawer } from '@/components/activity/TeamActivityDrawer';
 import { useTeamActivity } from '@/hooks/useTeamActivity';
 
@@ -691,20 +690,12 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
               </Button>
               <Button
                 size="sm"
-                onClick={() => setIsSwarmModalOpen(true)}
+                onClick={handleRunPipeline}
                 className="cyan-gradient text-black font-extrabold uppercase text-xs h-9 px-4 font-mono shadow-[0_0_15px_rgba(0,240,255,0.4)] hover:shadow-[0_0_25px_rgba(0,240,255,0.6)]"
               >
                 <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" /> Deploy AI Swarm
               </Button>
-              <Link href="/earn">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-white/10 text-[#8E9BB4] hover:text-white font-mono text-xs h-9 px-3"
-                >
-                  Explore 9 Earn Methods &rarr;
-                </Button>
-              </Link>
+              
             </div>
             <span className="text-[11px] font-mono text-[#00F0FF]">
               Autonomously dispatches parallel builders + sales scout
@@ -1293,13 +1284,7 @@ export function TaskDetailClient({ task, userTask: initialUserTask, stories, art
           {task?.disclaimer ?? 'FOR EDUCATIONAL PURPOSES ONLY. FORGE IS NOT LIABLE FOR OPERATIONAL LOSSES.'}
         </p>
 
-        {/* AI Brainstorm Chamber Modal */}
-        <BrainstormModal
-          isOpen={isSwarmModalOpen}
-          onClose={() => setIsSwarmModalOpen(false)}
-          taskId={task?.id}
-          trendTitle={task?.title}
-        />
+        
 
         {/* Unified live drawer: auto-open on task mount, inline approvals */}
         <TeamActivityDrawer taskId={task?.id} autoOpen />

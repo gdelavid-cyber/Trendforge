@@ -135,7 +135,7 @@ export function StationClient({
           setHmhuHistory((prev) => [data.payload, ...prev.filter((p) => p.id !== data.payload.id)]);
           toast.info(`⚡ "Help Me Help U" Ask: ${data.payload.commanderAsk?.question}`);
         } else if (data.type === 'hmhu_resolved') {
-          setActiveHmhuPacket((current) => (current?.id === data.payload?.id ? null : current));
+          setActiveHmhuPacket((current: any) => (current?.id === data.payload?.id ? null : current));
           setHmhuHistory((prev) =>
             prev.map((p) => (p.id === data.payload?.id ? { ...p, status: 'RESOLVED', commanderResponse: data.payload?.commanderResponse } : p))
           );

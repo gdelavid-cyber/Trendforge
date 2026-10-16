@@ -99,7 +99,7 @@ export async function createVenture(input: CreateVentureInput) {
       hypothesis: input.hypothesis,
       riskLevel: input.riskLevel ?? RiskLevel.MEDIUM,
       autonomyLevel: input.autonomyLevel ?? AutonomyLevel.LEVEL_3,
-      capitalAllocatedCents: input.capitalAllocatedCents ?? 0,
+      capitalAllocatedCents: input.capitalAllocatedCents ?? 50000,
       capitalConsumedCents: 0,
       revenueCents: 0,
       costCents: 0,

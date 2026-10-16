@@ -20,9 +20,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
-import { MarketDebriefModal } from '@/components/debrief/MarketDebriefModal';
-import { CouncilBoardroom } from '@/components/council/council-boardroom';
 import { SwarmTelemetryConsole } from '@/components/swarm/SwarmTelemetryConsole';
 import { InferHubEarnings } from '@/components/dashboard/inferhub-earnings';
 import { StationCommandDeck } from './station-command-deck';
@@ -178,9 +175,6 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
 
       {/* 1b. Native TrendForge Station Command Deck */}
       <StationCommandDeck />
-
-      {/* 2. LIVE AI MONEY COUNCIL ROUND-TABLE BOARDROOM */}
-      <CouncilBoardroom embedded={true} />
 
       {/* 2b. InferHub publisher earnings auto-reinvestment */}
       <InferHubEarnings />
@@ -343,17 +337,6 @@ export function DashboardClient({ user, trendingMoves }: DashboardClientProps) {
         <SwarmTelemetryConsole />
       </div>
 
-      {/* Global Modals */}
-      <AgentCompanionModal
-        isOpen={isCompanionOpen}
-        onClose={() => setIsCompanionOpen(false)}
-        user={user as any}
-      />
-
-      <MarketDebriefModal
-        isOpen={isDebriefOpen}
-        onClose={() => setIsDebriefOpen(false)}
-      />
     </div>
   );
 }

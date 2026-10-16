@@ -10082,54 +10082,56 @@ const server = http.createServer((req, res) => {
   // HERE, before the /api gate, and ONLY for that exact shape — its own per-trigger secret is the fence (serveTriggerHook).
   // Any other method or path on /api/hooks still meets the full host/origin/token gate below.
   if (triggerHook) return serveTriggerHook(req, res, triggerHook[1]);
+  const trendAgentRunner = {
+    runAgent: async ({ goal, tools, model, context }) => {
+      const runId = crypto.randomUUID();
+      const ac = new AbortController();
+      let buf = '';
+      let usd = 0;
+      let errMsg = null;
+      const sink = (name, payload) => {
+        if (name === 'agent.token' && payload && payload.delta) buf += payload.delta;
+        else if (name === 'agent.run.error' && payload && payload.message) errMsg = payload.message;
+        else if (name === 'agent.run.end' && payload && typeof payload.usd === 'number') usd = payload.usd;
+      };
+      const runOpts = {
+        runId,
+        agentId: 'agent',
+        provider: 'openrouter',
+        model: model || process.env.STARNET_DEFAULT_MODEL || 'nvidia/nemotron-3.5-lightning:free',
+        key: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '',
+        messages: [{ role: 'user', content: goal }],
+        surface: 'autonomous',
+        isTask: true,
+        tools: tools && tools.length ? tools : undefined,
+        emit: sink,
+        signal: ac.signal,
+        context,
+      };
+      try {
+        const result = await runOnce(runOpts);
+        return {
+          success: !errMsg,
+          runId,
+          costCents: Math.round(usd * 100),
+          artifact: { text: buf || 'Task completed', raw: result, error: errMsg },
+        };
+      } catch (err) {
+        return {
+          success: false,
+          runId,
+          costCents: Math.round(usd * 100),
+          artifact: { text: buf, error: (err && err.message) || String(err) },
+        };
+      }
+    }
+  };
+
   if (req.url && (req.url.startsWith('/api/trendforge/') || req.url === '/api/trendforge')) {
     applyApiCors(req, res);
     if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
     const parsedUrl = new URL(req.url, 'http://' + (req.headers.host || '127.0.0.1'));
-    if (trendforgeChannel.mount(req, res, parsedUrl, {
-      runAgent: async ({ goal, tools, model, context }) => {
-        const runId = crypto.randomUUID();
-        const ac = new AbortController();
-        let buf = '';
-        let usd = 0;
-        let errMsg = null;
-        const sink = (name, payload) => {
-          if (name === 'agent.token' && payload && payload.delta) buf += payload.delta;
-          else if (name === 'agent.run.error' && payload && payload.message) errMsg = payload.message;
-          else if (name === 'agent.run.end' && payload && typeof payload.usd === 'number') usd = payload.usd;
-        };
-        const runOpts = {
-          runId,
-          agentId: 'agent',
-          provider: 'openrouter',
-          model: model || process.env.STARNET_DEFAULT_MODEL || 'nvidia/nemotron-3.5-lightning:free',
-          key: process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || '',
-          messages: [{ role: 'user', content: goal }],
-          surface: 'autonomous',
-          isTask: true,
-          tools: tools && tools.length ? tools : undefined,
-          emit: sink,
-          signal: ac.signal,
-          context,
-        };
-        try {
-          const result = await runOnce(runOpts);
-          return {
-            success: !errMsg,
-            runId,
-            costCents: Math.round(usd * 100),
-            artifact: { text: buf || 'Task completed', raw: result, error: errMsg },
-          };
-        } catch (err) {
-          return {
-            success: false,
-            runId,
-            costCents: Math.round(usd * 100),
-            artifact: { text: buf, error: (err && err.message) || String(err) },
-          };
-        }
-      }
-    })) {
+    if (trendforgeChannel.mount(req, res, parsedUrl, trendAgentRunner)) {
       return;
     }
   }
@@ -10137,7 +10139,7 @@ const server = http.createServer((req, res) => {
     applyApiCors(req, res);
     if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
     const parsedUrl = new URL(req.url, 'http://' + (req.headers.host || '127.0.0.1'));
-    if (trendlyBridge.mount(req, res, parsedUrl)) {
+    if (trendlyBridge.mount(req, res, parsedUrl, trendAgentRunner)) {
       return;
     }
   }
@@ -25329,11 +25331,24 @@ async function serveStatic(req, res) {
       boot += '</script>';
       data = Buffer.from(String(data).replace(/<\/head>/i, boot + '\n</head>'), 'utf8');
     }
-    // ANTI-FRAMING (2026-09-23 security audit): a foreign site must not frame the live app (the framed page passes
-    // Host/Origin with its own requests, so a clickjacking overlay could drive consent cards and toggles).
-    // SAMEORIGIN, not DENY: frontend/dev/comms-layout-review.html frames "/" from this same origin.
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store',
-      'X-Frame-Options': 'SAMEORIGIN', 'Content-Security-Policy': "frame-ancestors 'self'; frame-src 'self' http://127.0.0.1:" + PORT + ' http://localhost:' + PORT, 'X-Content-Type-Options': 'nosniff' });
+    // Allow framing from authorized Trendly origins (localhost:3000, vercel.app, Cloudflare tunnels)
+    const allowedFrameAncestors = [
+      "'self'",
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:' + PORT,
+      'http://127.0.0.1:' + PORT,
+      'https://trendly-platform-chi.vercel.app',
+      'https://*.vercel.app',
+      'https://*.trycloudflare.com',
+    ].join(' ');
+
+    res.writeHead(200, {
+      'Content-Type': MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream',
+      'Cache-Control': 'no-store',
+      'Content-Security-Policy': `frame-ancestors ${allowedFrameAncestors}; frame-src 'self' http://127.0.0.1:${PORT} http://localhost:${PORT}`,
+      'X-Content-Type-Options': 'nosniff'
+    });
     res.end(data);
   } catch (e) { res.writeHead(404); res.end('not found'); }
 }

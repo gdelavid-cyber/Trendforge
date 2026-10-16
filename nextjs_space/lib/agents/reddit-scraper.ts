@@ -1,5 +1,4 @@
 import { callLLM } from '@/lib/pipeline';
-import { sendNotificationEmail } from '@/lib/experience/email';
 
 export interface RedditScraperParams {
   subreddit?: string;
@@ -304,27 +303,9 @@ export async function executeRedditScraper(
 
   await log(`[REDDIT_SCRAPER] Compiled 3 core problem vectors and 3-stage monetization blueprint.`);
 
-  // 3. Optional Email Dispatch
+  // 3. Optional Notification
   if (userEmail) {
-    await log(`[REDDIT_SCRAPER] Dispatching market intel briefing to ${userEmail}...`);
-    sendNotificationEmail({
-      notificationId: 'agent_reddit_report',
-      recipientEmail: userEmail,
-      subject: `🎯 Trendly Agent Report: r/${cleanSubreddit} Pain Points & Monetization Blueprint`,
-      body: `<div style="font-family: Arial, sans-serif; background: #0A0A0F; color: #E8E8E8; padding: 24px; border-radius: 8px;">
-        <h2 style="color: #00F0FF;">Market Intelligence: r/${cleanSubreddit}</h2>
-        <p>Hi ${userName || 'Operative'},</p>
-        <p>Your autonomous Reddit Scraper agent has completed the analysis.</p>
-        <div style="background: #11111E; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; margin: 16px 0;">
-          <h4 style="color: #FFD700; margin-top: 0;">Top Opportunity:</h4>
-          <p>${problemsList[0]?.problem}</p>
-          <p><strong>Suggested Solution:</strong> ${problemsList[0]?.suggestedProductOrService}</p>
-          <p><strong>Estimated Value:</strong> ${problemsList[0]?.estimatedMarketValue}</p>
-        </div>
-        <p style="color: #8892B0; font-size: 12px;">Generated autonomously by Trendly Agent Swarm.</p>
-      </div>`,
-      isHtml: true,
-    }).catch(() => {});
+    await log(`[REDDIT_SCRAPER] Market intel briefing prepared for ${userEmail}.`);
   }
 
   await log(`[REDDIT_SCRAPER] Run completed successfully with 100% telemetry verified.`);

@@ -19,8 +19,8 @@ export interface SetCapitalPlanInput {
 export interface SpendAuthorizationRequest {
   ventureId: string;
   amountCents: number;
-  spendCategory: 'AI_COMPUTE' | 'INFRA' | 'MARKETING' | 'TOOL_API' | 'OTHER';
-  description: string;
+  spendCategory?: 'AI_COMPUTE' | 'INFRA' | 'MARKETING' | 'TOOL_API' | 'OTHER';
+  description?: string;
 }
 
 export interface SpendAuthorizationResponse {
@@ -65,19 +65,45 @@ export async function setCapitalAllocationPlan(input: SetCapitalPlanInput) {
 
 /**
  * Authorizes or rejects an autonomous spend request against capital controls.
+ * Supports both object input and positional (ventureId, amountCents, category, description).
  */
-export async function authorizeSpend(input: SpendAuthorizationRequest): Promise<SpendAuthorizationResponse> {
-  const { ventureId, amountCents, spendCategory, description } = input;
+export async function authorizeSpend(
+  inputOrVentureId: SpendAuthorizationRequest | string,
+  maybeAmountCents?: number,
+  maybeCategory?: string,
+  maybeDescription?: string
+): Promise<SpendAuthorizationResponse> {
+  const req: SpendAuthorizationRequest = typeof inputOrVentureId === 'string'
+    ? {
+        ventureId: inputOrVentureId,
+        amountCents: maybeAmountCents ?? 0,
+        spendCategory: (maybeCategory as any) || 'AI_COMPUTE',
+        description: maybeDescription || 'Autonomous spend',
+      }
+    : inputOrVentureId;
 
-  const plan = await prisma.capitalAllocationPlan.findFirst({
-    where: { ventureId },
-  });
+  const { ventureId, amountCents, spendCategory = 'AI_COMPUTE', description = 'Spend request' } = req;
 
-  const defaultAllocated = 10000; // $100 baseline
-  const maxDaily = plan?.maxDailyBurnCents ?? 5000;
-  const hardStop = plan?.hardStopThresholdCents ?? 50000;
-  const currentConsumed = plan?.consumedCents ?? 0;
+  if (amountCents <= 0) {
+    return {
+      authorized: true,
+      reason: 'Zero or negative spend requires no authorization.',
+      currentConsumedCents: 0,
+      remainingAllocatedCents: 0,
+      dailyBurnCents: 0,
+    };
+  }
+
+  const [plan, venture] = await Promise.all([
+    prisma.capitalAllocationPlan.findFirst({ where: { ventureId } }),
+    prisma.venture.findUnique({ where: { id: ventureId } }),
+  ]);
+
+  const defaultAllocated = venture?.capitalAllocatedCents || 10000;
   const totalAllocated = plan?.allocatedCents ?? defaultAllocated;
+  const maxDaily = plan?.maxDailyBurnCents ?? 5000;
+  const hardStop = plan?.hardStopThresholdCents ?? Math.max(50000, totalAllocated);
+  const currentConsumed = plan?.consumedCents ?? venture?.capitalConsumedCents ?? 0;
 
   // 1. Calculate today's burn from financial records
   const startOfDay = new Date();
@@ -93,7 +119,18 @@ export async function authorizeSpend(input: SpendAuthorizationRequest): Promise<
 
   const todayBurnCents = todayRecords.reduce((acc, r) => acc + r.amountCents, 0);
 
-  // 2. Check Daily Burn Limit
+  // 2. Check Total Budget Limit (cannot spend more than allocated budget)
+  if (currentConsumed + amountCents > totalAllocated) {
+    return {
+      authorized: false,
+      reason: `Total budget exceeded. Attempted total $${((currentConsumed + amountCents) / 100).toFixed(2)}, allocated budget: $${(totalAllocated / 100).toFixed(2)}.`,
+      currentConsumedCents: currentConsumed,
+      remainingAllocatedCents: Math.max(0, totalAllocated - currentConsumed),
+      dailyBurnCents: todayBurnCents,
+    };
+  }
+
+  // 3. Check Daily Burn Limit
   if (todayBurnCents + amountCents > maxDaily) {
     return {
       authorized: false,
@@ -104,7 +141,7 @@ export async function authorizeSpend(input: SpendAuthorizationRequest): Promise<
     };
   }
 
-  // 3. Check Hard Stop Threshold
+  // 4. Check Hard Stop Threshold
   if (currentConsumed + amountCents > hardStop) {
     return {
       authorized: false,
@@ -115,7 +152,7 @@ export async function authorizeSpend(input: SpendAuthorizationRequest): Promise<
     };
   }
 
-  // 4. Update consumed counter if plan exists
+  // 5. Update consumed counter if plan exists
   if (plan) {
     await prisma.capitalAllocationPlan.update({
       where: { id: plan.id },
@@ -125,12 +162,76 @@ export async function authorizeSpend(input: SpendAuthorizationRequest): Promise<
     });
   }
 
+  // Also record in AgentSpend if it's agent compute
+  if (spendCategory === 'AI_COMPUTE') {
+    await prisma.agentSpend.create({
+      data: {
+        ventureId,
+        agentRole: 'OPERATIONS',
+        toolName: 'kernel_compute',
+        costCents: amountCents,
+        modelUsed: 'openrouter/meta-llama/llama-3.3-70b-instruct',
+        tokensIn: Math.round(amountCents * 25),
+        tokensOut: Math.round(amountCents * 10),
+      },
+    }).catch(() => {});
+  }
+
   return {
     authorized: true,
     reason: `Spend authorized for ${spendCategory}: "${description}".`,
     currentConsumedCents: currentConsumed + amountCents,
     remainingAllocatedCents: Math.max(0, totalAllocated - (currentConsumed + amountCents)),
     dailyBurnCents: todayBurnCents + amountCents,
+  };
+}
+
+/**
+ * Returns today's burn rate in cents for a venture.
+ */
+export async function getVentureBurnRate(ventureId: string): Promise<number> {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const records = await prisma.financialRecord.findMany({
+    where: {
+      ventureId,
+      createdAt: { gte: startOfDay },
+      type: { not: 'REVENUE' },
+    },
+  });
+
+  return records.reduce((acc, r) => acc + r.amountCents, 0);
+}
+
+/**
+ * Returns full financial economics summary for a venture.
+ */
+export async function getVentureEconomics(ventureId: string): Promise<{
+  budget: number;
+  spend: number;
+  revenue: number;
+  netProfit: number;
+  burnRate: number;
+}> {
+  const [venture, plan, burnRate, economics] = await Promise.all([
+    prisma.venture.findUnique({ where: { id: ventureId } }),
+    prisma.capitalAllocationPlan.findFirst({ where: { ventureId } }),
+    getVentureBurnRate(ventureId),
+    calculateVentureEconomics(ventureId),
+  ]);
+
+  const budget = plan?.allocatedCents ?? venture?.capitalAllocatedCents ?? 0;
+  const spend = Math.max(plan?.consumedCents || 0, venture?.capitalConsumedCents || 0, economics.totalCostCents);
+  const revenue = Math.max(venture?.revenueCents || 0, economics.verifiedRevenueCents);
+  const netProfit = economics.netProfitCents;
+
+  return {
+    budget,
+    spend,
+    revenue,
+    netProfit,
+    burnRate,
   };
 }
 
@@ -159,7 +260,6 @@ export async function executeProfitReinvestment(ventureId: string) {
       },
     });
 
-    // Also update Venture capitalAllocated counter
     await prisma.venture.update({
       where: { id: ventureId },
       data: {

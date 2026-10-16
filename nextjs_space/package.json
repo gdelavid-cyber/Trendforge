@@ -16,10 +16,14 @@
     "reinvest:daemon": "npx tsx scripts/reinvest-inferhub-earnings.ts --daemon",
     "reinvest:dry": "npx tsx scripts/reinvest-inferhub-earnings.ts --dry-run",
     "observability:worker": "npx tsx worker/observability.ts",
-    "observability:verify": "npx tsx scripts/verify/verify-observability.ts"
+    "observability:verify": "npx tsx scripts/verify/verify-observability.ts",
+    "daemon": "npx tsx scripts/run-swarm-daemon.ts",
+    "daemon:once": "npx tsx scripts/run-swarm-daemon.ts --once",
+    "verify:infer": "npx tsx scripts/verify/verify-infer.ts",
+    "verify:checkout": "npx tsx scripts/verify/verify-checkout-flow.ts"
   },
   "prisma": {
-    "seed": "tsx --require dotenv/config scripts/seeds/safe-seed.ts"
+    "seed": "tsx --require dotenv/config prisma/seed.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "2.4.6",
@@ -27,7 +31,6 @@
     "@types/node": "20.6.2",
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
-    "@types/three": "^0.160.0",
     "postcss": "8.4.30",
     "prisma": "6.7.0",
     "tailwind-merge": "2.5.2",
@@ -39,8 +42,6 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.0.0",
-    "@aws-sdk/s3-request-presigner": "^3.0.0",
     "@next-auth/prisma-adapter": "1.0.7",
     "@prisma/client": "6.7.0",
     "@radix-ui/react-accordion": "1.2.0",
@@ -70,8 +71,6 @@
     "@radix-ui/react-toggle": "1.1.0",
     "@radix-ui/react-toggle-group": "1.1.0",
     "@radix-ui/react-tooltip": "1.1.2",
-    "@react-three/drei": "^9.114.0",
-    "@react-three/fiber": "^8.17.0",
     "autoprefixer": "10.4.15",
     "bcryptjs": "2.4.3",
     "class-variance-authority": "0.7.0",
@@ -97,8 +96,8 @@
     "sonner": "1.5.0",
     "stripe": "^22.5.0",
     "tailwind-scrollbar-hide": "1.1.7",
-    "three": "^0.160.0",
-    "vaul": "0.9.9"
+    "vaul": "0.9.9",
+    "zod": "^4.6.7"
   },
   "browserslist": [
     "> 0.5%",

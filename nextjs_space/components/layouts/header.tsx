@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
 import { CreditBadge } from '@/components/credits/credit-badge';
 import { WorkTicker } from '@/components/layout/work-ticker';
 import { useMyWork } from '@/lib/hooks/use-my-work';
@@ -40,9 +39,9 @@ export function Header({ userStats }: { userStats?: any } = {}) {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/trendly-os', label: 'Trendly OS', icon: Cpu, badge: 'LIVE' },
+    { href: '/starnet', label: 'StarNet Swarm', icon: Bot, badge: 'SWARM' },
     { href: '/ventures', label: 'Venture OS', icon: Rocket },
     { href: '/dashboard/my-work', label: 'My Work', icon: Briefcase, badge: activeCount },
-    ...(isAdmin ? [{ href: '/council', label: 'AI Council', icon: Flame }] : []),
     { href: '/earn', label: 'Tasks & Earn', icon: Zap },
     { href: '/trends', label: 'Trends Radar', icon: Radio },
   ];
@@ -283,12 +282,6 @@ export function Header({ userStats }: { userStats?: any } = {}) {
         </header>
       </div>
 
-      {/* Global Visual AI Companion Modal */}
-      <AgentCompanionModal
-        isOpen={isCompanionOpen}
-        onClose={() => setIsCompanionOpen(false)}
-        user={session?.user as any}
-      />
     </>
   );
 }

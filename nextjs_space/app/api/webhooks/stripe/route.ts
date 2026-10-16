@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
 import { stripe } from '@/lib/core/stripe';
-import { sendNotificationEmail } from '@/lib/experience/email';
 import type Stripe from 'stripe';
 
 const PLAN_MAP: Record<string, string> = {
@@ -92,16 +91,7 @@ export async function POST(request: Request) {
           },
         });
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (user?.email && role !== 'FREE') {
-          sendNotificationEmail({
-            notificationId: process.env.NOTIF_ID_SUBSCRIPTION_CONFIRMATION ?? '',
-            recipientEmail: user.email,
-            subject: `Welcome to Trendly ${role}!`,
-            body: `<div style="font-family: Arial; background: #0A0A0F; color: #E8E8E8; padding: 32px;"><h2 style="color: #F5A623;">You're now a ${role} member!</h2><p>Enjoy all the premium features including full task access, tools, and more.</p></div>`,
-            isHtml: true,
-          }).catch(() => {});
-        }
+        console.log(`[STRIPE_WEBHOOK] User ${userId} upgraded to ${role}`);
         break;
       }
 

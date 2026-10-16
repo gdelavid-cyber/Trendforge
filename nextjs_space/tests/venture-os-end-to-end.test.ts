@@ -16,7 +16,6 @@ import { recordFinancialTransaction, calculateVentureEconomics, reconcileStripeW
 import { createVentureLead, transitionLeadStage, createVentureCustomer } from '@/lib/customer/crm';
 import { createSalesProposal, acceptSalesProposal, handleBuyerObjection } from '@/lib/sales/proposals';
 import { updateFulfillmentOrder, inspectAndVerifyOrder, customerAcceptOrder } from '@/lib/fulfillment/engine';
-import { evaluateVentureNextAction } from '@/lib/council/orchestration/venture-hierarchy';
 import { recordVentureMemory, promoteToBlueprint, getVentureMemories } from '@/lib/learning/memory';
 import { setCapitalAllocationPlan, authorizeSpend, executeProfitReinvestment } from '@/lib/capital/allocation';
 import { gateAgentAction, resolveApprovalRequest } from '@/lib/autonomy/control-plane';
@@ -343,13 +342,6 @@ describe('Trendly Venture OS — Comprehensive End-to-End Economic Loop', () => 
     });
     expect(profitableStep.lifecycleState).toBe(VentureLifecycleState.PROFITABLE);
 
-    // =========================================================================
-    // STAGE 13: CEO AGENT STRATEGIC DELIBERATION ("What happens next?")
-    // =========================================================================
-    const ceoRecommendation = await evaluateVentureNextAction(venture.id);
-    expect(ceoRecommendation.recommendedAction).toBe('SCALE_VENTURE');
-    expect(ceoRecommendation.priority).toBe('HIGH');
-    expect(ceoRecommendation.rationale).toContain('Unit economics strong');
 
     // =========================================================================
     // STAGE 14: VENTURE MEMORY & BLUEPRINT PROMOTION

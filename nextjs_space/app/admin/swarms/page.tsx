@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth-options';
-import { isUserAdmin } from '@/lib/council/config';
+import { isAdminRole } from '@/lib/core/route-auth';
 import { Header } from '@/components/layouts/header';
 import Link from 'next/link';
 import { 
@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 export default async function AdminSwarmsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
-  if (!isUserAdmin(session.user as any)) redirect('/dashboard');
+  if (!isAdminRole((session.user as any)?.role)) redirect('/dashboard');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">

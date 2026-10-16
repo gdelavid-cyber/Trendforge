@@ -4,10 +4,7 @@ import { getIntegration } from '@/lib/core/vault';
 import { runResearchStep } from './research';
 import { runEmailStep, hasEmailProvider } from './email';
 import { draftTweetText, postTweet } from './social';
-import { runFileStep } from './file';
-import { runTradeStep } from './trade';
 import { runVoiceStep } from './voice';
-import { runVideoStep } from './video';
 import { runSalesStep } from './sales';
 import { checkStationHealth, dispatchToStarNet } from './starnet';
 
@@ -127,38 +124,6 @@ export function createSkillRunner(llm: LlmFn) {
         }
       }
 
-      // --- Short-Form Video, TikTok & Shorts Storyboard ---
-      if (VIDEO_ACTIONS.has(step.action)) {
-        try {
-          const result = await runVideoStep({
-            step,
-            taskTitle: ctx.taskTitle,
-            previousResults: ctx.previousResults,
-            llm: boundLlm,
-          });
-          return {
-            output: result.output,
-            costUsd: 0.005,
-            artifact: {
-              kind: 'VIDEO',
-              name: `Short-Form Video: ${result.title.slice(0, 60)}`,
-              url: null,
-              meta: {
-                title: result.title,
-                format: result.format,
-                hook: result.hook,
-                scenes: result.scenes,
-                caption: result.caption,
-                hashtags: result.hashtags,
-                viewsPotential: result.estimatedViewsPotential,
-              },
-            },
-          };
-        } catch (err: any) {
-          return { output: `Video production package failed: ${err.message}`, blocked: true, costUsd: 0 };
-        }
-      }
-
       // --- Sales, Outreach & Monetization Pitch ---
       if (SALES_ACTIONS.has(step.action)) {
         try {
@@ -229,47 +194,6 @@ export function createSkillRunner(llm: LlmFn) {
         }
       }
 
-      // --- Deliverable file ---
-      if (step.action === 'export') {
-        try {
-          const result = await runFileStep({
-            step, userId: ctx.userId, userTaskId: ctx.userTaskId, stepIndex: ctx.stepIndex,
-            previousResults: ctx.previousResults, llm: boundLlm,
-          });
-          return {
-            output: result.output,
-            costUsd: 0.005,
-            artifact: {
-              kind: 'FILE', name: result.fileName, url: result.url,
-              meta: { format: result.format, bytes: result.content.length, inline: result.url === null },
-            },
-          };
-        } catch (err: any) {
-          return { output: `File generation failed: ${err.message}`, blocked: true, costUsd: 0 };
-        }
-      }
-
-      // --- External: trade ---
-      if (step.action === 'trade') {
-        const creds = await getIntegration(ctx.userId, 'polymarket');
-        try {
-          const result = await runTradeStep({
-            step, taskTitle: ctx.taskTitle, previousResults: ctx.previousResults,
-            llm: boundLlm, hasPolymarketKey: Boolean(creds),
-          });
-          return {
-            output: result.output,
-            costUsd: 0.005,
-            artifact: {
-              kind: 'TRADE', name: `${result.order.outcome} @ ${result.order.price} — ${result.order.market.slice(0, 60)}`,
-              url: null, meta: { ...result.order, live: result.live },
-            },
-          };
-        } catch (err: any) {
-          return { output: `Trade staging failed: ${err.message}`, blocked: true, costUsd: 0 };
-        }
-      }
-
       // --- External: deploy ---
       if (step.action === 'deploy') {
         const stationAlive = await checkStationHealth();
@@ -298,6 +222,22 @@ export function createSkillRunner(llm: LlmFn) {
           output: 'BLOCKED — deployment automation requires an active StarNet station. Connect or start a station at http://localhost:8787.',
           blocked: true,
           costUsd: 0,
+        };
+      }
+
+      // --- File export ---
+      if (step.action === 'export') {
+        const fallback = await llmFallback(step, ctx, boundLlm);
+        const isCsv = /spreadsheet|csv/i.test(step.description) || /spreadsheet|csv/i.test(step.title);
+        const name = `${step.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.${isCsv ? 'csv' : 'md'}`;
+        return {
+          ...fallback,
+          artifact: {
+            kind: 'FILE',
+            name,
+            url: null,
+            meta: { inline: true, format: isCsv ? 'csv' : 'markdown', bytes: Buffer.byteLength(fallback.output || '', 'utf8') },
+          },
         };
       }
 

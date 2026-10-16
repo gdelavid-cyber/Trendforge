@@ -30,8 +30,6 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { SectionHelpBanner } from '@/components/guide/section-help-banner';
 import Link from 'next/link';
-import { AgentCompanionModal } from '@/components/chat/AgentCompanionModal';
-import { CompanionPortrait } from '@/components/avatar/CompanionPortrait';
 
 interface AgentItem {
   type: string;
@@ -346,7 +344,7 @@ export function AgentsClient({ user }: { user: any }) {
                   {/* Name & Desc with Animated Avatar */}
                   <div className="flex items-center gap-3.5 mb-3">
                     <div className="w-13 h-13 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_15px_rgba(0,240,255,0.15)] flex-shrink-0 bg-black/60 p-0.5">
-                      <CompanionPortrait archetype={getAgentArchetype(agent.type)} className="w-full h-full" seed={agent.type.length} />
+                      <div className="w-full h-full flex items-center justify-center text-[#00F0FF]"><Bot className="w-7 h-7" /></div>
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white group-hover:text-[#00F0FF] transition-colors leading-snug">
@@ -440,20 +438,7 @@ export function AgentsClient({ user }: { user: any }) {
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-5 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setTalkAgent({
-                        name: agent.name,
-                        archetype: getAgentArchetype(agent.type),
-                        walletBalance: 0,
-                        survivalScore: 88,
-                      })
-                    }
-                    className="col-span-2 border-[#00F0FF]/30 text-xs font-mono uppercase text-[#00F0FF] hover:bg-[#00F0FF]/10 bg-black/40 h-10 px-2"
-                  >
-                    <Bot className="w-3.5 h-3.5 mr-1 text-[#00F0FF]" /> Talk & Voice
-                  </Button>
+                  
                   <Button
                     onClick={() => setSelectedAgent(agent)}
                     disabled={!hasRemaining || isDegraded}
@@ -492,7 +477,7 @@ export function AgentsClient({ user }: { user: any }) {
 
               <div className="flex items-center gap-3.5 mb-3">
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(0,240,255,0.2)] flex-shrink-0 bg-black/60 p-0.5">
-                  <CompanionPortrait archetype={getAgentArchetype(selectedAgent.type)} className="w-full h-full" />
+                  <div className="w-full h-full flex items-center justify-center text-[#00F0FF]"><Bot className="w-7 h-7" /></div>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white uppercase tracking-wider">
@@ -672,13 +657,7 @@ export function AgentsClient({ user }: { user: any }) {
         )}
       </AnimatePresence>
 
-      {/* Global AI Companion Consultation Modal */}
-      <AgentCompanionModal
-        isOpen={!!talkAgent}
-        onClose={() => setTalkAgent(null)}
-        agent={talkAgent}
-        user={user}
-      />
+      
     </div>
   );
 }

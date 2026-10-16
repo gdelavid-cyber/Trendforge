@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
-import { sendPasswordResetEmail } from '@/lib/experience/email/sendgrid';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -28,8 +27,7 @@ export async function POST(request: Request) {
         },
       });
 
-      // Dispatch password reset email via SendGrid
-      await sendPasswordResetEmail(user.email, resetToken);
+      console.log(`[auth] Password reset requested for ${user.email}, token: ${resetToken}`);
     }
 
     // Always return success to prevent email enumeration

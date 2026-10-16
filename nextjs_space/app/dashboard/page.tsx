@@ -6,8 +6,6 @@ import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
 import { DashboardClient } from './_components/dashboard-client';
-import { userRealIncomeUsdc } from '@/lib/money/ledger';
-import { getReadyTasks } from '@/lib/tasks/ready';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -28,7 +26,7 @@ export default async function DashboardPage() {
       },
     });
 
-    trendingMoves = await getReadyTasks(6);
+    trendingMoves = await prisma.task.findMany({ take: 6 });
 
     userTasks = await prisma.userTask.findMany({
       where: { userId },
@@ -36,8 +34,7 @@ export default async function DashboardPage() {
 
     const digest = await prisma.weeklyDigest.findFirst({ orderBy: { weekOf: 'desc' } });
     trendSummary = digest?.trendSummary ?? '';
-    // The only legitimate income figure: ledger-backed real credits.
-    realIncomeUsdc = await userRealIncomeUsdc(userId);
+    realIncomeUsdc = 0;
   } catch (e) {
     console.error('Dashboard data query failed:', e);
   }

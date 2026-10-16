@@ -152,6 +152,7 @@ model User {
   pitchSessions       PitchSession[]
   ventures            Venture[]
   humanApprovals      HumanApprovalRequest[]
+  approvalQueue       ApprovalRequest[]
 
   @@index([role])
   @@index([email])
@@ -2564,6 +2565,10 @@ model Venture {
   memories          VentureMemory[]
   approvalRequests  HumanApprovalRequest[]
   capitalPlans      CapitalAllocationPlan[]
+  metadata          Json?                 @default("{}")
+  agentSpends       AgentSpend[]
+  starNetTasks      StarNetTask[]
+  approvalQueue     ApprovalRequest[]
 
   @@index([userId])
   @@index([lifecycleState])
@@ -2925,4 +2930,75 @@ model StarNetJob {
   @@index([ventureId])
   @@index([status])
 }
+
+model AgentSpend {
+  id         String   @id @default(cuid())
+  ventureId  String
+  venture    Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  agentRole  String
+  toolName   String?
+  costCents  Int      @default(0)
+  modelUsed  String?
+  tokensIn   Int      @default(0)
+  tokensOut  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([ventureId])
+  @@index([agentRole])
+  @@index([createdAt])
+}
+
+model StarNetTask {
+  id                String    @id @default(cuid())
+  ventureId         String?
+  venture           Venture?  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  taskId            String    @unique
+  taskType          String
+  payload           Json      @default("{}")
+  status            String    @default("PENDING")
+  assignedStationId String?
+  result            Json?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  @@index([status])
+  @@index([ventureId])
+}
+
+model TrendSignal {
+  id                String   @id @default(cuid())
+  query             String
+  platform          String
+  rawData           Json     @default("{}")
+  velocity          Float    @default(0)
+  sentiment         Float    @default(0)
+  monetizationScore Float    @default(0)
+  status            String   @default("ACTIVE")
+  createdAt         DateTime @default(now())
+
+  @@index([platform])
+  @@index([status])
+}
+
+model ApprovalRequest {
+  id                 String         @id @default(cuid())
+  ventureId          String
+  venture            Venture        @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User           @relation(fields: [userId], references: [id])
+  proposedAction     String
+  agentRole          String
+  toolName           String?
+  riskLevel          RiskLevel      @default(MEDIUM)
+  estimatedCostCents Int            @default(0)
+  status             ApprovalStatus @default(PENDING)
+  rationale          String         @db.Text
+  evidence           Json?
+  createdAt          DateTime       @default(now())
+  resolvedAt         DateTime?
+
+  @@index([userId, status])
+  @@index([ventureId])
+}
+
 

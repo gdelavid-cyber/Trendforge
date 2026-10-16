@@ -6,7 +6,6 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { CyberBackground } from '@/components/backgrounds/cyber-background';
-import { NovaAssistant } from '@/components/nova/nova-assistant';
 import { TeamActivityDrawer } from '@/components/activity/TeamActivityDrawer';
 
 const poppins = Poppins({
@@ -40,16 +39,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <head>
-        <script src="https://apps.abacus.ai/chatllm/appllm-lib.js" />
-      </head>
       <body className={`${poppins.variable} ${sourceSerif.variable} font-sans min-h-screen relative bg-[#02040A]`}>
         <Providers>
           <CyberBackground />
           <div className="relative z-10">
             {children}
           </div>
-          <NovaAssistant />
           <TeamActivityDrawer />
           <Toaster position="top-right" theme="dark" richColors />
         </Providers>

@@ -1,5 +1,4 @@
 import { logExecutionEvent } from '@/lib/execution/logger';
-import { recordTrace } from '@/lib/growth/nova/traces';
 
 export interface EmitInput {
   taskId: string;
@@ -31,15 +30,11 @@ export async function emitProgress(input: EmitInput) {
 }
 
 export async function emitDone(input: EmitInput) {
-  const out = await emit('companion_action', input);
-  void recordTrace({ userId: null, kind: 'STEP', subject: input.actionDescription.slice(0, 200), summary: 'Done.', reasons: [] });
-  return out;
+  return emit('companion_action', input);
 }
 
 export async function emitBlocked(input: EmitInput) {
-  const out = await emit('companion_action', input);
-  void recordTrace({ userId: null, kind: 'STEP', subject: input.actionDescription.slice(0, 200), summary: 'Blocked, reported honestly.', reasons: [input.actionDescription.slice(0, 500)] });
-  return out;
+  return emit('companion_action', input);
 }
 
 export async function requestAck(input: EmitInput) {

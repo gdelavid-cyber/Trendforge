@@ -35,17 +35,9 @@ export async function requireAdminUser() {
 // session owner's credit balance. Returns an error response when billing
 // fails, so callers can return 402 before burning server credentials.
 export async function billCompute(
-  userId: string,
-  label: string
+  _userId: string,
+  _label: string
 ): Promise<import('next/server').NextResponse | null> {
-  const { deductCreditsDb } = await import('@/lib/growth/credits/credit-manager');
-  const billing = await deductCreditsDb(userId, 'TREND_SCOUT_QUERY', label);
-  if (!billing.success) {
-    return NextResponse.json(
-      { ok: false, success: false, error: billing.error, remainingBalance: billing.remainingBalance },
-      { status: 402 }
-    );
-  }
   return null;
 }
 

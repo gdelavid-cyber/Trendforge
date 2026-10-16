@@ -67,22 +67,75 @@ export async function dispatchToStarNet(
   const body = JSON.stringify({ ...job, callbackUrl });
   const sig  = signPayload(body, s.bridgeSecret || '');
 
-  const res = await fetch(`${s.url}/api/trendforge/dispatch`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':           'application/json',
-      'X-Trendforge-Signature': sig,
-    },
-    body,
-    signal: AbortSignal.timeout(15000),
+  try {
+    const res = await fetch(`${s.url}/api/trendforge/dispatch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':           'application/json',
+        'X-Trendforge-Signature': sig,
+      },
+      body,
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`StarNet dispatch failed (${res.status}): ${text}`);
+    }
+
+    return res.json();
+  } catch (err: any) {
+    // If direct push fails (e.g. station is behind NAT or offline), fallback to durable DB queue
+    console.warn(`[StarNet] Direct push failed (${err.message}). Enqueuing into persistent DB queue for consumer pull.`);
+    return queueJobForStarNet(job, s);
+  }
+}
+
+/**
+ * Enqueue a heavy swarm task directly into the persistent StarNet job queue.
+ * StarNet persistent worker daemon will pull and execute it asynchronously.
+ */
+export async function queueJobForStarNet(
+  job: StarNetJob,
+  station?: StarNetStation
+): Promise<{ jobId: string }> {
+  const { prisma } = await import('@/lib/prisma');
+  const s = station || getDefaultStation();
+
+  // Find or create default station record
+  let stationRecord = await prisma.starNetStation.findFirst({
+    where: { isActive: true },
+    orderBy: { createdAt: 'desc' },
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`StarNet dispatch failed (${res.status}): ${text}`);
+  if (!stationRecord) {
+    stationRecord = await prisma.starNetStation.create({
+      data: {
+        userId: 'system',
+        name: s.stationId || 'Primary Station',
+        url: s.url,
+        bridgeSecret: s.bridgeSecret || 'station-secret',
+        isActive: true,
+      },
+    });
   }
 
-  return res.json();
+  const created = await prisma.starNetJob.create({
+    data: {
+      stationId: stationRecord.id,
+      ventureId: job.ventureId || null,
+      fulfillmentOrderId: job.fulfillmentOrderId || null,
+      taskId: job.taskId || null,
+      status: 'PENDING',
+      jobPayload: {
+        agentGoal: job.agentGoal,
+        tools: job.tools || [],
+        callbackUrl: job.callbackUrl || null,
+      },
+    },
+  });
+
+  return { jobId: created.id };
 }
 
 /**

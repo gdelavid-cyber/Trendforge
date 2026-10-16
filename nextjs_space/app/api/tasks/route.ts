@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
-import { NON_TEST_TASK_WHERE } from '@/lib/tasks/ready';
+const NON_TEST_TASK_WHERE = {};
 
 export async function GET(request: Request) {
   try {

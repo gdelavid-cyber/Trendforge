@@ -49,7 +49,7 @@ export async function GET() {
     }),
   ]);
 
-  const totalSpendToday = speciesList.reduce((acc, s) => acc + (s.currentSpendUsd || 0), 0);
+  const totalSpendToday = speciesList.reduce((acc: number, s: any) => acc + (s.currentSpendUsd || 0), 0);
 
   return NextResponse.json({
     success: true,

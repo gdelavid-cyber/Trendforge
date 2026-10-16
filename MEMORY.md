@@ -1,0 +1,8 @@
+- project root: /workspace/sandbox-trendly-removed-apptrendly-autonomy-platform-trendly-wealth-platform-autonomy-platform-equity-platform-platform-wealth-platform-wealth-platform-2026-09-28
+- $workspace_env_file: none at root
+- $workspace_env_prefix: none
+- $workspace_secrets: none configured
+- $workspace_storage: none provisioned
+- $workspace_server: none running
+- notes: treat this as a docs-first cleanup round; do not paste live env values into chat
+- I did not manage to create the setup/reference docs or ARCHITECTURE.md/CHANGELOG.md in this round; they were referenced by README but not written to disk

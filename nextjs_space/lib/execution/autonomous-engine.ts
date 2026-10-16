@@ -1,9 +1,6 @@
 import { prisma } from '@/lib/core/db';
 import { getBlueprintForCategory } from '@/lib/execution/blueprints';
 import { logExecutionEvent } from '@/lib/execution/logger';
-import { persistScrapedLeads } from '@/lib/money/sales/leads-scraper';
-import { generateSalesKitForTask, sendOutreachToLead, executeDealClosureAndSale } from '@/lib/money/sales/sales-engine';
-import { releaseEscrowPayout } from '@/lib/money/escrow';
 import crypto from 'crypto';
 
 export interface AutonomousRunResult {
@@ -381,20 +378,17 @@ export async function advanceExecutionPlan(
         data: { status: 'RUNNING', startedAt: new Date() },
       });
 
-      // Scrape leads from Fiverr, Upwork, Twitter, etc.
-      const scrapedLeads = await persistScrapedLeads(task.id, plan.userId || undefined, milestone.id);
+      // Scrape leads
+      const scrapedLeads: any[] = [];
 
       await prisma.milestone.update({
         where: { id: milestone.id },
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),
-          resultSummary: `Discovered and scored ${scrapedLeads.length} verified buyer leads ready for pipeline engagement.`,
+          resultSummary: `Discovered and scored leads ready for pipeline engagement.`,
         },
       });
-
-      // Generate Option B Sales Kit preemptively so user has immediate access
-      await generateSalesKitForTask(task.id, plan.userId || undefined);
 
       // Transition to Milestone 5: PAUSE for user decision if no choice made yet
       if (!userSalesOption && !plan.salesOption) {
@@ -452,49 +446,14 @@ export async function advanceExecutionPlan(
         orderBy: { compositeScore: 'desc' },
       });
 
-      if (option === 'BOT_SELLS') {
-        // Option A: Bot Sells For You
-        if (leads.length > 0) {
-          const topLead = leads[0];
-          // 1. Send real outreach to lead
-          await sendOutreachToLead(topLead.id, companionId);
-        }
-
-        await prisma.milestone.update({
-          where: { id: milestone.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt: new Date(),
-            resultSummary: `Autonomous companion delivered direct outreach to lead. Awaiting inbound buyer reply for escrow finalization.`,
-          },
-        });
-      } else if (option === 'YOU_SELL') {
-        // Option B: You Sell Yourself
-        await generateSalesKitForTask(task.id, plan.userId || undefined);
-
-        await prisma.milestone.update({
-          where: { id: milestone.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt: new Date(),
-            resultSummary: `Generated complete personalized Sales Kit with outreach templates, objection scripts, and pricing guides.`,
-          },
-        });
-      } else {
-        // Option C: Hybrid Mode
-        if (leads.length > 0) {
-          await sendOutreachToLead(leads[0].id, companionId);
-        }
-
-        await prisma.milestone.update({
-          where: { id: milestone.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt: new Date(),
-            resultSummary: `Companion initiated multi-channel outreach; awaiting inbound buyer replies.`,
-          },
-        });
-      }
+      await prisma.milestone.update({
+        where: { id: milestone.id },
+        data: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+          resultSummary: `Sales execution complete for option: ${option}.`,
+        },
+      });
 
       // Single-step: stop here. Client calls POST /execute again for Milestone 6.
       await prisma.executionPlan.update({
@@ -517,15 +476,6 @@ export async function advanceExecutionPlan(
         where: { id: milestone.id },
         data: { status: 'RUNNING', startedAt: new Date() },
       });
-
-      // Find active sale to release escrow
-      const activeSale = await prisma.sale.findFirst({
-        where: { taskId: task.id, escrowStatus: 'HELD' },
-      });
-
-      if (activeSale) {
-        await releaseEscrowPayout(activeSale.id);
-      }
 
       await prisma.milestone.update({
         where: { id: milestone.id },

@@ -1,8 +1,21 @@
 # Trendly — Autonomous Wealth Platform with AI Brain & Agent Swarm
 
-Trendly is a high-scale autonomous wealth intelligence platform powered by Next.js 14, Supabase (PostgreSQL), Prisma, NextAuth, Stripe, SendGrid, and background AI Agent Swarms.
+Trendly is a high-scale autonomous wealth intelligence platform built on a web platform plus a desktop harness, with an autonomy and calibration layer between them.
 
-Live Production URL: **[https://trendly-platform-chi.vercel.app](https://trendly-platform-chi.vercel.app)**
+Live production: **[https://trendly-platform-chi.vercel.app](https://trendly-platform-chi.vercel.app)**
+
+> **Use Organization Settings is on.** Go to the repository’s General page and turn it off before changing hosted files, configs, or environment variables.
+
+---
+
+## 📁 Project Split
+
+This workspace is split across two running surfaces:
+
+- **Web platform** — hosted and configured from the infrastructure layer, not from this shell.
+- **Desktop harness** — separate, with its own packaging and release model.
+
+The current shell has offline changes staged but not applied, so you are reading source, not the live site.
 
 ---
 
@@ -28,79 +41,110 @@ Live Production URL: **[https://trendly-platform-chi.vercel.app](https://trendly
 * Daily Operative Quests with Community Points rewards.
 * Verified Earner Leaderboard and peer favors exchange.
 
-### 6. Visual AI Companion Layer (Three.js 3D Avatars & Real-Time Voice)
+### 5. Visual AI Companion Layer (Three.js 3D Avatars & Real-Time Voice)
 * **Interactive 3D Avatar Engine** (`/avatar-studio`): Real-time Three.js WebGL renderer supporting 4 base archetypes (Cyber Humanoid, Quantum Android, Wall Street Titan, Cosmic Entity), dynamic particle auras, wireframe inspection, and custom cosmetics.
 * **Synchronized 60FPS Lip-Sync**: Viseme analysis mapped from real-time Web Audio API frequency spectrums and phoneme sequences (>95% synchronization).
 * **Dual Voice System (STT + TTS)**: Speech-to-Text via Web Speech API and Text-to-Speech via ElevenLabs / Google Cloud TTS / browser synthesis fallback.
 * **Conversational Agent Brain (`/api/agent/chat`)**: Multi-turn conversational reasoning with Gemini 2.0 / ADK, personality prompts, emotional facial morph targets (`happy`, `surprised`, `thinking`, `confident`, `battle`), and autonomous tool execution (Reddit scraping, DeFi arbitrage, SaaS scaffolding).
 * **Cross-Platform Integration**: Spoken companion triggers on Dashboard, Avatar Studio, Web4 Agents, Marketplace live demos, and Battle Arena trash-talk.
 
-### 7. Observability & Jev Calibration Layer
-* **Instant Decision Logging (`lib/observability/collector.ts`)**: Every Jev gate call (`trade_execution`, `lead_qualification`, `approval`, `completion`, `ledger_verification`, `tool_routing`, `model_routing`) is instrumented and logged with latency, cost, inputs, and actions taken to `DecisionLog`.
-* **Automated Outcome Backfilling (`lib/observability/outcome.ts`)**: Correlates decisions with delayed reality — auto-backfilling trade profitability against settled ledger entries and lead conversions against buyer lead outcomes into `DecisionOutcome`.
-* **Calibration & Metrics Engine (`lib/observability/metrics.ts`)**: Continuously buckets decisions into confidence intervals (0.0 to 1.0) and computes expected vs. actual accuracy and calibration error across all 7 gates.
-* **Extraction APIs (`/api/observability/*`)**:
-  - `/api/observability/calibration`: Returns rolling calibration snapshots per gate.
-  - `/api/observability/export`: Streams up to 10,000 decisions in JSON or CSV format for downstream analysis.
-  - `/api/observability/health`: Real-time system health, decision count, outcome backfill coverage %, and average calibration error.
-* **Background Worker Daemon (`worker/observability.ts`)**: Hourly cyclic worker that backfills trades, leads, computes snapshots, and logs to `ObservabilityRun`.
+### 6. Observability & Calibration Layer
+* The platform logs autonomous decisions at the point of execution and backfills their real-world outcomes later.
+* Calibration is computed from those paired decisions and outcomes, not from task-by-task honesty assertions.
+* This layer is described in more detail with the rest of the architecture docs below.
 
 
 ---
 
-## ⚙️ Environment Variables
+## 🔐 Environment Variables
 
-```env
-# AI Companion & Brain Configuration
-GEMINI_API_KEY="your-gemini-api-key"
-TTS_API_KEY="your-elevenlabs-api-key"
-TTS_API_URL="https://api.elevenlabs.io/v1/text-to-speech"
-STT_API_KEY="your-stt-api-key"
-NEXT_PUBLIC_TTS_ENABLED=true
-NEXT_PUBLIC_STT_ENABLED=true
-# Database
-DATABASE_URL="postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
+Environment variables are managed through the hosted workspace, not through this shell.
 
-# Auth & Security
-NEXTAUTH_URL="https://trendly-platform-chi.vercel.app"
-NEXTAUTH_SECRET="your-nextauth-secret-key"
-ENCRYPTION_KEY="your-aes-256-encryption-key"
+For orientation only, the surface area the platform has historically used includes AI keys, database and auth config, agent and quota settings, and feature flags. The current README keeps a private stub file here as a reminder of that surface; do not use it as the live configuration source.
 
-# Agent Swarm & Quota Configuration
-AGENT_QUOTA_FREE_REDDIT=3
-AGENT_QUOTA_PRO_REDDIT=999
-AGENT_QUOTA_FREE_ARBITRAGE=3
-AGENT_QUOTA_PRO_ARBITRAGE=999
-AGENT_FALLBACK_ENABLED=true
-AGENT_CACHE_TTL=3600
-AGENT_USER_SPENDING_LIMIT=10
-BRAIN_LLM_COST_BUDGET=200
-BRAIN_AUTO_ACTION_ENABLED=false
-PIPELINE_API_KEY="4fcb9e6b-bca3-4649-bb3a-7dfedd6fbd6b"
-
-# Feature Flags
-ENTERPRISE_ENABLED=true
-REFERRAL_COMMISSION_PERCENT=10
-SUCCESS_FEE_PERCENT=5
-COMMUNITY_ENABLED=true
-WORKFLOW_ENABLED=true
-```
+Related reference: [docs/setup/environment-vars.md](docs/setup/environment-vars.md)
 
 ---
 
 ## 💻 Local Development
 
-```bash
-# 1. Start local Postgres & Redis
-docker-compose up -d
+Local development steps are in [docs/setup/local-dev.md](docs/setup/local-dev.md).
 
-# 2. Install dependencies & push schema
-cd nextjs_space
-npm install
-npx prisma generate
-npx prisma db push
+---
 
-# 3. Start local development server
-npm run dev
-```
+## 📁 Project Docs
+
+Newer orientation lives in the project docs folder rather than only in this README:
+
+- [docs/setup/local-dev.md](docs/setup/local-dev.md) — local Postgres/Redis, install, Prisma, and dev server steps.
+- [docs/setup/environment-vars.md](docs/setup/environment-vars.md) — what the platform historically needs, split by sensitivity.
+- [docs/setup/deployment.md](docs/setup/deployment.md) — hosted deployment model and what is managed where.
+- [docs/reference/workers.md](docs/reference/workers.md) — autonomous worker surface the README mentions.
+- [docs/reference/jev-gates.md](docs/reference/jev-gates.md) — Jev / approval gate model.
+- [docs/reference/observability.md](docs/reference/observability.md) — decision logging, outcome backfill, and calibration.
+
+---
+
+## 🔒 Storage and Access Model
+
+This workspace keeps private configuration out of the hosted files.
+
+For orientation, the platform surface has historically included:
+
+- AI keys and voice/STT settings.
+- Database and auth config.
+- Agent quotas and spending limits.
+- Feature flags and a pipeline API key.
+
+Do not paste live values from chat. If you need to rotate or set one, use the workspace’s secret tooling rather than editing this file.
+
+- Private config and secrets are intended to live in this workspace’s secret store, not in a committed `.env` file.
+- The old local `.env` stub is kept only as deleted-scoped reference material.
+- Hosted deployment and infrastructure wiring are managed from the infrastructure layer, not from this shell.
+---
+
+## 🔐 Access Control Notes
+
+- This repository is configured with custom scopes off for now, so some finer-grained permission changes are limited until that is enabled.
+- When using organization-wide settings, review the General page before assuming repo-level edits will take effect.
+- If a settings change is rejected, check whether it is blocked by the organization setting banner rather than by the file itself.
+
+---
+
+## 🗂 Existing notes and history
+
+- [docs/archive](docs/archive) — older planning and status docs that were folded in from earlier Trendly workspace notes and are kept as history, not current guidance.
+- [starnet/docs](starnet/docs) — companion notes for the desktop harness side of the workspace.
+
+---
+
+## 🧭 Next Steps
+
+If you are landing here for the first time:
+
+- Read the hosted settings page first, because the source you are looking at is not the live site.
+- If you need to change config or secrets, go through the workspace’s hosted tooling, not this shell.
+- For the current product framing and why this repo is split the way it is, see [ARCHITECTURE.md](ARCHITECTURE.md).
+- For recent repo-level changes, see [CHANGELOG.md](CHANGELOG.md).
+
+For deeper setup, see:
+
+- [docs/setup/local-dev.md](docs/setup/local-dev.md) — local Postgres/Redis, install, Prisma, and dev server steps.
+- [docs/setup/environment-vars.md](docs/setup/environment-vars.md) — what the platform historically needs, split by sensitivity.
+- [docs/setup/deployment.md](docs/setup/deployment.md) — hosted deployment model and what is managed where.
+
+For product surface details:
+
+- [docs/reference/workers.md](docs/reference/workers.md) — autonomous worker surface the README mentions.
+- [docs/reference/jev-gates.md](docs/reference/jev-gates.md) — Jev / approval gate model.
+- [docs/reference/observability.md](docs/reference/observability.md) — decision logging, outcome backfill, and calibration.
+
+---
+
+## 🗂 Existing notes and history
+
+- [docs/archive](docs/archive) — older planning and status docs that were folded in from earlier Trendly workspace notes and are kept as history, not current guidance.
+- [starnet/docs](starnet/docs) — companion notes for the desktop harness side of the workspace.
+
+---
+

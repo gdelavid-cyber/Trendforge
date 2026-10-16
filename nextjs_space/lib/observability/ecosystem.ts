@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import { ALL_GATE_TYPES } from './metrics';
-import { executePredictionArbitrage } from '../agents/prediction-arbitrage';
 import { executeRedditScraper } from '../agents/reddit-scraper';
 
 export interface TuningResult {
@@ -151,22 +150,7 @@ export async function runAutonomousEcosystemPulse(): Promise<EcosystemPulseResul
     console.log('[Autonomous Ecosystem] No user activity detected. Initiating autonomous platform pulse...');
 
     try {
-      // 1. Autonomous Prediction Arbitrage Market Discovery (simulation paper trade)
-      await executePredictionArbitrage(
-        {
-          budget: 0,
-          market: 'Polymarket',
-          runId: `auto-eco-arb-${Date.now()}`,
-        } as any,
-        async (msg) => console.log(`[Auto-Eco Arb] ${msg}`)
-      );
-      autonomousRunsTriggered++;
-    } catch (err) {
-      console.error('[Autonomous Ecosystem] Error in autonomous arbitrage sweep:', err);
-    }
-
-    try {
-      // 2. Autonomous Reddit Problem Extraction (topic trend scouting)
+      // Autonomous Reddit Problem Extraction (topic trend scouting)
       await executeRedditScraper(
         {
           subreddit: 'SaaS',

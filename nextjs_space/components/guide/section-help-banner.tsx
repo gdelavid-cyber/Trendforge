@@ -15,8 +15,25 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { guideForPath, PageGuide } from '@/lib/experience/guide/content';
 import Link from 'next/link';
+
+export interface PageGuide {
+  path: string;
+  title: string;
+  group: string;
+  tagline: string;
+  tour: any[];
+  whatItDoes?: string;
+  actions?: Array<{ label?: string; description?: string; what?: string; why?: string }>;
+  tips?: Array<string | { title?: string; tip?: string }>;
+  keyActions?: Array<{ label: string; description: string }>;
+  bestPractices?: string[];
+  docUrl?: string;
+}
+
+export function guideForPath(_path: string): PageGuide | null {
+  return null;
+}
 
 interface Props {
   overrideGuide?: PageGuide;
@@ -132,14 +149,17 @@ export function SectionHelpBanner({ overrideGuide, defaultExpanded = false }: Pr
                   <CheckCircle2 className="w-3.5 h-3.5" /> Key Actions You Can Take:
                 </span>
                 <ul className="space-y-1.5 pl-1">
-                  {guide.actions.map((action, idx) => (
-                    <li key={idx} className="text-xs text-[#CCD6F6] font-sans flex items-start gap-2">
-                      <span className="w-4 h-4 rounded-full bg-green-500/10 text-green-400 font-mono text-[9px] flex items-center justify-center shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span>{action}</span>
-                    </li>
-                  ))}
+                  {(guide.actions || []).map((action, idx) => {
+                    const actionLabel = typeof action === 'string' ? action : (action.label || action.what || action.description || '');
+                    return (
+                      <li key={idx} className="text-xs text-[#CCD6F6] font-sans flex items-start gap-2">
+                        <span className="w-4 h-4 rounded-full bg-green-500/10 text-green-400 font-mono text-[9px] flex items-center justify-center shrink-0 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <span>{actionLabel}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
 
@@ -149,12 +169,15 @@ export function SectionHelpBanner({ overrideGuide, defaultExpanded = false }: Pr
                   <Lightbulb className="w-3.5 h-3.5" /> Important Tips & Mechanics:
                 </span>
                 <ul className="space-y-1.5 pl-1">
-                  {guide.tips.map((tip, idx) => (
-                    <li key={idx} className="text-xs text-[#CCD6F6] font-sans flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] shrink-0 mt-1.5" />
-                      <span>{tip}</span>
-                    </li>
-                  ))}
+                  {(guide.tips || []).map((tip, idx) => {
+                    const tipText = typeof tip === 'string' ? tip : (tip.title || tip.tip || '');
+                    return (
+                      <li key={idx} className="text-xs text-[#CCD6F6] font-sans flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] shrink-0 mt-1.5" />
+                        <span>{tipText}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>

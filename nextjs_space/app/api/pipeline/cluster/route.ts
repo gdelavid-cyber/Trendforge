@@ -5,7 +5,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/db';
 import { validatePipelineKey, fingerprint, isDuplicate } from '@/lib/pipeline';
 import { getSessionUser, requireAdminUser } from '@/lib/core/route-auth';
-import { themeSlug } from '@/lib/tasks/ready';
+
+function themeSlug(name: string, category: string): string {
+  return `${category.toLowerCase()}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+}
 
 const MIN_SUPPORT = 3; // a theme needs 3+ posts to count as a trend
 

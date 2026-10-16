@@ -5,7 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, CheckCircle, AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { COMPLIANCE_DISCLAIMERS, TERMS_AND_CONDITIONS } from '@/lib/experience/compliance/disclaimers';
+const COMPLIANCE_DISCLAIMERS = {
+  GENERAL: 'The services and autonomous agents provided are experimental and for professional venture development.',
+  FINANCIAL_RISK: 'Autonomous actions carry operational risk. You remain accountable for credentials and compute limits.',
+  ECONOMIC_DARWINISM: 'Ventures operate under strict survival and daily burn caps.',
+};
 
 export function AgreementModal({
   isOpen,

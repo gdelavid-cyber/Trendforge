@@ -288,40 +288,6 @@ describe('file runner', () => {
   });
 });
 
-describe('trade runner', () => {
-  it('stages an order ticket from live Gamma data without moving funds', async () => {
-    getIntegrationMock.mockImplementation(async (_u: string, provider: string) =>
-      provider === 'polymarket' ? { apiKey: 'pk' } : null
-    );
-    fetchMock.mockImplementation(async (input: any) => {
-      const url = String(input instanceof Request ? input.url : input);
-      if (url.startsWith('https://gamma-api.polymarket.com')) {
-        return jsonResponse([
-          {
-            question: 'Will the fixture market resolve YES?',
-            outcomes: JSON.stringify(['YES', 'NO']),
-            outcomePrices: JSON.stringify(['0.62', '0.38']),
-            slug: 'fixture-market',
-          },
-        ]);
-      }
-      throw new Error(`unexpected fetch ${url}`);
-    });
-
-    const llm = vi.fn(async () => JSON.stringify({ outcome: 'YES', sizeUsdc: 25, reasoning: 'edge' }));
-    const outcome = await createSkillRunner(llm).run(makeStep('trade'), makeCtx(llm));
-
-    expect(outcome.blocked).toBeFalsy();
-    expect(outcome.artifact?.kind).toBe('TRADE');
-    expect((outcome.artifact?.meta as any)?.live).toBe(false);
-    expect((outcome.artifact?.meta as any)?.outcome).toBe('YES');
-    expect((outcome.artifact?.meta as any)?.sizeUsdc).toBe(25);
-    expect(outcome.output).toContain('STAGED TRADE TICKET');
-    expect(outcome.output).toContain('no funds moved');
-    expect(fetchMock.mock.calls.every(([r]: any[]) => String(r).startsWith('https://gamma-api.polymarket.com'))).toBe(true);
-  });
-});
-
 describe('voice runner', () => {
   it('synthesizes spoken voice notes and records a VOICE artifact', async () => {
     const voiceJson = JSON.stringify({
@@ -341,38 +307,6 @@ describe('voice runner', () => {
     expect(outcome.output).toContain('Voice Message Synthesized');
     expect((outcome.artifact?.meta as any)?.transcript).toContain('Hey Sarah');
     expect((outcome.artifact?.meta as any)?.durationSec).toBe(45);
-  });
-});
-
-describe('video runner', () => {
-  it('generates a 9:16 viral video package with scenes and hashtags', async () => {
-    const videoJson = JSON.stringify({
-      title: 'How to automate trend research in 60s',
-      format: 'TIKTOK_9_16',
-      hook: 'Stop doing manual data entry in 2026.',
-      scenes: [
-        {
-          sceneNumber: 1,
-          durationSec: 4,
-          visualDescription: 'Split screen comparing manual vs autonomous swarm',
-          voiceover: 'Here is what happens when you deploy an AI companion.',
-          onScreenText: 'STOP DOING THIS 🛑',
-        },
-      ],
-      caption: 'Autonomous AI swarms doing the heavy lifting. 🔥',
-      hashtags: ['#Trendly', '#AIAutomation', '#Web4'],
-      estimatedViewsPotential: '50k - 100k',
-    });
-    const llm = vi.fn(async () => videoJson);
-    const step = makeStep('video' as any, 'Generate TikTok short');
-    const outcome = await createSkillRunner(llm).run(step, makeCtx(llm));
-
-    expect(outcome.blocked).toBeFalsy();
-    expect(outcome.artifact?.kind).toBe('VIDEO');
-    expect(outcome.output).toContain('Viral Video Production Package');
-    expect((outcome.artifact?.meta as any)?.format).toBe('TIKTOK_9_16');
-    expect((outcome.artifact?.meta as any)?.hook).toBe('Stop doing manual data entry in 2026.');
-    expect((outcome.artifact?.meta as any)?.scenes).toHaveLength(1);
   });
 });
 

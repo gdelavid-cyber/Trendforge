@@ -5,7 +5,6 @@ import { authOptions } from '@/lib/core/auth-options';
 import { prisma } from '@/lib/core/db';
 import { Header } from '@/components/layouts/header';
 import { VenturesClient } from './_components/ventures-client';
-import { generateCeoPortfolioBrief } from '@/lib/council/orchestration/venture-hierarchy';
 import { getVentureGraveyard } from '@/lib/venture/engine';
 import { clusterMarketSignals } from '@/lib/opportunity/intelligence';
 
@@ -43,15 +42,26 @@ export default async function VenturesPage() {
       });
 
       graveyard = await getVentureGraveyard(userId);
-      brief = await generateCeoPortfolioBrief(userId);
+      brief = null;
 
-      pendingApprovals = await prisma.humanApprovalRequest.findMany({
-        where: { userId, status: 'PENDING' },
-        include: {
-          venture: { select: { id: true, name: true, slug: true, lifecycleState: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+      const [humanApprovals, circuitBreakerApprovals] = await Promise.all([
+        prisma.humanApprovalRequest.findMany({
+          where: { userId, status: 'PENDING' },
+          include: {
+            venture: { select: { id: true, name: true, slug: true, lifecycleState: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.approvalRequest.findMany({
+          where: { userId, status: 'PENDING' },
+          include: {
+            venture: { select: { id: true, name: true, slug: true, lifecycleState: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      ]);
+
+      pendingApprovals = [...circuitBreakerApprovals, ...humanApprovals];
     }
 
     signalClusters = await clusterMarketSignals();

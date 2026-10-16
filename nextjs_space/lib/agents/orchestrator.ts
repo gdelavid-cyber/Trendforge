@@ -8,11 +8,6 @@ import {
 import { getUserQuota, consumeQuota, refundQuota, AGENT_CONFIGS } from '@/lib/agents/quota';
 import { getCachedAgentResultAsync, setCachedAgentResult } from '@/lib/agents/cache';
 import { executeRedditScraper } from '@/lib/agents/reddit-scraper';
-import { executePredictionArbitrage } from '@/lib/agents/prediction-arbitrage';
-import { executeOpenClawDeployer } from '@/lib/agents/openclaw-deployer';
-import { executeAIVideoMaker } from '@/lib/agents/ai-video-maker';
-import { executeMicroSaaSBuilder } from '@/lib/agents/micro-saas-builder';
-import { recordTrace } from '@/lib/growth/nova/traces';
 import { stationBus } from '@/lib/station/bus';
 
 export interface StartAgentOptions {
@@ -63,13 +58,6 @@ export async function launchAgentRun(
   const circuit = canExecute(agentType);
   if (!circuit.allowed) {
     const reason = circuit.reason || 'Agent is currently disabled by circuit breaker';
-    void recordTrace({
-      userId,
-      kind: 'RUN_REJECTED',
-      subject: agentType,
-      summary: `Run refused by circuit breaker.`,
-      reasons: [reason],
-    });
     throw new Error(reason);
   }
 
@@ -77,13 +65,6 @@ export async function launchAgentRun(
   const quota = await getUserQuota(userId, agentType, userRole);
   if (!quota.hasQuota) {
     const reason = `Weekly quota reached for ${config.name} (${quota.runsUsed}/${quota.runsLimit} runs used). Upgrade to Pro for unlimited runs.`;
-    void recordTrace({
-      userId,
-      kind: 'RUN_REJECTED',
-      subject: agentType,
-      summary: 'Run refused: quota exhausted.',
-      reasons: [reason],
-    });
     throw new Error(reason);
   }
 
@@ -221,14 +202,6 @@ async function executeAgentAsync(
         switch (agentType) {
           case 'reddit_scraper':
             return await executeRedditScraper(parameters, appendLog);
-          case 'prediction_arbitrage':
-            return await executePredictionArbitrage(parameters, appendLog);
-          case 'openclaw_deployer':
-            return await executeOpenClawDeployer(parameters, appendLog);
-          case 'ai_video_maker':
-            return await executeAIVideoMaker(parameters, appendLog);
-          case 'micro_saas_builder':
-            return await executeMicroSaaSBuilder(parameters, appendLog);
           default:
             throw new Error(`No execution handler for agent type '${agentType}'`);
         }

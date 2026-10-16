@@ -365,149 +365,21 @@ export function generateProceduralTrends(count: number, existingNames: Set<strin
   return results;
 }
 
-// Unified LLM and autonomous fallback dispatcher
-export async function callLLM(messages: { role: string; content: string }[], jsonMode = false, existingNames: Set<string> = new Set()) {
-  const apiKey = process.env.INFERHUB_API_KEY || process.env.OPENAI_API_KEY || process.env.ABACUSAI_API_KEY || process.env.OPENROUTER_API_KEY;
-
-  if (apiKey) {
-    try {
-      let endpoint = 'https://apps.abacus.ai/v1/chat/completions';
-      let model = 'gpt-5.4-mini';
-      let activeKey = apiKey;
-
-      if (process.env.INFERHUB_API_KEY) {
-        endpoint = process.env.INFERHUB_BASE_URL
-          ? `${process.env.INFERHUB_BASE_URL.replace(/\/$/, '')}/chat/completions`
-          : 'https://api.inferhub.dev/v1/chat/completions';
-        model = process.env.INFERHUB_MODEL || 'gemini-3.6-flash';
-        activeKey = process.env.INFERHUB_API_KEY;
-      } else if (process.env.OPENAI_API_KEY) {
-        endpoint = 'https://api.openai.com/v1/chat/completions';
-        model = 'gpt-4o-mini';
-        activeKey = process.env.OPENAI_API_KEY;
-      } else if (process.env.OPENROUTER_API_KEY && !process.env.ABACUSAI_API_KEY) {
-        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-        model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct';
-        activeKey = process.env.OPENROUTER_API_KEY;
-      } else if (process.env.ABACUSAI_API_KEY) {
-        activeKey = process.env.ABACUSAI_API_KEY;
-      }
-
-      const formattedMessages = [...messages];
-      if (jsonMode) {
-        const hasJson = formattedMessages.some((m) => m.content && m.content.toLowerCase().includes('json'));
-        if (!hasJson && formattedMessages.length > 0) {
-          const last = formattedMessages[formattedMessages.length - 1];
-          formattedMessages[formattedMessages.length - 1] = {
-            ...last,
-            content: `${last.content}\nOutput valid JSON only.`,
-          };
-        }
-      }
-
-      const body: any = {
-        model,
-        messages: formattedMessages,
-        max_tokens: 3000,
-      };
-      if (jsonMode) {
-        body.response_format = { type: 'json_object' };
-      }
-
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${activeKey}`,
-      };
-
-      if (process.env.INFERHUB_API_KEY && endpoint.includes('inferhub.dev')) {
-        headers['x-api-key'] = activeKey;
-      }
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data?.choices?.[0]?.message?.content ?? '';
-      } else {
-        const errText = await response.text();
-        console.warn(`[LLM] Non-OK response (${response.status}):`, errText.slice(0, 200));
-      }
-    } catch (err: any) {
-      console.warn('[LLM] Call failed, engaging autonomous trend engine:', err.message);
-    }
-  } else {
-    console.warn('[LLM] No API key configured (INFERHUB_API_KEY / OPENAI_API_KEY / ABACUSAI_API_KEY / OPENROUTER_API_KEY).');
-  }
-
-  // Fallback generation
-  const systemPrompt = messages.find((m) => m.role === 'system')?.content || '';
-  const userPrompt = messages.find((m) => m.role === 'user')?.content || '';
-
-  if (systemPrompt.includes('cluster forum posts') || systemPrompt.includes('commercial themes')) {
-    // Clustering pass requires real LLM evaluation — return empty to report PENDING honestly
-    return '';
-  }
-
-  if (systemPrompt.includes('trend detection AI')) {
-    const trends = generateProceduralTrends(3, existingNames);
-    return JSON.stringify({ trends });
-  }
-
-  if (systemPrompt.includes('task generation AI')) {
-    const matchingBlueprint = TREND_BLUEPRINTS.find((bp) => userPrompt.includes(bp.prefix));
-    
-    if (matchingBlueprint) {
-      const targetMatch = matchingBlueprint.targets.find((t) => userPrompt.includes(t)) || matchingBlueprint.targets[0];
-      const steps = matchingBlueprint.steps.map((s) => s.replace(/\{TARGET\}/g, targetMatch));
-
-      return JSON.stringify({
-        title: `Monetize ${matchingBlueprint.prefix} ${targetMatch}`,
-        description: `Actionable execution framework to acquire paying clients and deploy solutions for ${targetMatch}.`,
-        steps,
-        difficulty: 'LOW',
-        startup_cost: matchingBlueprint.startupCost,
-        time_to_first_dollar: matchingBlueprint.time,
-        earnings_low: matchingBlueprint.baseEarningsLow,
-        earnings_high: matchingBlueprint.baseEarningsHigh,
-        risk_level: 'LOW',
-        risk_explanation: 'Minimal startup capital required. Downside limited to setup and outreach time.',
-        mitigation_strategy: 'Offer free demonstration or pilot before locking in full retainer.',
-        pro_tip: matchingBlueprint.proTip,
-        category: matchingBlueprint.category,
-      });
-    }
-
-    const topic = userPrompt.replace(/Generate one (custom )?task about:?|Generate one money-making task for trend:?|\. Output JSON only\./gi, '').trim() || 'Trending Opportunity';
-    
-    return JSON.stringify({
-      title: `Monetize ${topic}`,
-      description: `Step-by-step framework to capitalize on ${topic} using zero-cost tooling and automated lead funnels.`,
-      steps: [
-        `Identify high-intent buyer personas and analyze market demand for ${topic}`,
-        `Deploy free baseline workflow using open APIs and no-code templates`,
-        `Launch automated outreach sequence to close first paying client`,
-        `Scale operations into a recurring $500+/mo service package`,
-      ],
-      difficulty: 'LOW',
-      startup_cost: 0,
-      time_to_first_dollar: '1-3 days',
-      earnings_low: 300,
-      earnings_high: 1400,
-      risk_level: 'LOW',
-      risk_explanation: 'Zero capital required. Downside limited to setup time.',
-      mitigation_strategy: 'Offer risk-free trial or performance-based pricing.',
-      pro_tip: 'Leverage LinkedIn and personalized video demos for instant trust and high conversion.',
-      category: 'AI_TOOLS',
-    });
-  }
-
-  return JSON.stringify({ success: true });
+// Unified LLM and autonomous fallback dispatcher powered by KernelRuntime
+export async function callLLM(
+  messages: { role: string; content: string }[],
+  jsonMode = false,
+  existingNames: Set<string> = new Set()
+): Promise<string> {
+  const { kernelRuntime } = await import('@/lib/runtime/kernel');
+  return kernelRuntime.call({
+    messages,
+    jsonMode,
+    existingNames,
+    gateType: 'model_routing',
+  });
 }
+
 
 export function extractJSON(raw: string): string {
   if (!raw) return '';

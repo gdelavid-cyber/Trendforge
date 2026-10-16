@@ -2,7 +2,6 @@ import { db } from '@/lib/db';
 import { callLLM, extractJSON } from '@/lib/pipeline';
 import { STAGES, generatePlayableHtml, type StageContext, type StageDefinition } from './stages';
 import { logActivity, updateCheckpoint } from './activity';
-import { harvestWarmLeads, requestExpandedDiscovery } from '@/lib/money/buyers/discovery';
 
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [0, 1500, 4000];
@@ -316,19 +315,9 @@ export async function runExecution(executionId: string): Promise<void> {
       disqualifiers: [],
     };
 
-    const warmLeads = await harvestWarmLeads({
-      trendId: execution.trendId,
-      executionId,
-      userId: execution.userId,
-      offer,
-      icp: icp?.icp ?? icp,
-    });
+    const warmLeads: any[] = [];
     warmLeadCount = warmLeads.length;
-
-    const queuedQueries = await requestExpandedDiscovery(
-      { trendId: execution.trendId, executionId, userId: execution.userId, offer, icp: icp?.icp ?? icp },
-      warmLeads.length
-    );
+    const queuedQueries = 0;
 
     await logActivity({
       userId: execution.userId,

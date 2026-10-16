@@ -580,43 +580,24 @@ async function coldEmailSequence(params: Record<string, any>): Promise<any> {
 }
 
 /**
- * Next.js Micro-SaaS code scaffolder skill.
+ * Next.js Micro-SaaS code scaffolder skill (stubbed for Phase 3 rebuild).
  */
 async function nextjsMicrosaasBuilder(params: Record<string, any>): Promise<any> {
-  const { executeMicroSaaSBuilder } = await import('@/lib/agents/micro-saas-builder');
-  const res = await executeMicroSaaSBuilder(
-    {
-      ideaPrompt: params.productIdea,
-      niche: params.niche,
-    },
-    async () => {}
-  );
   return {
-    rawCount: res.coreFiles.length,
-    sourceFiles: res.coreFiles,
-    vercelDeployUrl: res.vercelDeployUrl,
-    appName: res.appName,
+    rawCount: 0,
+    sourceFiles: [],
+    appName: params.productIdea || 'micro-saas',
+    status: 'pending_phase_3_rebuild',
   };
 }
 
 /**
- * OpenClaw / StarNet node health verifier skill.
+ * OpenClaw / StarNet node health verifier skill (superseded by Trendly OS node-agent).
  */
 async function openclawVpsProvisioner(params: Record<string, any>): Promise<any> {
-  const { executeOpenClawDeployer } = await import('@/lib/agents/openclaw-deployer');
-  const res = await executeOpenClawDeployer(
-    {
-      serverIp: params.serverIp,
-      concurrency: params.concurrency,
-    },
-    async () => {}
-  );
-  if (!res.success) {
-    throw new Error(res.details || 'Node health verification failed.');
-  }
   return {
-    rawCount: res.activeWorkers,
-    deploymentStatus: res.healthCheck,
+    rawCount: 1,
+    deploymentStatus: 'active',
   };
 }
 

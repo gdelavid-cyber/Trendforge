@@ -1,9 +1,6 @@
-import { execFile, spawn } from 'child_process';
 import path from 'path';
-import { callLLM } from '@/lib/pipeline';
-import { opencodeServeLlm } from './opencode-serve';
-import { starnetServeLlm, type StarNetRunOptions } from './starnet-serve';
-import { trendforgeStationLlm } from '@/lib/station/engine';
+import { type StarNetRunOptions } from './starnet-serve';
+
 
 // Pluggable brain for companions and the execution engine.
 //
@@ -64,6 +61,8 @@ function resolveOpencodeBin(): string {
  */
 function runOpencode(bin: string, model: string, prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
+    // Dynamic require so browser/webpack client bundles do not attempt to resolve child_process
+    const { spawn } = require('child_process');
     const child = spawn(
       bin,
       ['run', '--model', model],
@@ -71,11 +70,11 @@ function runOpencode(bin: string, model: string, prompt: string): Promise<string
     );
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', (d) => (stdout += d));
-    child.stderr.on('data', (d) => (stderr += d));
+    child.stdout.on('data', (d: any) => (stdout += d));
+    child.stderr.on('data', (d: any) => (stderr += d));
     const timer = setTimeout(() => child.kill(), OPENCODE_TIMEOUT_MS);
-    child.on('error', (e) => { clearTimeout(timer); reject(e); });
-    child.on('close', (code) => {
+    child.on('error', (e: any) => { clearTimeout(timer); reject(e); });
+    child.on('close', (code: any) => {
       clearTimeout(timer);
       if (code === 0) resolve(stdout);
       else reject(new Error(`opencode exited ${code}: ${stderr.slice(0, 300)}`));
@@ -113,50 +112,17 @@ export function opencodeRunLlm(
 }
 
 export function makeLlm(opts?: StarNetRunOptions): LlmFn {
-  if (process.env.LLM_PROVIDER === 'station') {
-    return trendforgeStationLlm({
+  return async (messages: ChatMessage[], jsonMode?: boolean) => {
+    const { kernelRuntime } = await import('@/lib/runtime/kernel');
+    return kernelRuntime.call({
+      messages,
+      jsonMode,
       userId: opts?.userId,
-      agentId: opts?.agent || opts?.model || 'overseer',
-      sessionId: opts?.sessionId || opts?.taskId,
+      runId: opts?.sessionId || opts?.taskId,
+      agentId: opts?.agent || opts?.model || 'starnet-runner',
+      modelOverride: opts?.model,
+      providerOverride: process.env.LLM_PROVIDER as any,
+      gateType: 'model_routing',
     });
-  }
-  if (process.env.LLM_PROVIDER === 'starnet') {
-    const starnetFn = starnetServeLlm(opts);
-    return async (messages, jsonMode) => {
-      try {
-        return await starnetFn(messages, jsonMode);
-      } catch (err: any) {
-        // Never mask an explicit station capability block (truthful telemetry)
-        if (String(err?.message || '').startsWith('BLOCKED by StarNet station:')) {
-          throw err;
-        }
-        console.warn('[LLM] StarNet station unreachable, falling back to platform LLM:', err.message);
-        return (callLLM as unknown as LlmFn)(messages, jsonMode);
-      }
-    };
-  }
-  if (process.env.LLM_PROVIDER === 'opencode') {
-    const serveUrl = process.env.OPENCODE_SERVE_URL;
-    if (serveUrl) {
-      const serveFn = opencodeServeLlm(serveUrl);
-      return async (messages, jsonMode) => {
-        try {
-          return await serveFn(messages, jsonMode);
-        } catch (err: any) {
-          console.warn('[LLM] opencode serve unreachable, falling back to platform LLM:', err.message);
-          return (callLLM as unknown as LlmFn)(messages, jsonMode);
-        }
-      };
-    }
-    const runFn = opencodeRunLlm();
-    return async (messages, jsonMode) => {
-      try {
-        return await runFn(messages, jsonMode);
-      } catch (err: any) {
-        console.warn('[LLM] opencode run failed, falling back to platform LLM:', err.message);
-        return (callLLM as unknown as LlmFn)(messages, jsonMode);
-      }
-    };
-  }
-  return callLLM as unknown as LlmFn;
+  };
 }
