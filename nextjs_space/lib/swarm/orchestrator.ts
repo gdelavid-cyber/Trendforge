@@ -110,9 +110,8 @@ export class StarNetOrchestrator {
       const auth = await authorizeSpend({
         ventureId,
         amountCents: 10, // Default 10 cents compute reservation
-        category: 'COMPUTE',
+        spendCategory: 'AI_COMPUTE',
         description: `Autonomous ${agentRole} execution for task ${task.taskType}`,
-        actor: `SWARM_${agentRole}`,
       });
 
       if (!auth.authorized) {
@@ -123,7 +122,7 @@ export class StarNetOrchestrator {
           data: {},
           costUsd: 0,
           latencyMs: Date.now() - startTime,
-          error: `Spend blocked by Capital Governor: ${auth.rejectionReason}`,
+          error: `Spend blocked by Capital Governor: ${auth.reason}`,
         };
 
         await prisma.starNetTask.update({

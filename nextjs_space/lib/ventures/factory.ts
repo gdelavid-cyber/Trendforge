@@ -65,7 +65,7 @@ Return JSON with strictly these fields:
     const raw = await runtime.call({
       messages: prompt,
       jsonMode: true,
-      costThresholdUsd: 0.05,
+      threshold: 0.05,
     });
 
     const parsed = JSON.parse(raw);

@@ -34,6 +34,7 @@ async function main() {
         email: 'operator@trendly.os',
         name: 'Autonomous Operator',
         role: 'ADMIN',
+        passwordHash: '$2a$10$dummyhashforverification1234567890abcdef',
       },
     });
   }

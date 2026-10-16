@@ -38,6 +38,7 @@ describe('Phase 3 Autonomous Engine: Ventures & Swarms', () => {
           email: 'operator@trendly.os',
           name: 'Autonomous Swarm Operator',
           role: 'ADMIN',
+          passwordHash: '$2a$10$dummyhashforverification1234567890abcdef',
         },
       });
     }

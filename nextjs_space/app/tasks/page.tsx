@@ -8,8 +8,7 @@ import { TasksContainer } from './_components/tasks-container';
 
 export default async function TasksPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect('/auth/signin');
-  const userRole = (session.user as any)?.role || 'FREE';
+  const userRole = (session?.user as any)?.role || 'FREE';
 
   return (
     <div className="min-h-screen bg-transparent text-[#F3F3F5]">
